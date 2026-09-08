@@ -1,0 +1,197 @@
+.css-treeview ul,
+.css-treeview li
+{
+    padding: 0;
+    margin: 0;
+    list-style: none;
+	
+}
+ 
+.css-treeview input
+{
+    position: absolute;
+    opacity: 0;
+}
+ 
+/* .css-treeview
+{
+    font-family: 'Open Sans', sans-serif;
+	font-weight:bold;
+	color:#000000;
+	font-size:14px;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+} */
+.css-treeview
+{
+font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  color: #000000;
+  font-size: 12px;
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  user-select: text;
+  width: 216px;
+  float: left;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  margin-top: 10px;
+}
+ 
+.css-treeview a
+{
+    color: #000;
+    text-decoration: none;
+	
+}
+ 
+.css-treeview a:hover
+{
+    text-decoration: underline;
+}
+ 
+.css-treeview input + label + ul
+{
+    margin: 0 0 0 22px;
+}
+ 
+.css-treeview input ~ ul
+{
+    display: none;
+}
+ 
+.css-treeview label,
+.css-treeview label::before
+{
+    cursor: pointer;
+}
+ 
+.css-treeview input:disabled + label
+{
+    cursor: default;
+    opacity: .6;
+}
+ 
+.css-treeview input:checked:not(:disabled) ~ ul
+{
+    display: block;
+}
+ 
+.css-treeview label,
+.css-treeview label::before
+{
+    background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASAgMAAAAroGbEAAAACVBMVEUAAIj4+Pjp6ekKlAqjAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfYAR0BKhmnaJzPAAAAG0lEQVQI12NgAAOtVatWMTCohoaGUY+EmIkEAEruEzK2J7tvAAAAAElFTkSuQmCC\") no-repeat;
+}
+ 
+.css-treeview label,
+.css-treeview a,
+.css-treeview label::before
+{
+    display: inline-block;
+    height: 16px;
+    line-height: 16px;
+    /*vertical-align: middle;*/
+}
+ 
+.css-treeview label
+{
+    background-position: 18px 0;
+}
+ 
+.css-treeview label::before
+{
+    content: "";
+    width: 16px;
+    margin: 0 22px 0 0;
+    vertical-align: middle;
+    background-position: 0 -32px;
+	
+}
+ 
+.css-treeview input:checked + label::before
+{
+    background-position: 0 -16px;
+}
+ 
+/* webkit adjacent element selector bugfix */
+@media screen and (-webkit-min-device-pixel-ratio:0)
+{
+    .css-treeview 
+    {
+        -webkit-animation: webkit-adjacent-element-selector-bugfix infinite 1s;
+    }
+ 
+    @-webkit-keyframes webkit-adjacent-element-selector-bugfix 
+    {
+        from 
+        { 
+            padding: 0;
+        } 
+        to 
+        { 
+            padding: 0;
+        }
+    }
+}
+
+.css-treeview .leftside-sevicelinks{
+	font-family: 'Open Sans', sans-serif;
+	font-size:12px;
+	font-weight:normal;
+	color:000000;
+	text-align: left;
+	padding-left: 51px;
+	}
+	
+.css-treeview	.leftside-sevicelinks_heading{
+	font-family: "Open Sans",sans-serif;
+font-size: 12px;
+font-weight: bold;
+/* border-bottom: 1px solid #1396D3;
+border-top: 1px solid #1396D3; */
+background-color: #E6F5F8;
+width:154px;
+text-align: left;
+	}
+	
+.css-treeview	.leftside-sevicelinks_heading1{
+	font-family: 'Open Sans', sans-serif;
+	font-size:12px;
+	font-weight:bold;
+	color:000000;
+	}
+	
+.css-treeview	.leftside-sevicelinks_heading-sub {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  border-bottom: 1px solid #1396d3;
+ /* border-top: 1px solid #1396d3;*/
+  background-color: #e6f5f8;
+  color: #e6f5f8;
+  width: 245px;
+  padding-left: 0px;
+  margin: 0px 0px 0px -22px;
+}
+
+.css-treeview .leftside-sevicelinks_heading2 {
+    font-family: "Open Sans",sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #E6F5F8;
+    width: 138px;
+    text-align: left;
+    padding-left: 17px;
+}
+
+.css-treeview .leftside-sevicelinks_heading3 {
+    font-family: "Open Sans",sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    background-color: #E6F5F8;
+    width: auto;
+    text-align: left;
+    padding-left: 30px;
+}

@@ -1,0 +1,220 @@
+<?php
+
+namespace App\Http\Controllers\Master\Projects;
+
+use App\Http\Controllers\Controller;
+use App\Models\AssetMasterDocumentCategory;
+use App\Models\PMS\PrtContractorDetail;									   
+use App\Models\PMS\PrtContractorDocumentDetails;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+
+class ContractorDetailsController extends Controller
+{
+    public function index()
+    {
+        $contractors = DB::table('projects.prt_contractor_details as c')
+            ->leftJoin('projects.prm_contractor_categories as cat', 'c.category_cd', '=', 'cat.category_cd')
+            ->leftJoin('public.asset_master_lgd_district as d', 'c.district_cd', '=', 'd.dist_code')
+            ->leftJoin('public.asset_master_lgd_state as s', 'c.state_cd', '=', 's.state_code')
+            ->select('c.*', 'cat.category_descr', 'd.dist_name', 's.state_name')
+            ->orderBy('c.regn_no')
+            ->get();
+
+        $categories = DB::table('projects.prm_contractor_categories')->where('is_published', 'Y')->get();
+        $districts = DB::table('public.asset_master_lgd_district')->orderBy('dist_name')->get();
+        $states = DB::table('public.asset_master_lgd_state')->orderBy('state_name')->get();
+
+        return view('master.projects.contractorDetails', compact('contractors', 'categories', 'districts', 'states'));
+    }
+
+    public function store(Request $request)
+    {
+		//newly modified by pulak 13-05-26								  
+        $request->validate([
+            'regn_no' => [
+                'required',
+                'max:30',
+                Rule::unique('pgsql_pms.prt_contractor_details', 'regn_no')
+            ],
+            'contractors_name' => ['required','max:100',Rule::unique('pgsql_pms.prt_contractor_details', 'contractors_name')],
+            'bank_acc_no' => 'nullable|numeric|digits_between:9,16',
+            'confirm_bank_acc_no' => 'nullable|same:bank_acc_no',
+        ], [
+            'confirm_bank_acc_no.same' => 'The Account Number and Confirm Account Number must match.',
+            'regn_no.unique' => 'Registration Number already exists.',
+			'contactors_name.unique' => 'Contractor Name already exists.',
+        ]);
+
+        //Log::info($request->all());
+
+        DB::beginTransaction();
+
+        try {
+
+            $details = [
+                'regn_no' => $request->regn_no,
+                'contractors_name' => $request->contractors_name,
+                'category_cd' => $request->category_cd,
+                'address_line1' => $request->address_line1,
+                'address_line2' => $request->address_line2,
+                'district_cd' => $request->district_cd,
+                'state_cd' => $request->state_cd,
+                'phone_no' => $request->phone_no,
+                'email' => $request->email,
+                'pan_no' => $request->pan_no,
+                'bank_acc_no' => $request->bank_acc_no,
+                'ifsc_code' => $request->ifsc_code,
+                'is_published' => $request->has('is_published') ? 'Y' : 'N',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+			$status = PrtContractorDetail::create($details);
+
+           // Log::info($status);
+
+            $userid = Auth::id();
+            $randomNumber = mt_rand(100, 999);
+            $currentTime = time();
+
+            $randomCode = $userid . $currentTime . $randomNumber;
+            $reg_no = $request->regn_no;
+            // Handle document upload
+
+            if($status){
+            $this->handleDocument($request, $randomCode, $reg_no);
+            DB::commit();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Contractor details saved successfully!'
+            ]);
+            }else{
+                return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to save contractor details.',
+                'error' => 'Contractor details not saved.'
+            ], 500);
+            }
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error('Error storing contractor details: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to save contractor details.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+	     //newly modified by pulak 13-05-26									   
+    }
+
+    private function handleDocument($request, $randomCode, $reg_no)
+    {
+        $configPath = config('customconfigpath.PMS_DOCS_PATH');
+        $configImagePath = config('customconfigpath.PMS_ASSET_IMAGES_PATH');
+        $rootPath = config('filesystems.disks.external.root');
+
+        //Now reads base64 from hidden input instead of hasFile()
+        if ($request->filled('passportPhoto')) {
+            $base64String = $request->input('passportPhoto');
+
+            // Strip the data URI prefix: "data:image/jpeg;base64,XXXX"
+            $imageData = base64_decode(
+                preg_replace('#^data:image/\w+;base64,#i', '', $base64String)
+            );
+
+            $randomNumber = mt_rand(100, 999);
+
+            $extension = 'jpg'; // Always jpg since cropper exports as jpeg
+            $uniqueFileName = 'pms_' . $randomCode . '_' . $randomNumber . '.' . $extension;
+            $folderPath = $configImagePath . now()->year;
+
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
+            }
+
+            //Use put() with raw binary data instead of storeAs()
+            Storage::disk('external')->put($folderPath . '/' . $uniqueFileName, $imageData);
+            $completeFilePath = $rootPath . '/' . $folderPath . '/' . $uniqueFileName;
+
+            PrtContractorDocumentDetails::create([
+                'regn_no' => $reg_no,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
+        // Code for PAN Card
+        // Do not change hasFile() value
+        if ($request->hasFile('panCardDoc')) {
+            $file = $request->file('panCardDoc');
+
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = $randomCode . '_' . '_1.pdf';
+            $folderPath = $configPath . now()->year;
+
+            // Use the 'external' disk to store the file
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
+            }
+
+            // Store the file using the 'external' disk
+            $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+            // Combine the root path and folder path to get the complete file path
+            $completeFilePath = $rootPath . '/' . $filePath;
+
+            PrtContractorDocumentDetails::create([
+                'regn_no' => $reg_no,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'contractors_name' => 'required|max:100',
+            'bank_acc_no' => 'nullable|numeric|digits_between:9,30',
+        ]);
+
+        try {
+            DB::table('projects.prt_contractor_details')
+                ->where('regn_no', $id)
+                ->update([
+                    'contractors_name' => $request->contractors_name,
+                    'category_cd' => $request->category_cd,
+                    'address_line1' => $request->address_line1,
+                    'address_line2' => $request->address_line2,
+                    'district_cd' => $request->district_cd,
+                    'state_cd' => $request->state_cd,
+                    'phone_no' => $request->phone_no,
+                    'email' => $request->email,
+                    'pan_no' => $request->pan_no,
+                    'bank_acc_no' => $request->bank_acc_no,
+                    'ifsc_code' => $request->ifsc_code,
+                    'is_published' => $request->has('is_published') ? 'Y' : 'N',
+                    'updated_at' => now(),
+                ]);
+            return response()->json(['status' => 'success', 'message' => 'Contractor details updated!']);
+        } catch (\Exception $e) {
+            Log::error("Error updating contractor details: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Update failed. ' . $e->getMessage()]);
+        }
+    }
+}

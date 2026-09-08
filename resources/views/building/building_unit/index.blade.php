@@ -1,0 +1,194 @@
+@extends('layouts.app')
+
+@section('content')
+    <main class="command-center">
+        <div class="content-header">
+            <div class="container-fluid" style="position: relative;">
+                <div class="row text-sm">
+                    <div class="col-sm-12 col-md-10">
+                        <div class="command-breadcrumb">
+                            <i class="fas fa-house"></i>
+                            <span><a href="{{ route('home') }}" style="color: inherit; text-decoration: none;">Home</a></span>
+                            <span>/</span>
+                            <span><a href="{{ route('building.view.index') }}"
+                                    style="color: inherit; text-decoration: none;">Housing List</a></span>
+                            <span>/</span>
+                            <span><a href="{{ route('manage.housing.show', $buildingId) }}"
+                                    style="color: inherit; text-decoration: none;">Building Details</a></span>
+                            <span>/</span>
+                            <strong>Manage Building Units</strong>
+                        </div>
+                    </div>
+                </div>
+                <x-common.alert-module />
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content px-3">
+
+            {{-- Page Header --}}
+            <div class="command-heading mb-4">
+                <div>
+                    <h1>
+                        <i class="fa fa-cubes text-primary me-2"></i>
+                        Manage Building Units
+                    </h1>
+                    <p>
+                        Building: <strong>{{ $building->bld_qtr_name ?? $building->qtr_no }}</strong>
+                        (Code: <strong>{{ $building->building_system_cd }}</strong>)
+                    </p>
+                </div>
+                <div class="command-actions">
+                    <a href="{{ route('manage.housing.show', $buildingId) }}" class="btn btn-secondary btn-sm text-light">
+                        <i class="fa fa-arrow-left me-1"></i> Back to Details
+                    </a>
+                </div>
+            </div>
+
+            {{-- Form Panel --}}
+            <article class="command-panel mb-4">
+                <header>
+                    <div>
+                        <span>New Entry</span>
+                        <h2>Add Building Unit</h2>
+
+                        {{-- Section to show count regarding total no of units and current no of units  --}}
+                        <div class="d-flex justify-content-between gap-2">
+                            <span>Total No. of Units : {{ $building->total_no_of_units ?? 0 }}</span>
+                            <span>Current No. of Units : {{ $buildingUnits->count() ?? 0 }}</span>
+
+                            @if ($building->total_no_of_units == $buildingUnits->count())
+                                <span class="badge bg-success">All Units have been added.</span>
+                            @endif
+                        </div>
+                    </div>
+                </header>
+                <div class="p-3">
+                    @include('building.building_unit.partials._form', [
+                        'formAction' => route('building.unit.store', $buildingId),
+                        'isEdit' => false,
+                        'currentUnit' => null,
+                        'buildingUnitTypes' => $buildingUnitTypes,
+                        'varificationStatuses' => $varificationStatuses,
+                    ])
+                </div>
+            </article>
+
+            {{-- List Panel --}}
+            <article class="command-panel mb-4">
+                <header>
+                    <div>
+                        <span>Registry</span>
+                        <h2>List of Building Units</h2>
+                    </div>
+                </header>
+                <div class="p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover w-100" id="building_unit_table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Unit Type</th>
+                                    <th>Unit Name</th>
+                                    <th>Unit No</th>
+                                    <th>Floor No</th>
+                                    <th>Unit Area</th>
+                                    <th class="text-center">Water</th>
+                                    <th class="text-center">Electricity</th>
+                                    <th class="text-center">Sanitary</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($buildingUnits as $index => $unit)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $unit->unitType?->unit_type_name ?? $unit->unit_type_cd }}</td>
+                                        <td>{{ $unit->unit_name }}</td>
+                                        <td>{{ $unit->unit_no }}</td>
+                                        <td>{{ $unit->floor_no }}</td>
+                                        <td>{{ $unit->plinth_area }}</td>
+                                        <td class="text-center">
+                                            <span
+                                                class="badge {{ $unit->has_water_supply === 'Y' ? 'bg-success text-light' : 'bg-danger text-light' }}">
+                                                {{ $unit->has_water_supply === 'Y' ? 'Yes' : 'No' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span
+                                                class="badge {{ $unit->has_electricity === 'Y' ? 'bg-success text-light' : 'bg-danger text-light' }}">
+                                                {{ $unit->has_electricity === 'Y' ? 'Yes' : 'No' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span
+                                                class="badge {{ $unit->has_sanitary === 'Y' ? 'bg-success text-light' : 'bg-danger text-light' }}">
+                                                {{ $unit->has_sanitary === 'Y' ? 'Yes' : 'No' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <a href="{{ route('building.occupancy.index', [$buildingId, $unit->unit_id]) }}"
+                                                    class="btn btn-info btn-xs text-light" title="Occupancy">
+                                                    <i class="fa fa-users"></i>
+                                                </a>
+                                                <a href="{{ route('building.unit.edit', [$buildingId, $unit->unit_id]) }}"
+                                                    class="btn btn-warning btn-xs text-dark" title="Edit">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                                <form
+                                                    action="{{ route('building.unit.destroy', [$buildingId, $unit->unit_id]) }}"
+                                                    method="POST" class="d-inline"
+                                                    onsubmit="return confirm('Are you sure you want to delete this unit?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-xs text-light"
+                                                        title="Delete">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted">No building units found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+@endsection
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/wings/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/common/selectOptionStyleSheet.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/command-center.css') }}">
+    <style>
+        .command-center {
+            color: var(--oamis-ink);
+        }
+
+        .table th,
+        .table td {
+            font-size: 14px !important;
+        }
+
+        .badge {
+            font-size: 11px !important;
+            padding: 5px 9px !important;
+        }
+
+        .gap-1 {
+            gap: 0.25rem !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+@endpush

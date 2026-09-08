@@ -1,0 +1,86 @@
+.btn-xs {
+	padding: 3px 10px;
+	font-size: 12px;
+	line-height: 1.4;
+	border-radius: 4px;
+}
+
+.showModal,
+.showModalNewAsset,
+.showModalMaintenance,
+.ItemsModal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Modal Content */
+.showModalContent,
+.showModalNewAssetContent,
+.showModalContentMaintenanace,
+.ItemsModalContent {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 60%;
+}
+
+/* The Close Button */
+.closeShowModal,
+.closeShowModalNewAsset,
+.closeShowModalMaintenance,
+.closeItemsModal {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.closeShowModal:hover,
+.closeShowModal:focus,
+.closeShowModalNewAsset:hover,
+.closeShowModalNewAsset:focus,
+.closeShowModalMaintenance:hover,
+.closeShowModalMaintenance:focus,
+.closeItemsModal:hover,
+.closeItemsModal:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.myTooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.myTooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+/* Style for the tooltip text */
+.tooltiptext {
+    visibility: hidden;
+    background-color: #f9efef;
+    color: #ff0000;
+    border: 1px solid red;
+    font-size: 0.8rem;
+    text-align: center;
+    border-radius: 2px;
+    padding: 0 2px;
+    position: absolute;
+    z-index: 1;
+    top: -1.5rem;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}

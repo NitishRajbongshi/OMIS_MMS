@@ -1,0 +1,169 @@
+@extends('layouts.app')
+@section('content')
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row text-sm">
+            <div class="col-sm-12 col-md-10">
+                <ol class="breadcrumb float-sm-left">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('home') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">Completion Certificate</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            @endif
+            @if(session('failed'))
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-times-circle mr-2"></i> {{ session('failed') }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            @endif
+
+            <div class="card card-primary card-outline">
+                <div class="card-header bg-white">
+                    <h3 class="card-title text-primary"><i class="fas fa-hourglass-half mr-2"></i> Projects Pending Certificate Generation</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped custom-datatable" id="pendingTable">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th>Sl No.</th>
+                                    <th>Project ID</th>
+                                    <th>Project Name</th>
+                                    <th>Contractor Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Project Cost</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pendingProjects as $index => $project)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $project['id'] }}</td>
+                                    <td>{{ $project['name'] }}</td>
+                                    <td>{{ $project['contractor'] }}</td>
+                                    <td>{{ date('d-m-Y', strtotime($project['start_date'])) }}</td>
+                                    <td>{{ date('d-m-Y', strtotime($project['end_date'])) }}</td>
+                                    <td>{{ $project['cost'] }}</td>
+                                    <td><span class="badge badge-warning">{{ $project['status'] }}</span></td>
+                                    <td class="text-center">
+                                        <form action="{{ route('pms.certificates.generate', $project['id']) }}" method="POST" class="generate-form">
+                                            @csrf
+                                            <button type="button" class="btn btn-sm btn-success btn-generate">
+                                                <i class="fas fa-certificate mr-1"></i> Generate Certificate
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-success card-outline mt-4">
+                <div class="card-header bg-white">
+                    <h3 class="card-title text-success"><i class="fas fa-check-circle mr-2"></i> Generated Certificates</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped custom-datatable" id="generatedTable">
+                            <thead class="bg-success text-white">
+                                <tr>
+                                    <th>Sl No.</th>
+                                    <th>Project ID</th>
+                                    <th>Project Name</th>
+                                    <th>Certificate Number</th>
+                                    <th>Generation Date</th>
+                                    <th>Generated By</th>
+                                    <th>Downloads</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($generatedCertificates as $index => $cert)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $cert['id'] }}</td>
+                                    <td>{{ $cert['name'] }}</td>
+                                    <td><strong>{{ $cert['certificate_number'] }}</strong></td>
+                                    <td>{{ date('d-m-Y H:i', strtotime($cert['generation_date'])) }}</td>
+                                    <td>
+                                        <span class="badge badge-light text-secondary">
+                                            <i class="fas fa-user mr-1"></i> {{ $cert['generated_by'] ?? 'System Admin' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if(($cert['download_count'] ?? 0) > 0)
+                                        <span class="badge badge-info px-2 py-1">
+                                            <i class="fas fa-cloud-download-alt mr-1"></i> {{ $cert['download_count'] }} Times
+                                        </span>
+                                        @else
+                                        <span class="badge badge-secondary px-2 py-1">
+                                            <i class="fas fa-minus mr-1"></i> Not Yet
+                                        </span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ route('pms.certificates.view', $cert['id']) }}" target="_blank" class="btn btn-sm text-warning">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{{ route('pms.certificates.download', $cert['id']) }}" class="btn btn-sm btn-primary ml-1 download-trigger-btn">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    @endsection
+
+    @push('scripts')
+    <!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
+    <script>
+        $(document).ready(function() {
+            if ($.fn.DataTable) {
+                $('.custom-datatable').DataTable();
+            }
+
+            $('.btn-generate').on('click', function(e) {
+                e.preventDefault();
+                let form = $(this).closest('form');
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You are about to generate the completion certificate for this project.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, generate it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+    @endpush

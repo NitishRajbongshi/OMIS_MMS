@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>ERROR!</title>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="text-center text-sm">
+        <h1 class="text-6xl font-bold text-gray-800">ERROR</h1>
+        <p class="text-lg text-gray-600 mt-4">Oops! Something's wrong here</p>
+        <p class="text-md text-gray-600 mt-4">An unexpected error occurred! Please try again.</p>
+        <a href="/" class="mt-6 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Go Back Home
+        </a>
+    </div>
+</body>
+
+</html>

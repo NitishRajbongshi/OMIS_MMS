@@ -1,0 +1,263 @@
+@extends('layouts.app')
+@section('content')
+    <div class="content-header mb-1">
+        <div class="container-fluid">
+            <ol class="breadcrumb float-sm-left text-sm">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('home') }}">Home</a>
+                </li>
+                <li class="breadcrumb-item">Verified Project List</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container-fluid mainBody">
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF ALL PROJECT DETAILS APPROVED AND FINALIZED UNDER GOVT. OF NAGALAND
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <table class="table-responsive text-xs table table-bordered table-striped rounded-0 user_list"
+                id="project_details_table">
+                <thead class="theader text-white" style="background-color:#417DBE">
+                    <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                    <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Name</th>
+                    <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                    <th class="text-center" style="min-width: 6rem;">Owner Department</th>
+                    <th class="text-center" style="min-width: 6rem;">Division</th>
+                    <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Start Date</th>
+                    <th class="text-center" style="min-width: 8rem;">Project End Date</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Status</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Awarded To</th>
+                    <th class="text-center" style="min-width: 8rem;">Estimated Project Cost</th>
+                    <th class="text-center" style="min-width: 8rem;">Defect Liability Period (in Month)</th>
+                    <th class="text-center" style="min-width: 8rem;">Work Order Amount(Rs.)</th>
+					<th class="text-center" style="min-width: 8rem;">Work Order Number</th>
+                    <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
+                    <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
+                    <th class="text-center" style="min-width: 8rem;">Technology Name</th>
+                    <th class="text-center" style="min-width: 8rem;">Asset Details</th>
+					<th class="text-center" style="min-width: 8rem;">Funding Agency</th>																	
+                    <th class="text-center" style="min-width: 8rem;">Items of work</th>
+                </thead>
+                <tbody>
+                    @foreach ($projects as $index => $draft)
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $draft->project_cd }}</td>
+                            <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_start_date ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_end_date ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
+							<td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ json_decode($draft->others, true)['tech_type_descr'] ?? 'N/A' }}</td>																 
+                            <td class="text-center">
+								@if ($draft->project_type_cd == 'NEW')
+                                @if ($user->department == '14' || $user->department == '3')
+                                    <button
+                                        class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal" data-target="#showAssetForNewWorks{{ $draft->project_cd }}"
+                                        onclick="getNewWorksAssetDetails('{{ $draft->project_cd }}', 'approved')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                @elseif ($user->department == '6')
+                                    <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            data-toggle="modal" data-target="#showAssetForNewWorks{{ $draft->project_cd }}"
+                                            onclick="getNewWorksAssetDetailsHousing('{{ $draft->project_cd }}', 'approved')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                @endif
+                                @elseif ($draft->project_type_cd == 'UPG')
+									@if ($user->department == '14' || $user->department == '3')
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal"
+                                    data-target="#showModalNewAsset{{ $draft->project_cd }}"
+                                    onclick="showModalNewAssetDetail('{{ $draft->project_cd }}', 'approved')">
+                                    <i class="fas fa-eye text-xs"></i>
+                                    View
+                                </button>
+							@elseif ($user->department == '6')
+                                        <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            data-toggle="modal"
+                                            onclick="showModalNewAssetDetailBuilding('{{ $draft->project_cd }}', 'approved')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                    @endif
+								@elseif ($draft->project_type_cd == 'MTN')
+                                    @if ($user->department == '14' || $user->department == '3')
+                                <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                    data-toggle="modal"
+                                    data-target="#showModalMaintenance{{ $draft->project_cd }}"
+                                    onclick="showModalMaintenanceDetail('{{ $draft->project_cd }}', 'approved')">
+                                    <i class="fas fa-eye text-xs"></i>
+                                    View
+                                </button>
+							@elseif ($user->department == '6')
+                                        <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            onclick="showModalMaintenanceDetailBuilding('{{ $draft->project_cd }}','approved')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                    @endif										  
+								@endif
+                            </td>
+                            <td class="text-center">
+								<button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                    data-toggle="modal" data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
+                                    onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}','approved')">
+                                    <i class="fas fa-eye text-xs"></i>
+                                    View
+                                </button>
+                            </td>
+                            <td class="text-center">																						   
+                                @if (in_array($draft->project_cd, $workItems_exist))
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal"
+                                        data-target="#ItemsModal{{ $draft->project_cd }}"
+                                        onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                @else
+                                    <span class="text-danger text-bold">NA</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <x-success-modal />
+    <x-warning-modal />
+
+    {{-- Work Items Modal --}}
+    <div id="ItemsModal" class="ItemsModal">
+        <div class="ItemsModalContent modal-md">
+            <div class="modal-header m-1 p-0">
+                <p class="text-md text-bold text-rose-primary">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                    List of Items of Work under the selected project
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row justify-content-center align-item-center text-xs m-1 p-0" id="modalItemsContainer">
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal to show asset items for new works --}}
+    <div id="showAssetForNewWorks" class="showAssetForNewWorks">
+        <!-- Modal content -->
+        <div class="ItemsModalContent modal-md">
+            <div class="modal-header m-1 p-0">
+                <p class="text-md text-bold text-rose-primary">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                    New Assets Details for the New Works
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row justify-content-center align-item-center text-xs m-1 p-0" id="dataSectionForNewWorks">
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal to show Upgradation Assets --}}
+    <div id="showModalNewAsset" class="showModalNewAsset">
+        <div class="showModalNewAssetContent">
+            <span class="closeShowModalNewAsset">&times;</span>
+            <p class="text-md text-bold text-rose-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Existing & New Asset Details
+            </p>
+            <div id="modalValContainerNewAsset" class="row text-xs"></div>
+        </div>
+    </div>
+
+	<div id="showFundingAgencyDetails" class="showFundingAgencyDetails">
+        <!-- Modal content -->
+        <div class="ItemsModalContent modal-md">
+            <div class="modal-header m-1 p-0">
+                <p class="text-md text-bold text-rose-primary">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                    Funding Agency Details
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row justify-content-center align-item-center text-xs p-1"
+                id="dataSectionForAgencyDetails">
+            </div>
+        </div>
+    </div>
+	
+    {{-- Modal to show maintenance assets --}}
+	{{-- -start by Dipshikha --}}							 
+    <div id="showModalMaintenance" class="showModalMaintenance">
+        <div class="showModalContentMaintenanace">
+            <span class="closeShowModalMaintenance">&times;</span>
+            <p class="text-md text-bold text-rose-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Asset Details
+            </p>
+            <div class="row text-xs" id="modalValContainerMaintenance">
+            </div>
+        </div>
+    </div>
+@endsection
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/pms/common/modal/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modal/style.css') }}">
+	<style>
+        :root {
+            --primary: var(--oamis-primary, #0b6b4a);
+            --secondary: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+            --accent: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+        }
+
+        .text-rose-primary {
+            color: var(--primary) !important;
+        }
+
+        .badge-rose-primary {
+            background-color: var(--secondary);
+            color: var(--primary);
+            border: 1px solid color-mix(in srgb, var(--primary) 25%, white);
+            font-weight: 600;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+        }
+    </style>	   
+@endpush
+@push('scripts')
+    <script src="{{ asset('js/pms/showModalDetail/showWorkItems.js') }}"></script>
+    <script src="{{ asset('js/pms/showModalDetail/upgAssetItem.js') }}"></script>
+    <script src="{{ asset('js/pms/showModalDetail/MtnAssetItem.js') }}"></script>
+    <script src="{{ asset('js/pms/showModalDetail/newAssetItem.js') }}"></script>
+	<script src="{{ asset('js/pms/building/modal/upgradationAssetModal.js') }}"></script>
+    <script src="{{ asset('js/pms/building/modal/maintenanceAssetModal.js') }}"></script>																					 
+	<script src="{{ asset('js/pms/showModalDetail/fundingAgencyDetails.js') }}"></script>																					 
+    <script>
+        $(function() {
+            $("#project_details_table").DataTable();
+        });
+    </script>
+@endpush

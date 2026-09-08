@@ -1,0 +1,645 @@
+@extends('layouts.app')
+@push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+@endpush
+@section('content')
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row text-sm">
+                <div class="col-sm-6 col-md-10">
+                    <ol class="breadcrumb float-sm-left">
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item">Projects</li>
+                        <li class="breadcrumb-item active">Contractor Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid mainBody px-3 py-2">
+            <form id="add_contractor" method="POST" action="{{ route('contractorDetails.store') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="row">
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">Regn No. <span class="star">*</span></label>
+                        <input type="text" name="regn_no" class="form-control form-control-sm" maxlength="30" placeholder="Registration No" required>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <label class="text-xs">Contractor Name <span class="star">*</span></label>
+                        <input type="text" name="contractors_name" class="form-control form-control-sm" maxlength="100" placeholder="Enter Contractor Name" required>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">Category <span class="star">*</span></label>
+                        <select name="category_cd" class="form-control form-control-sm select2" required>
+                            <option value="">Select Category</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->category_cd }}">{{ $cat->category_descr }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6 col-sm-12">
+                        <label class="text-xs">Address Line 1</label>
+                        <input type="text" name="address_line1" class="form-control form-control-sm" maxlength="100" placeholder="Address Line 1">
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <label class="text-xs">Address Line 2</label>
+                        <input type="text" name="address_line2" class="form-control form-control-sm" maxlength="100" placeholder="Address Line 2">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">State</label>
+                        <select name="state_cd" class="form-control form-control-sm select2">
+                            <option value="">Select State</option>
+                            @foreach($states as $state)
+                                <option value="{{ $state->state_code }}">{{ $state->state_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">District</label>
+                        <select name="district_cd" class="form-control form-control-sm select2">
+                            <option value="">Select District</option>
+                            @foreach($districts as $dist)
+                                <option value="{{ $dist->dist_code }}">{{ $dist->dist_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">Phone No.</label>
+                        <input type="text" name="phone_no" class="form-control form-control-sm" maxlength="10" placeholder="10-digit Phone No">
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="text-xs">Email</label>
+                        <input type="email" name="email" class="form-control form-control-sm" maxlength="30" placeholder="Email Address">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-sm font-weight-bold text-primary mb-2 border-bottom pb-1">Bank Details</h6>
+                    </div>
+                    <div class="col-md-3 col-sm-12">
+                        <label class="text-xs">PAN No.</label>
+                        <input type="text" name="pan_no" class="form-control form-control-sm" maxlength="12" placeholder="PAN Number">
+                    </div>
+                    <div class="col-md-3 col-sm-12">
+                        <label class="text-xs">Bank Account No.</label>
+                        <input type="text" name="bank_acc_no" id="bank_acc_no" class="form-control form-control-sm numeric-only" maxlength="16" placeholder="Account Number">
+                    </div>
+                    <div class="col-md-3 col-sm-12">
+                        <label class="text-xs">Confirm Bank Account No.</label>
+                        <input type="text" name="confirm_bank_acc_no" id="confirm_bank_acc_no" class="form-control form-control-sm numeric-only" maxlength="16" placeholder="Confirm Account Number" onpaste="return false;">
+                    </div>
+                    <div class="col-md-3 col-sm-12">
+                        <label class="text-xs">IFSC Code</label>
+                        <input type="text" name="ifsc_code" class="form-control form-control-sm" maxlength="20" placeholder="IFSC Code">
+                    </div>
+                </div>
+
+                {{-- Document Upload Section --}}
+                    <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_document_container">
+                                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
+                                    <fieldset class="">
+                                        <legend class="w-auto px-2" style="font-size:13px ">
+                                            Upload Documents
+                                        </legend>
+                                        <div class="p-2">
+                                            <div>
+                                                <p class="text-sm text-info text-underline"><strong>
+                                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
+                                                    </strong></p>
+                                                <ul class="text-xs text-secondary">
+                                                    <li>
+                                                        <strong>
+                                                            Pdf file Size Limit:
+                                                        </strong>
+                                                        The maximum allowed file size is 2 MB.
+                                                    </li>
+                                                    <li>
+                                                        <strong>
+                                                            Photo file Size Limit:
+                                                        </strong>
+                                                        The maximum allowed file size is 1 MB.
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="row form-1-box my-1">
+                                                <div class="col-md-4">
+                                                    <label for="passportPhoto">1. Upload Passport Size Photo (jpg,jpeg):</label>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <input type="file" class="text-xs text-success" id="passportPhoto"
+                                                        name="_passportPhoto_raw" accept=".jpg,.jpeg">
+
+                                                    {{-- Hidden input that will carry the cropped image as base64 --}}
+                                                    <input type="hidden" name="passportPhoto" id="passportPhotoCropped">
+
+                                                    {{-- Preview of final cropped image --}}
+                                                    <div id="passportPreviewContainer" style="margin-top:10px; display:none;">
+                                                        <p class="text-xs text-muted mb-1">Final Preview:</p>
+                                                        <img id="passportPreview"
+                                                            style="width:120px; height:150px; object-fit:cover; border:2px solid #28a745; border-radius:5px;">
+                                                    </div>
+
+                                                    <button type="button" id="removeBtn_passportPhoto"
+                                                        class="outline-0 border border-danger text-danger text-xs rounded-0 mt-1"
+                                                        style="background:rgb(252, 217, 217); display:none;"
+                                                        onclick="removePhoto('passportPhoto')">
+                                                        <i class="fa fa-trash mr-1 text-xs"></i> Remove
+                                                    </button>
+
+                                                    @error('passportPhoto')
+                                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            {{-- Crop Modal --}}
+                                            <div class="modal fade" id="cropModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                                                <div class="modal-dialog modal-md">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header py-2">
+                                                            <h6 class="modal-title text-sm"><i class="fa fa-crop mr-1"></i>Adjust Passport Photo</h6>
+                                                        </div>
+                                                        <div class="modal-body text-center" style="background:#f5f5f5;">
+                                                            <div style="max-height: 400px; overflow:hidden;">
+                                                                <img id="cropperImage" src="" style="max-width:100%; display:block;">
+                                                            </div>
+                                                            <div class="mt-2 d-flex justify-content-center flex-wrap gap-1">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.rotate(-90)" title="Rotate Left">
+                                                                    <i class="fa fa-undo"></i> Rotate Left
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.rotate(90)" title="Rotate Right">
+                                                                    <i class="fa fa-redo"></i> Rotate Right
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.scaleX(cropperInstance.getData().scaleX === -1 ? 1 : -1)" title="Flip Horizontal">
+                                                                    <i class="fa fa-arrows-alt-h"></i> Flip H
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.scaleY(cropperInstance.getData().scaleY === -1 ? 1 : -1)" title="Flip Vertical">
+                                                                    <i class="fa fa-arrows-alt-v"></i> Flip V
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.reset()" title="Reset">
+                                                                    <i class="fa fa-sync"></i> Reset
+                                                                </button>
+                                                            </div>
+                                                            <p class="text-xs text-muted mt-2">Drag to reposition · Scroll to zoom · Use buttons to rotate/flip</p>
+                                                        </div>
+                                                        <div class="modal-footer py-2">
+                                                            <button type="button" class="btn btn-success btn-sm" id="cropConfirmBtn">
+                                                                <i class="fa fa-check mr-1"></i> Confirm & Use Photo
+                                                            </button>
+                                                            <button type="button" class="btn btn-secondary btn-sm" id="cropCancelBtn">
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row form-1-box my-1">
+                                                <div class="col-md-4">
+                                                    <label for="panCardDoc">2. Upload PAN Card (PDF):</label>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <input type="file" name="panCardDoc" id="panCardDoc"
+                                                        class="text-xs text-success" accept=".pdf">
+                                                    <button type="button" id="removeBtn_panCardDoc"
+                                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                                        style="background:rgb(252, 217, 217); display:none;"
+                                                        onclick="removeFile('panCardDoc')">
+                                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                                        Remove
+                                                    </button>
+                                                    @error('panCardDoc')
+                                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <div class="row form-1-box my-1">
+                                                <div class="col-md-4">
+                                                    <label for="passbookDoc">3. Upload Passbook (PDF):</label>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <input type="file" name="passbookDoc" id="passbookDoc"
+                                                        class="text-xs text-success" accept=".pdf">
+                                                    <button type="button" id="removeBtn_passbookDoc"
+                                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                                        style="background:rgb(252, 217, 217); display:none;"
+                                                        onclick="removeFile('passbookDoc')">
+                                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                                        Remove
+                                                    </button>
+                                                    @error('passbookDoc')
+                                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                <div class="row mt-3 align-items-center">
+                    <div class="col-md-2">
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="is_published" name="is_published" value="Y" checked>
+                            <label for="is_published" class="custom-control-label text-xs">Publish?</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 offset-md-8">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-1 fw-bold w-100">
+                            <i class="fa fa-plus"></i> Add Contractor
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-4 text-sm">
+            <div class='card rounded-0'>
+                <div class="card-header rounded-0" style="background-color:rgb(214, 232, 253)">
+                    <h4 class="card-title text-sm text-bold text-uppercase">Contractor List</h4>
+                </div>
+                <div class='card-body rounded-0'>
+                    <table class="table table-bordered table-striped w-100" id="contractorTable">
+                        <thead style="background-color:#e7effc;">
+                            <tr>
+                                <th>SI No.</th>
+                                <th>Regn No.</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>District</th>
+                                <th>Phone</th>
+                                <th class="text-center">Published</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($contractors as $index => $con)
+                                <tr class="text-xs">
+                                    <td>{{ $index+1 }}</td>
+                                    <td>{{ $con->regn_no }}</td>
+                                    <td>{{ $con->contractors_name }}</td>
+                                    <td>{{ $con->category_descr }}</td>
+                                    <td>{{ $con->dist_name }}</td>
+                                    <td>{{ $con->phone_no }}</td>
+                                    <td class="text-center">
+                                        @if($con->is_published == 'Y')
+                                            <span class="badge badge-success">Yes</span>
+                                        @else
+                                            <span class="badge badge-secondary">No</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <a data-toggle="modal" data-target="#editModal{{ str_replace('/', '_', $con->regn_no) }}" class="btn btn-sm text-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="editModal{{ str_replace('/', '_', $con->regn_no) }}" tabindex="-1" data-backdrop="static">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <form class="update-form" method="PUT" action="{{ route('contractorDetails.update', $con->regn_no) }}">
+                                                @csrf
+                                                <div class="modal-header">
+                                                    <h6 class="modal-title">Edit Contractor: {{ $con->regn_no }}</h6>
+                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Contractor Name</label>
+                                                                <input type="text" name="contractors_name" class="form-control form-control-sm" value="{{ $con->contractors_name }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Category</label>
+                                                                <select name="category_cd" class="form-control form-control-sm select2" required>
+                                                                    @foreach($categories as $cat)
+                                                                        <option value="{{ $cat->category_cd }}" {{ $con->category_cd == $cat->category_cd ? 'selected' : '' }}>{{ $cat->category_descr }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Address 1</label>
+                                                                <input type="text" name="address_line1" class="form-control form-control-sm" value="{{ $con->address_line1 }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Address 2</label>
+                                                                <input type="text" name="address_line2" class="form-control form-control-sm" value="{{ $con->address_line2 }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">State</label>
+                                                                <select name="state_cd" class="form-control form-control-sm select2">
+                                                                    <option value="">Select State</option>
+                                                                    @foreach($states as $state)
+                                                                        <option value="{{ $state->state_code }}" {{ $con->state_cd == $state->state_code ? 'selected' : '' }}>{{ $state->state_name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">District</label>
+                                                                <select name="district_cd" class="form-control form-control-sm select2">
+                                                                    <option value="">Select District</option>
+                                                                    @foreach($districts as $dist)
+                                                                        <option value="{{ $dist->dist_code }}" {{ $con->district_cd == $dist->dist_code ? 'selected' : '' }}>{{ $dist->dist_name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Phone</label>
+                                                                <input type="text" name="phone_no" class="form-control form-control-sm" value="{{ $con->phone_no }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Email</label>
+                                                                <input type="email" name="email" class="form-control form-control-sm" value="{{ $con->email }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-2">
+                                                        <div class="col-12">
+                                                            <h6 class="text-xs font-weight-bold text-primary border-bottom pb-1">Bank Details</h6>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">PAN No.</label>
+                                                                <input type="text" name="pan_no" class="form-control form-control-sm" value="{{ $con->pan_no }}" maxlength="12">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">Bank A/C No.</label>
+                                                                <input type="text" name="bank_acc_no" class="form-control form-control-sm numeric-only" value="{{ $con->bank_acc_no }}" maxlength="16">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="text-xs">IFSC Code</label>
+                                                                <input type="text" name="ifsc_code" class="form-control form-control-sm" value="{{ $con->ifsc_code }}" maxlength="20">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <div class="custom-control custom-checkbox">
+                                                            <input class="custom-control-input" type="checkbox" id="edit_pub_{{ str_replace('/', '_', $con->regn_no) }}" name="is_published" value="Y" {{ $con->is_published == 'Y' ? 'checked' : '' }}>
+                                                            <label for="edit_pub_{{ str_replace('/', '_', $con->regn_no) }}" class="custom-control-label text-xs">Is Published</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="{{ asset('js/road/assets/removeSelectedFile/script.js') }}" defer></script>
+    <script>
+    $(document).ready(function() {
+        $('#contractorTable').DataTable();
+        $('.select2').select2({
+            width: '100%'
+        });
+
+        $('#add_contractor').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Client-side Validation
+            let regnNo = $('input[name="regn_no"]').val().trim();
+            let name = $('input[name="contractors_name"]').val().trim();
+            let category = $('select[name="category_cd"]').val();
+            let accNo = $('#bank_acc_no').val().trim();
+            let confirmAccNo = $('#confirm_bank_acc_no').val().trim();
+
+            if (!regnNo || !name || !category) {
+                Swal.fire({ icon: 'warning', title: 'Required Fields', text: 'Please fill all mandatory fields (*).' });
+                return;
+            }
+
+            if (accNo) {
+                if (accNo.length < 9 || accNo.length > 16) {
+                    Swal.fire({ icon: 'warning', title: 'Invalid Account No.', text: 'Account number must be between 9 and 16 digits.' });
+                    return;
+                }
+                if (accNo !== confirmAccNo) {
+                    Swal.fire({ icon: 'warning', title: 'Mismatch', text: 'Account Number and Confirm Account Number do not match!' });
+                    return;
+                }
+            }
+            handleAjax($(this), $(this).attr('action'), $(this).attr('method'));
+        });
+
+        $(document).on('submit', '.update-form', function(e) {
+            e.preventDefault();
+            handleAjax($(this), $(this).attr('action'), $(this).attr('method'));
+        });
+
+        $(document).on('input', '.numeric-only', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        function handleAjax(form, url, method) {
+            let formData = new FormData(form[0]);
+            $.ajax({
+                type: method,
+                url: url,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    Swal.fire({ 
+                        icon: res.status, 
+                        title: res.status.toUpperCase(), 
+                        text: res.message, 
+                        timer: 2000 
+                    }).then(() => { if(res.status === 'success') location.reload(); });
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        let errorMsg = '';
+                        $.each(errors, function(key, value) {
+                            errorMsg += value[0] + '<br>';
+                        });
+                        Swal.fire({ icon: 'error', title: 'Validation Error', html: errorMsg });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ERROR', text: 'Something went wrong!' });
+                    }
+                }
+            });
+        }
+    });
+
+    function validateFile(inputId, allowedExts, maxSizeMB = 2) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const ext = file.name.split(".").pop().toLowerCase();
+            const maxSize = maxSizeMB * 1024 * 1024;
+
+            if (!allowedExts.includes(ext)) {
+                alert(`Invalid file type. Allowed: ${allowedExts.join(", ")}`);
+                this.value = "";
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert(`File size exceeds ${maxSizeMB} MB limit.`);
+                this.value = "";
+                return;
+            }
+
+            if (typeof showRemoveBtn === "function") showRemoveBtn(inputId);
+        });
+    }
+    validateFile("panCardDoc", ["pdf"]);
+    validateFile("passbookDoc", ["pdf"]);
+
+let cropperInstance = null;
+
+function removePhoto(inputId) {
+    const fileInput = document.getElementById('passportPhoto');
+    if (fileInput) fileInput.value = "";
+
+    document.getElementById('passportPhotoCropped').value = "";
+    document.getElementById('passportPreviewContainer').style.display = 'none';
+    document.getElementById('passportPreview').src = '';
+    document.getElementById('removeBtn_passportPhoto').style.display = 'none';
+
+    // Destroy cropper if open
+    if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+    }
+}
+
+    document.getElementById('passportPhoto').addEventListener('change', function () {
+        const file = this.files[0];
+        const allowedTypes = ["image/jpeg", "image/jpg"];
+        const maxSize = 1024 * 1024;
+
+        if (!file) return;
+
+        if (!allowedTypes.includes(file.type)) {
+            alert("Only JPG/JPEG files are allowed.");
+            this.value = "";
+            return;
+        }
+
+        if (file.size > maxSize) {
+            alert("File size must be less than 1MB.");
+            this.value = "";
+            return;
+        }
+
+        // Load image into cropper modal
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const cropperImg = document.getElementById('cropperImage');
+            cropperImg.src = e.target.result;
+
+            // Destroy previous instance if any
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+
+            $('#cropModal').modal('show');
+
+            // Init Cropper after modal is shown
+            $('#cropModal').one('shown.bs.modal', function () {
+                cropperInstance = new Cropper(cropperImg, {
+                    aspectRatio: 3 / 4,         // Passport photo ratio
+                    viewMode: 2,
+                    dragMode: 'move',
+                    autoCropArea: 0.9,
+                    responsive: true,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // On Confirm — export cropped canvas as base64
+    document.getElementById('cropConfirmBtn').addEventListener('click', function () {
+        if (!cropperInstance) return;
+
+        const canvas = cropperInstance.getCroppedCanvas({
+            width: 300,
+            height: 400,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+            fillColor: '#fff',
+        });
+
+        const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Set cropped image into hidden input & preview
+        document.getElementById('passportPhotoCropped').value = base64;
+        document.getElementById('passportPreview').src = base64;
+        document.getElementById('passportPreviewContainer').style.display = 'block';
+        document.getElementById('removeBtn_passportPhoto').style.display = 'inline-block';
+
+        cropperInstance.destroy();
+        cropperInstance = null;
+        $('#cropModal').modal('hide');
+    });
+
+    // On Cancel — clear the file input
+    document.getElementById('cropCancelBtn').addEventListener('click', function () {
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+        }
+        document.getElementById('_passportPhoto_raw').value = "";
+        $('#cropModal').modal('hide');
+    });
+
+    </script>
+@endpush

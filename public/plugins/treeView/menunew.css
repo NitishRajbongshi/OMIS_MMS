@@ -1,0 +1,196 @@
+/* @import "font-awesome.css"; */
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+* {
+    margin: 0;
+    padding: 0;
+}
+/* top level elements */
+#nav, #nav ul {
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+	
+}
+#nav {
+   /* background-color: rgb(78,105,162);
+    background: -moz-linear-gradient(top, rgba(78,105,162,1) 0%, rgba(59,88,152,1) 100%);
+    background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(78,105,162,1)), color-stop(100%, rgba(59,88,152,1)));
+    background: -webkit-linear-gradient(top, rgba(78,105,162,1) 0%, rgba(59,88,152,1) 100%);
+    background: -o-linear-gradient(top, rgba(78,105,162,1) 0%, rgba(59,88,152,1) 100%);
+    background: -ms-linear-gradient(top, rgba(78,105,162,1) 0%, rgba(59,88,152,1) 100%);
+    background: linear-gradient(to bottom, rgba(78,105,162,1) 0%, rgba(59,88,152,1) 100%);
+
+    border-bottom: 1px solid #3A4B7B;*/
+   /*width: 100%;*/
+   width: 84.56%;
+	margin: 0;
+	padding: 0;
+	position: relative;
+	/*float: left;*/
+	font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+	list-style: none;
+	/* background: #1396d3; */
+	font-weight:400;
+	
+}
+#nav > li {
+    display: inline-block;
+	font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+	margin: 0;
+	padding: 0;
+	float: left;
+	line-height: 20px;
+	position: relative;
+	font-weight:400;
+	
+}
+#nav > li > a {
+   padding: 13px 11px;
+	color: #FFF;
+	text-decoration: none;
+	display: block;
+	/*text-transform: capitalize;*/
+	-webkit-transition: color 0.2s linear, background 0.2s linear;
+	-moz-transition: color 0.2s linear, background 0.2s linear;
+	-o-transition: color 0.2s linear, background 0.2s linear;
+	transition: color 0.2s linear, background 0.2s linear;
+}
+#nav > li:hover > a, #nav > a:hover {
+   background: #f5f5f5/*ff670f*/;
+	color: #262626!important;;
+}
+#nav > li.subs:hover > a {
+   background: #f5f5f5/*ff670f*/;
+	color: #262626!important;;
+}
+
+/* top items separator */
+#nav > li:after {
+    display: inline-block !important;
+	width: 100%;
+	padding: 18px 20px 16px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+#nav > li:first-child:after {
+    background-color: transparent;
+}
+
+/* submenu */
+#nav ul {
+   list-style: none;
+	margin: 0;
+	padding: 0;
+	display: none;
+	position: absolute;
+	z-index: 99999;
+	width: auto;
+	background: #f5f5f5;
+	box-shadow: 0 1px 1px rgba(0,0,0,0.3);
+	
+	
+	
+}
+#nav li:hover ul {
+    display: block;
+}
+#nav ul li a {
+    border-bottom: 1px solid transparent;
+    border-top: 1px solid transparent;
+    color: #232B37;
+    display: block;
+    font-family: 'Open Sans', sans-serif;
+	font-style: normal;
+	font-weight: 400;
+	font-size: 15px;
+    line-height: 20px;
+    padding: 10px 10px 10px 10px ;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+	
+}
+#nav ul li a:hover {
+    background-color: #FFF;
+   /* border-bottom: 1px solid #3B5998;
+    border-top: 1px solid #3B5998;*/
+	line-height:20px;
+    color: #262626;
+}
+
+/* other elements */
+#nav span {
+    display: none;
+}
+
+/* responsive rules */
+@media all and (max-width : 980px) {
+
+    /* top level elements */
+    #nav  {
+        height: auto;
+        margin: 0;
+        overflow: hidden;
+        padding: 0;
+        width: 100%;
+    }
+    #nav li {
+        display: inline;
+        float: left;
+        height: auto;
+        line-height: 40px;
+        margin: 0;
+        padding: 0;
+        position: relative;
+        width: 100%;
+    }
+    #nav > li:after {
+        display: none;
+    }
+    #nav > li > a {
+        /*border-bottom: 1px solid #3B5998;*/
+        height: 40px;
+        line-height: 40px;
+        margin: 0;
+    }
+    #nav > li:hover > a, #nav > a:hover {
+        margin: 0;
+        /*border-width: 1px;*/
+    }
+    #nav > li.subs:hover > a {
+        border-radius: 0;
+        border-width: 0px;
+    }
+
+    /* submenu */
+    #nav ul {
+        border: 0;
+        left: 0;
+        margin: 0;
+        overflow: hidden;
+        padding: 0;
+        position: relative;
+        top: 0;
+    }
+    #nav li:hover ul {
+        display: none;
+    }
+    #nav ul li a {
+        height: 40px;
+        line-height: 40px;
+    }
+    #nav #Manuals:target + li > a,
+    #nav #s2:target + li > a{
+        background-color: #FFFFFF;
+        border: 0;
+        color: #000000;
+        text-shadow: 0 0 transparent;
+    }
+    #nav #Manuals:target + li ul,
+    #nav #s2:target + li ul {
+        display: block;
+    }
+}

@@ -1,0 +1,52 @@
+label {
+    font-size: 12px;
+}
+
+legend {
+    text-transform: uppercase;
+    color: black;
+    padding: 2px 2px 2px 2px;
+    border: 2px solid #5677e7;
+}
+
+.star {
+    color: red;
+}
+
+#humePipeCulvert,
+#humePipeCulvertEdit,
+#slabCulvert,
+#slabCulvertEdit,
+#boxArcCulvert,
+#boxArcCulvertEdit,
+#ventedCauseway,
+#ventedCausewayEdit {
+    display: none;
+}
+
+.myTooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.myTooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+/* Style for the tooltip text */
+.tooltiptext {
+    visibility: hidden;
+    background-color: #f9efef;
+    color: #ff0000;
+    border: 1px solid red;
+    font-size: 0.8rem;
+    text-align: center;
+    border-radius: 2px;
+    padding: 0 2px;
+    position: absolute;
+    z-index: 1;
+    top: -1rem;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}

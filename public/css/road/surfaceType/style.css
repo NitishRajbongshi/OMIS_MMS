@@ -1,0 +1,14 @@
+label {
+    font-size: 12px;
+}
+
+legend {
+    text-transform: uppercase;
+    color: black;
+    padding: 2px 2px 2px 2px;
+    border: 2px solid #5677e7;
+}
+
+.star {
+    color: red;
+}

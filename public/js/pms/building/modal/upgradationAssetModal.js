@@ -1,0 +1,84 @@
+async function showModalNewAssetDetailBuilding(projectId, table = "draft") {
+    const showModalNewAsset = document.getElementById("showModalNewAsset");
+    const container = $("#modalValContainerNewAsset");
+
+    container.empty();
+
+    try {
+        const response = await $.ajax({
+            type: "GET",
+            url:
+                "/project-management/get-upgradation-detail/" +
+                encodeURIComponent(projectId),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: {
+                table: table,
+            },
+        });
+
+        if (response.status === "success") {
+            let data = response.data;
+
+            const label =
+                data.building_class_cd == 0 ? "Quarter No" : "Building Name";
+            const value =
+                data.building_class_cd == 0
+                    ? data.quarter_no
+                    : data.building_name;
+
+            container.append(`
+
+                <div class="col-12 mb-2">
+                    <b>Building Category:</b> ${data.building_class_descr ?? "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>${label}:</b> ${value || "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Is Maintained by NPWD?</b><br>
+                    <input type="radio" name="npwd" ${data.is_maintained_by_npwd === "Y" ? "checked" : ""} onclick="return false"> Yes
+                    <input type="radio" name="npwd" ${data.is_maintained_by_npwd === "N" ? "checked" : ""} onclick="return false"> No
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Latitude:</b> ${data.lat ?? "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Longitude:</b> ${data.lon ?? "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Location:</b> ${data.location_name ?? "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Building Type:</b> ${data.building_type_descr ?? "NA"}
+                </div>
+
+                <div class="col-12 mb-2">
+                    <b>Owning Department:</b> ${data.dept_name ?? "NA"}
+                </div>
+
+            `);
+
+            showModalNewAsset.style.display = "block";
+        }
+    } catch (error) {
+        console.error("Error fetching upgradation/building details:", error);
+    }
+
+    $(".closeShowModalNewAsset").click(() => {
+        showModalNewAsset.style.display = "none";
+    });
+}
+
+async function fetchJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+    return response.json();
+}

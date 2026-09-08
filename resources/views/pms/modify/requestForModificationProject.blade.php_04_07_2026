@@ -1,0 +1,494 @@
+@extends('layouts.app')
+@section('content')
+    <div class="content-header mb-1">
+        <div class="container-fluid">
+            <ol class="breadcrumb float-sm-left text-sm">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('home') }}">Home</a>
+                </li>
+                <li class="breadcrumb-item">Verified Project List</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container-fluid mainBody">
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF NEW APPROVED PROJECTS
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <table class="table-responsive text-xs table table-bordered table-striped rounded-0 user_list"
+                id="new_project_details_table">
+                <thead class="theader text-white" style="background-color:#417DBE">
+                    <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                    <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Name</th>
+                    <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                    <th class="text-center" style="min-width: 6rem;">Owner Department</th>
+                    <th class="text-center" style="min-width: 6rem;">Division</th>
+                    <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                    <th class="text-center" style="min-width: 8rem;">Items of work</th>
+                    <th class="text-center" style="min-width: 8rem;">Check Status</th>
+                    <th class="text-center" style="min-width: 8rem;">Action</th>
+                </thead>
+                <tbody>
+                    @foreach ($projectDetailsNew as $index => $draft)
+                        @php
+                            $other = json_decode($draft->others ?? '{}', true);
+                            $status = $draft->latest_mod_status;
+                            $disableReason = '';
+                            $canEdit = true;
+
+                            if (is_null($status)) {
+                                $statusText = 'No Request';
+                                $statusClass = 'secondary';
+                                $canEdit = true;
+                            } elseif ($status == 0) {
+                                $statusText = 'Pending';
+                                $statusClass = 'warning';
+                                $canEdit = false;
+                                $disableReason = 'Modification request is pending approval';
+                            } elseif ($status == 1) {
+                                $statusText = 'Approved - In Progress';
+                                $statusClass = 'primary';
+                                $canEdit = false;
+                                $disableReason = 'Modification request has been approved and work is in progress';
+                            } elseif ($status == 2) {
+                                $statusText = 'Completed';
+                                $statusClass = 'success';
+                                $canEdit = true;
+                            } elseif ($status == 4) {
+                                $statusText = 'Rejected';
+                                $statusClass = 'danger';
+                                $canEdit = true;
+                            }
+                        @endphp
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $draft->project_cd }}</td>
+                            <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                            <td class="text-center">
+                                @if (in_array($draft->project_cd, $workItems_exist))
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold"
+                                        style="padding: 0.15rem 0.5rem;" data-toggle="modal"
+                                        data-target="#ItemsModal{{ $draft->project_cd }}"
+                                        onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                @else
+                                    <span class="text-danger text-bold">NA</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a
+                                    href="{{ route('project.modification.history', $draft->project_cd) }}"
+                                    class="btn btn-outline-info btn-xs text-xs fw-bold"
+                                    title="View modification status">
+                                    <i class="fas fa-eye me-1"></i>
+                                    View Status
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <div style="margin-bottom: 0.1rem;">
+
+                                    @if(!$canEdit)
+                                        <span
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="{{ $disableReason }}"
+                                            style="display:inline-block;">
+
+                                            <button
+                                                class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                                disabled
+                                                style="width: 6rem;">
+                                                Request for modification
+                                            </button>
+                                        </span>
+                                    @else
+                                        <button
+                                            class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                            style="width: 6rem;"
+                                            data-id="{{ $draft->project_cd }}"
+                                            data-project='@json($draft)'
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#requestModificationModal">
+                                            Request for modification
+                                        </button>
+                                    @endif
+
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF UPGRADATION APPROVED PROJECTS
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <table class="table-responsive text-xs table table-bordered table-striped rounded-0 user_list"
+                id="upg_project_details_table">
+                <thead class="theader text-white" style="background-color:#417DBE">
+                    <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                    <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Name</th>
+                    <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                    <th class="text-center" style="min-width: 6rem;">Owner Department</th>
+                    <th class="text-center" style="min-width: 6rem;">Division</th>
+                    <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                    <th class="text-center" style="min-width: 8rem;">Items of work</th>
+                    <th class="text-center" style="min-width: 8rem;">Check Status</th>
+                    <th class="text-center" style="min-width: 8rem;">Action</th>
+                </thead>
+                <tbody>
+                    @foreach ($projectDetailsUpgrade as $index => $draft)
+                        @php
+                            $other = json_decode($draft->others ?? '{}', true);
+                            $status = $draft->latest_mod_status;
+                            $disableReason = '';
+                            $canEdit = true;
+
+                            if (is_null($status)) {
+                                $statusText = 'No Request';
+                                $statusClass = 'secondary';
+                                $canEdit = true;
+                            } elseif ($status == 0) {
+                                $statusText = 'Pending';
+                                $statusClass = 'warning';
+                                $canEdit = false;
+                                $disableReason = 'Modification request is pending approval';
+                            } elseif ($status == 1) {
+                                $statusText = 'Approved - In Progress';
+                                $statusClass = 'primary';
+                                $canEdit = false;
+                                $disableReason = 'Modification request has been approved and work is in progress';
+                            } elseif ($status == 2) {
+                                $statusText = 'Completed';
+                                $statusClass = 'success';
+                                $canEdit = true;
+                            } elseif ($status == 4) {
+                                $statusText = 'Rejected';
+                                $statusClass = 'danger';
+                                $canEdit = true;
+                            }
+                        @endphp
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $draft->project_cd }}</td>
+                            <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                            <td class="text-center">
+                                @if (in_array($draft->project_cd, $workItems_exist))
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold"
+                                        style="padding: 0.15rem 0.5rem;" data-toggle="modal"
+                                        data-target="#ItemsModal{{ $draft->project_cd }}"
+                                        onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                @else
+                                    <span class="text-danger text-bold">NA</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a
+                                    href="{{ route('project.modification.history', $draft->project_cd) }}"
+                                    class="btn btn-outline-info btn-xs text-xs fw-bold"
+                                    title="View modification status">
+                                    <i class="fas fa-eye me-1"></i>
+                                    View Status
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <div style="margin-bottom: 0.1rem;">
+
+                                    @if(!$canEdit)
+                                        <span
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="{{ $disableReason }}"
+                                            style="display:inline-block;">
+
+                                            <button
+                                                class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                                disabled
+                                                style="width: 6rem;">
+                                                Request for modification
+                                            </button>
+                                        </span>
+                                    @else
+                                        <button
+                                            class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                            style="width: 6rem;"
+                                            data-id="{{ $draft->project_cd }}"
+                                            data-project='@json($draft)'
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#requestModificationModal">
+                                            Request for modification
+                                        </button>
+                                    @endif
+
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF MAINTENANCE APPROVED PROJECTS
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <table class="table-responsive text-xs table table-bordered table-striped rounded-0 user_list"
+                id="mtn_project_details_table">
+                <thead class="theader text-white" style="background-color:#417DBE">
+                    <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                    <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                    <th class="text-center" style="min-width: 8rem;">Project Name</th>
+                    <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                    <th class="text-center" style="min-width: 6rem;">Owner Department</th>
+                    <th class="text-center" style="min-width: 6rem;">Division</th>
+                    <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                    <th class="text-center" style="min-width: 8rem;">Items of work</th>
+                    <th class="text-center" style="min-width: 8rem;">Check Status</th>
+                    <th class="text-center" style="min-width: 8rem;">Action</th>
+                </thead>
+                <tbody>
+                    @foreach ($projectDetailsMaintenance as $index => $draft)
+                        @php
+                            $other = json_decode($draft->others ?? '{}', true);
+                            $status = $draft->latest_mod_status;
+                            $disableReason = '';
+                            $canEdit = true;
+
+                            if (is_null($status)) {
+                                $statusText = 'No Request';
+                                $statusClass = 'secondary';
+                                $canEdit = true;
+                            } elseif ($status == 0) {
+                                $statusText = 'Pending';
+                                $statusClass = 'warning';
+                                $canEdit = false;
+                                $disableReason = 'Modification request is pending approval';
+                            } elseif ($status == 1) {
+                                $statusText = 'Approved - In Progress';
+                                $statusClass = 'primary';
+                                $canEdit = false;
+                                $disableReason = 'Modification request has been approved and work is in progress';
+                            } elseif ($status == 2) {
+                                $statusText = 'Completed';
+                                $statusClass = 'success';
+                                $canEdit = true;
+                            } elseif ($status == 4) {
+                                $statusText = 'Rejected';
+                                $statusClass = 'danger';
+                                $canEdit = true;
+                            }
+                        @endphp
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $draft->project_cd }}</td>
+                            <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                            <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                            <td class="text-center">
+                                @if (in_array($draft->project_cd, $workItems_exist))
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold"
+                                        style="padding: 0.15rem 0.5rem;" data-toggle="modal"
+                                        data-target="#ItemsModal{{ $draft->project_cd }}"
+                                        onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                @else
+                                    <span class="text-danger text-bold">NA</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a
+                                    href="{{ route('project.modification.history', $draft->project_cd) }}"
+                                    class="btn btn-outline-info btn-xs text-xs fw-bold"
+                                    title="View modification status">
+                                    <i class="fas fa-eye me-1"></i>
+                                    View Status
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <div style="margin-bottom: 0.1rem;">
+
+                                    @if(!$canEdit)
+                                        <span
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="{{ $disableReason }}"
+                                            style="display:inline-block;">
+
+                                            <button
+                                                class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                                disabled
+                                                style="width: 6rem;">
+                                                Request for modification
+                                            </button>
+                                        </span>
+                                    @else
+                                        <button
+                                            class="approveBtn btn btn-outline-primary btn-xs text-xs fw-bold requestEditBtn"
+                                            style="width: 6rem;"
+                                            data-id="{{ $draft->project_cd }}"
+                                            data-project='@json($draft)'
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#requestModificationModal">
+                                            Request for modification
+                                        </button>
+                                    @endif
+
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <x-success-modal />
+    <x-warning-modal />
+
+    {{-- Work Items Modal --}}
+    <div id="ItemsModal" class="ItemsModal">
+        <div class="ItemsModalContent">
+            <div class="modal-header m-1 p-0">
+                <h5 class="modal-title text-uppercase text-md text-primary font-bold" id="diseaseWiseTitle">
+                    List of Items of Work under the selected project
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row justify-content-center align-item-center text-xs m-1 p-0" id="modalItemsContainer">
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal to show Upgradation Assets --}}
+    <div id="showModalNewAsset" class="showModalNewAsset">
+        <div class="showModalNewAssetContent">
+            <span class="closeShowModalNewAsset">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Existing & New Asset Details
+            </p>
+
+            <div id="modalValContainerNewAsset" class="row text-xs"></div>
+        </div>
+    </div>
+
+    <!-- Request Modification Modal -->
+    <div class="modal fade" id="requestModificationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Request for Modification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="requestModificationForm"
+                    method="POST"
+                    action="{{ route('request.modification') }}"
+                    enctype="multipart/form-data">
+                    @csrf
+
+                    <input type="hidden" name="project_cd" id="project_cd">
+
+                    <div class="modal-body">
+
+                        <div id="projectDetailsContainer"></div>
+
+                        <div class="mb-3 mt-4">
+                            <label class="form-label fw-bold">Reason</label>
+                            <textarea
+                                class="form-control"
+                                name="reason"
+                                rows="4"
+                                placeholder="Enter reason..."
+                                required></textarea>
+                        </div>
+
+                        <!-- NEW -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Modification Order
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="file"
+                                class="form-control"
+                                name="supporting_document"
+                                id="supporting_document"
+                                accept="application/pdf"
+                                required>
+
+                            <small class="text-muted">
+                                Only PDF allowed (Max: 2MB)
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal to show maintenance assets --}}
+    <div id="showModalMaintenance" class="showModalMaintenance">
+        <div class="showModalContentMaintenanace">
+            <span class="closeShowModalMaintenance">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Asset Details
+            </p>
+            <div class="row text-xs" id="modalValContainerMaintenance">
+            </div>
+        </div>
+    </div>
+@endsection
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/pms/common/modal/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modal/style.css') }}">
+@endpush
+@push('scripts')
+    <script src="{{ asset('js/pms/showModalDetail/showWorkItems.js') }}"></script>
+    <script src="{{ asset('js/pms/showModalDetail/upgAssetItem.js') }}"></script>
+    <script src="{{ asset('js/pms/showModalDetail/MtnAssetItem.js') }}"></script>
+    <script src="{{ asset('js/pms/modification/requestMdfy.js') }}"></script>
+    <script src="{{ asset('js/modal/script.js') }}" defer></script>
+    <script>
+        $(function() {
+            $("#new_project_details_table, #upg_project_details_table, #mtn_project_details_table").DataTable();
+        });
+    </script>
+@endpush

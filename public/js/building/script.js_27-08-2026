@@ -1,0 +1,270 @@
+function closeDiv() {
+    document.getElementById("mapClosableDiv").style.display = "none";
+    document.getElementById("map").style.display = "none";
+}
+
+$(
+    "#building_location_cd, #building_type_cd, #bld_catg, #construction_year, #maintainedBy," +
+        "#occupant_dept_cd, #buildingAccess, #owning_dept, #fencing_type",
+).select2();
+
+/**
+ * Fetch building types for a given class, populate #building_type_cd,
+ * then optionally select a specific value.
+ */
+function loadBuildingTypes(buildingClassCd, selectedValue) {
+    $.ajax({
+        url: "/asset-management/buildingType",
+        type: "GET",
+        data: { building_class_cd: buildingClassCd },
+        success: function (data) {
+            var dropdown = $("#building_type_cd");
+            dropdown.empty().append('<option value="">Choose one</option>');
+            $.each(data, function (index, value) {
+                dropdown.append(
+                    $("<option>", {
+                        value: value.building_type_cd,
+                        text: value.building_type_descr,
+                    }),
+                );
+            });
+            if (selectedValue) {
+                dropdown.val(selectedValue).trigger("change");
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Error loading building types:", error);
+        },
+    });
+}
+
+/**
+ * Fetch building locations for a given class, populate #building_location_cd,
+ * then optionally select a specific value.
+ */
+function loadBuildingLocations(
+    buildingClassCd,
+    selectedValue,
+    division_cd,
+    sub_division_cd,
+) {
+    $.ajax({
+        url: "/asset-management/buildingLocation",
+        type: "GET",
+        data: {
+            building_class_cd: buildingClassCd,
+            division_cd: division_cd,
+            sub_division_cd: sub_division_cd,
+        },
+        success: function (data) {
+            var dropdown = $("#building_location_cd");
+            dropdown.empty().append('<option value="">Choose one</option>');
+            if (data === "null" || !data || data.length === 0) {
+                alert("No location found!");
+                return;
+            }
+            $.each(data, function (index, value) {
+                dropdown.append(
+                    $("<option>", {
+                        value: value.location_cd,
+                        text: value.location_name,
+                    }),
+                );
+            });
+            if (selectedValue) {
+                dropdown.val(selectedValue).trigger("change");
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Error loading building locations:", error);
+        },
+    });
+}
+
+// ─── Edit-mode: pre-populate on page load ────────────────────────────────────
+//
+// The Blade partial embeds `window.housingEditData` only on the edit page.
+// On the create page this block is simply skipped.
+
+$(document).ready(function () {
+    if (window.housingEditData) {
+        var d = window.housingEditData;
+
+        // Show the housing container (hidden by default on create)
+        $("#housingContainer").show();
+
+        // Show/hide quarter vs building name input
+        toggleNameInputs(d.building_class_cd);
+
+        // Load location dropdown and pre-select saved value
+        loadBuildingLocations(d.building_class_cd, d.building_location_cd);
+
+        // Load building type dropdown and pre-select saved value
+        loadBuildingTypes(d.building_class_cd, d.building_type_cd);
+    }
+});
+
+// ─── Show/hide quarter no vs building name ────────────────────────────────────
+
+function toggleNameInputs(buildingClassCd) {
+    if (String(buildingClassCd) === "0") {
+        // Residential → show Quarter No, hide Building Name
+        $("#quarterNoInput").show();
+        $("#buildingNameInput").hide();
+    } else {
+        // Non-Residential / Rental → show Building Name, hide Quarter No
+        $("#quarterNoInput").hide();
+        $("#buildingNameInput").show();
+    }
+}
+
+// ─── Building class change (create form & edit form) ─────────────────────────
+
+$('input[name="building_class_cd"]').on("change", function () {
+    var buildingClassCd = $(this).val();
+
+    // Show the housing details container
+    $("#housingContainer").show();
+	$("#housingContainerNewWorks").show();									  
+
+    // Clear dependent fields
+    $("#quarter_no").val("");
+    $("#building_name").val("");
+    $("#occupant_name").val("");
+    $("#occupant_dept_cd").val("");
+
+    // Toggle name inputs
+    toggleNameInputs(buildingClassCd);
+
+    // First need to check if id "division_cd" and "sub_division_cd" is exists or not,
+    // and if exist get the value. If not then get the value from session
+    var division_cd = $("#division_cd").val() ?? null;
+    var sub_division_cd = $("#sub_division_cd").val() ?? null;
+
+    // Reload dependent dropdowns (no pre-selected value on a fresh change)
+    loadBuildingTypes(buildingClassCd, null);
+    loadBuildingLocations(buildingClassCd, null, division_cd, sub_division_cd);
+});
+
+// ─── Maintained-by-NPWD radio ─────────────────────────────────────────────────
+
+$("#rdo_yes").on("click", function () {
+    $("#maintained_by").val("Y");
+});
+
+$("#rdo_no").on("click", function () {
+    $("#maintained_by").val("N");
+});
+
+// ─── Security fencing toggle ──────────────────────────────────────────────────
+
+$('input[name="security_fencing"]').on("change", function () {
+    var val = $(this).val();
+    $("#div_fencing_type, #fencing_type").hide();
+    $("#fencing_type").prop("required", false);
+    if (val === "Y") {
+        $("#div_fencing_type, #fencing_type").show();
+        $("#fencing_type").prop("required", true);
+    }
+});
+
+// ─── Repaired toggle ──────────────────────────────────────────────────────────
+
+$('input[name="repaired"]').on("change", function () {
+    var val = $(this).val();
+    $("#repairedCost, #repairedScheme, #repairedYear").hide();
+    if (val === "Y") {
+        $("#repairedCost, #repairedScheme, #repairedYear").show();
+    }
+});
+
+// ─── Send for finalization ────────────────────────────────────────────────────
+
+$("#freezeBtn").on("click", function () {
+    if (!confirm("Are you sure?")) return;
+
+    var selectedAsset = $(".selected-asset:checked")
+        .map(function () {
+            return $(this).data("housing-id");
+        })
+        .get();
+
+    if (selectedAsset.length === 0) {
+        showDashboardModal(
+            "Select at least one housing data to send for finalization",
+        );
+        return;
+    }
+
+    $.ajax({
+        type: "GET",
+        url: "/asset-management/send-building-details-finalization",
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        data: { assetList: selectedAsset },
+        cache: false,
+        success: function (response) {
+            if (response.status === 200) showSuccessModal(response.message);
+            else showDashboardModal(response.message);
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+        },
+    });
+});
+
+// ─── Google Map ───────────────────────────────────────────────────────────────
+
+$(".classSetGeoLocation").on("click", function () {
+    $("#mapModal")
+        .on("shown.bs.modal", function () {
+            initMapForSetGeoLocation();
+        })
+        .modal("show");
+});
+
+let lat = 26.094757374299146;
+let lng = 94.58979407214116;
+
+async function initMapForSetGeoLocation() {
+    const startPosition = { lat, lng };
+    const { Map } = await google.maps.importLibrary("maps");
+
+    const map = new Map(document.getElementById("map"), {
+        center: startPosition,
+        zoom: 9,
+    });
+
+    let marker = new google.maps.Marker({
+        position: startPosition,
+        map: map,
+        draggable: true,
+    });
+
+    function getGeoPosition(latLng) {
+        lat = latLng.lat();
+        lng = latLng.lng();
+        $("#asset_geo_location").val("[" + lat + "," + lng + "]");
+        $("#asset_geo_location_lat").val(lat);
+        $("#asset_geo_location_lng").val(lng);
+    }
+
+    google.maps.event.addListener(map, "dragend", function () {
+        const center = map.getCenter();
+        marker.setPosition(center);
+        getGeoPosition(center);
+    });
+
+    google.maps.event.addListener(map, "click", function (event) {
+        marker.setPosition(event.latLng);
+        getGeoPosition(event.latLng);
+    });
+}
+
+$("#btnSaveGeoLocation").on("click", function () {
+    $("#asset_geo_location").val("[" + lat + "," + lng + "]");
+    $("#asset_geo_location_lat").val(lat);
+    $("#asset_geo_location_lng").val(lng);
+    $("#mapModal").modal("hide");
+});

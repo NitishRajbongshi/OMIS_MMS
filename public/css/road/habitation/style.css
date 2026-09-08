@@ -1,0 +1,20 @@
+.mainBody {
+    background-color: #fefbfa;
+    margin: 3px 10px 5px 10px;
+    color: #11113b;
+}
+
+label {
+    font-size: 12px;
+}
+
+legend {
+    text-transform: uppercase;
+    color: black;
+    padding: 2px 2px 2px 2px;
+    border: 2px solid #5677e7;
+}
+
+.star {
+    color: red;
+}

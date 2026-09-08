@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jQuery Bootstrap TreeFy Plugin Demo</title>
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" href="dist/css/bootstrap-treefy.css">
+<link href="http://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<div id="jquery-script-menu">
+<div class="jquery-script-center">
+<ul>
+<li><a href="http://www.jqueryscript.net/table/jQuery-Plugin-To-Create-Collapsible-Bootstrap-Tables-Bootstrap-TreeFy.html">Download This Plugin</a></li>
+<li><a href="http://www.jqueryscript.net/">Back To jQueryScript.Net</a></li>
+</ul>
+<div class="jquery-script-ads"><script type="text/javascript"><!--
+google_ad_client = "ca-pub-2783044520727903";
+/* jQuery_demo */
+google_ad_slot = "2780937993";
+google_ad_width = 728;
+google_ad_height = 90;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div>
+<div class="jquery-script-clear"></div>
+</div>
+</div>
+<div class="container" style="margin-top:150px;">
+<h1 style="margin-bottom:30px; text-align:center">jQuery Bootstrap TreeFy Plugin Demo</h1>
+<table class="table table-striped" id="table">
+  <thead>
+    <tr>
+      <th>Column A</th>
+      <th>Column B</th>
+      <th>Column C</th>
+      <th>Column D</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr data-node="treetable-1">
+      <td>Node</td>
+      <td>1</td>
+      <td>c</td>
+      <td>info</td>
+    </tr>
+    <tr data-node="treetable-2" data-pnode="treetable-parent-1">
+      <td>Node</td>
+      <td>1-1</td>
+      <td>c</td>
+      <td>info</td>
+    </tr>
+    <tr data-node="treetable-3" data-pnode="treetable-parent-1">
+      <td>Node</td>
+      <td>1-2</td>
+      <td>c</td>
+      <td>info</td>
+    </tr>
+    <tr data-node="treetable-4">
+      <td>Node</td>
+      <td>2</td>
+      <td>c</td>
+      <td>info</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script> 
+<script src="dist/bootstrap-treefy.js"></script> 
+<script>
+    $(function() {
+        $("#table").treeFy({
+            treeColumn: 1
+        });
+    });
+</script>
+</body>
+</html>

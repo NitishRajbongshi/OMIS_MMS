@@ -1,0 +1,802 @@
+document.addEventListener("DOMContentLoaded", () => {
+    // ============================================================
+    // 1. PROJECT NAME VALIDATION
+    // ============================================================
+    const projectNameInput = document.getElementById("project_name");
+    const errorDisplay = document.getElementById("projectNameError");
+
+    if (projectNameInput) {
+        projectNameInput.addEventListener("input", function () {
+            const projectName = this.value.trim();
+            if (!projectName) return;
+
+            fetch(`/check-project-name?name=${encodeURIComponent(projectName)}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.exists) {
+                        this.setCustomValidity("Project Name already exists");
+                        if (errorDisplay)
+                            errorDisplay.textContent =
+                                "Project name already exists.";
+                        this.style.borderColor = "red";
+                    } else {
+                        this.setCustomValidity("");
+                        if (errorDisplay) errorDisplay.textContent = "";
+                        this.style.borderColor = "";
+                    }
+                })
+                .catch((err) =>
+                    console.error("Error checking project name:", err),
+                );
+        });
+    }
+
+    // ============================================================
+    // 2. OFFICE SELECT AUTOFILL
+    // ============================================================
+    const officeSelect = document.getElementById("site_incharge_office_cd");
+    const nameInput = document.getElementById("site_incharge_name");
+    const phoneInput = document.getElementById("site_incharge_ph_no");
+
+    if (officeSelect) {
+        officeSelect.addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            if (nameInput)
+                nameInput.value = selected.getAttribute("data-name") || "";
+            if (phoneInput)
+                phoneInput.value = selected.getAttribute("data-phone") || "";
+        });
+    }
+
+    // ============================================================
+    // 3. NEGATIVE VALUE PREVENTION
+    // ============================================================
+    ["noOfCl", "noOfBr", "noOfrtw", "noOfPvm"].forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener("input", function () {
+                if (parseFloat(this.value) < 0) {
+                    this.value = "";
+                    alert("Value can't be negative");
+                }
+            });
+        }
+    });
+
+    // ============================================================
+    // 4. DATE VALIDATION
+    // ============================================================
+    const startDateInputs = document.getElementById("project_start_date");
+    const endDateInputs = document.getElementById("project_end_date");
+
+    if (endDateInputs && startDateInputs) {
+        endDateInputs.addEventListener("blur", function () {
+            if (this.value && startDateInputs.value) {
+                const start = new Date(startDateInputs.value);
+                const end = new Date(this.value);
+
+                this.setCustomValidity("");
+
+                if (end < start) {
+                    this.setCustomValidity(
+                        "Stipulated End date must be later than project start date.",
+                    );
+                    this.reportValidity();
+                }
+            } else {
+                this.setCustomValidity("");
+            }
+        });
+    }
+
+    // ============================================================
+    // 5. DOCUMENT & IMAGE VALIDATION (Helper Function)
+    // ============================================================
+    function validateFile(inputId, allowedExts, maxSizeMB = 2) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const ext = file.name.split(".").pop().toLowerCase();
+            const maxSize = maxSizeMB * 1024 * 1024;
+
+            if (!allowedExts.includes(ext)) {
+                alert(`Invalid file type. Allowed: ${allowedExts.join(", ")}`);
+                this.value = "";
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert(`File size exceeds ${maxSizeMB} MB limit.`);
+                this.value = "";
+                return;
+            }
+
+            if (typeof showRemoveBtn === "function") showRemoveBtn(inputId);
+        });
+    }
+    validateFile("panCardDoc", ["pdf"]);
+	validateFile("passbookDoc", ["pdf"]);
+    validateFile("workOrder", ["pdf"]);
+    validateFile("projectPlan", ["pdf"]);
+    validateFile("drpDocument", ["pdf", "xls", "xlsx"]);
+    validateFile("designDoc", ["pdf"]);
+
+    let selectedFiles = [];
+
+    document.getElementById("images").addEventListener("change", function () {
+        let files = Array.from(this.files);
+
+        let allowedTypes = ["image/jpeg", "image/jpg"];
+        let maxSize = 1024 * 1024; //1MB
+
+        files.forEach((file) => {
+            if (!allowedTypes.includes(file.type)) {
+                alert("Only JPG/JPEG files are allowed.");
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert("File size must be less than 1MB.");
+                return;
+            }
+
+            selectedFiles.push(file);
+        });
+
+        updatePreview();
+    });
+
+    function updatePreview() {
+        let previewContainer = document.getElementById("imagesPreview");
+        previewContainer.innerHTML = "";
+
+        selectedFiles.forEach((file, index) => {
+            let reader = new FileReader();
+
+            reader.onload = function (e) {
+                let col = document.createElement("div");
+                col.classList.add(
+                    "col-3",
+                    "col-md-2",
+                    "mb-2",
+                    "position-relative",
+                );
+
+                let img = document.createElement("img");
+                img.src = e.target.result;
+                img.style.width = "100%";
+                img.style.height = "auto";
+                img.classList.add("border");
+
+                let removeBtn = document.createElement("button");
+                removeBtn.innerHTML = "×";
+                removeBtn.classList.add("btn", "btn-danger", "btn-sm");
+                removeBtn.style.position = "absolute";
+                removeBtn.style.top = "5px";
+                removeBtn.style.right = "1px";
+
+                removeBtn.onclick = function () {
+                    removeImage(index);
+                };
+
+                col.appendChild(img);
+                col.appendChild(removeBtn);
+                previewContainer.appendChild(col);
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        rebuildFileInput();
+    }
+
+    function removeImage(index) {
+        selectedFiles.splice(index, 1);
+        updatePreview();
+    }
+
+    function rebuildFileInput() {
+        let dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach((file) => {
+            dataTransfer.items.add(file);
+        });
+
+        document.getElementById("images").files = dataTransfer.files;
+    }
+});
+// ============================================================
+// 6. DROPDOWN LOGIC (Reusable Helper)
+// ============================================================
+function setupCustomDropdown(
+    btnId,
+    menuId,
+    searchId,
+    optionsContainerId,
+    hiddenInputId,
+) {
+    const btn = document.getElementById(btnId);
+    const menu = document.getElementById(menuId);
+    const search = document.getElementById(searchId);
+    const container = document.getElementById(optionsContainerId);
+    const hiddenInput = hiddenInputId
+        ? document.getElementById(hiddenInputId)
+        : null;
+
+    if (!btn || !menu) return;
+
+    // Toggle
+    btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Use classList for consistency (better than style.display toggling manually)
+        // Assuming CSS class .show { display: block; } exists or logic matches your code
+        // Your code mixed style.display and classList.toggle. Standardizing to classList or style logic.
+        // Keeping logic strictly as per your request (Predecessor uses style, SubItems use classList).
+        if (
+            menu.classList.contains("dropdown-menu-custom") ||
+            menuId === "predecessorMenu"
+        ) {
+            menu.style.display =
+                menu.style.display === "block" ? "none" : "block";
+        } else {
+            menu.classList.toggle("show");
+        }
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target) && e.target !== btn) {
+            if (menuId === "predecessorMenu") menu.style.display = "none";
+            else menu.classList.remove("show");
+        }
+    });
+
+    // Search
+    if (search && container) {
+        search.addEventListener("input", () => {
+            const term = search.value.toLowerCase();
+            // Check if labels (predecessor) or divs (subitems) wrapper exists
+            // Your code: predecessor uses labels directly, subitems use checkbox parent
+            const items = container.querySelectorAll(
+                menuId === "predecessorMenu"
+                    ? "label"
+                    : "input[type='checkbox']",
+            );
+
+            items.forEach((item) => {
+                const el =
+                    menuId === "predecessorMenu" ? item : item.parentElement;
+                const text = el.textContent.toLowerCase();
+                el.style.display = text.includes(term)
+                    ? menuId === "predecessorMenu"
+                        ? "block"
+                        : "flex"
+                    : "none";
+            });
+        });
+    }
+
+    // Checkbox Logic
+    if (container) {
+        container.addEventListener("change", (e) => {
+            if (e.target.type === "checkbox") {
+                const checkboxes = container.querySelectorAll(
+                    "input[type='checkbox']",
+                );
+                const selected = Array.from(checkboxes)
+                    .filter((c) => c.checked)
+                    .map((c) => c.nextElementSibling.textContent.trim());
+
+                const defaultText =
+                    btnId === "predecessorDropdown"
+                        ? "Select Predecessor"
+                        : btnId === "subItemDropdown"
+                          ? "Select Sub Items"
+                          : "Select Sub Items";
+
+                btn.textContent = selected.length
+                    ? selected.join(", ")
+                    : defaultText;
+
+                if (hiddenInput) hiddenInput.value = selected.join(",");
+            }
+        });
+    }
+}
+
+setupCustomDropdown(
+    "predecessorDropdown",
+    "predecessorMenu",
+    "predecessorSearch",
+    "predecessorOptions",
+    "predecessorHidden",
+);
+setupCustomDropdown(
+    "subItemDropdown",
+    "subItemMenu",
+    "subItemSearch",
+    "subItemsOptions",
+    "subItemHidden",
+);
+// Note: subItemHidden was commented out in your code, keeping strictly as is for logic.
+
+// For Edit Sub Item Dropdown
+setupCustomDropdown(
+    "editSubItemDropdown",
+    "editSubItemMenu",
+    "editSubItemSearch",
+    "editSubItemOptions",
+    "editSubItemHidden",
+);
+
+// ============================================================
+// 7. MODAL HANDLING
+// ============================================================
+const addModal = document.getElementById("subItemModal");
+const viewModal = document.getElementById("viewSubItemsModal");
+const editModal = document.getElementById("editSubItemModal");
+const modalItemType = document.getElementById("modalItemType");
+const viewSubItemsTableBody = document.querySelector(
+    "#viewSubItemsTable tbody",
+);
+
+let currentRow = null;
+let subItemsData = {};
+
+function showModal(modal) {
+    if (modal) modal.style.display = "block";
+}
+function hideModal(modal) {
+    if (modal) modal.style.display = "none";
+}
+
+// Unified Close Logic
+document.addEventListener("click", (e) => {
+    if (
+        e.target.classList.contains("closeShowModal") ||
+        e.target.classList.contains("closeButton") ||
+        e.target.classList.contains("showModal")
+    ) {
+        const modal = e.target.closest(".showModal") || e.target;
+        if (modal.classList.contains("showModal")) hideModal(modal);
+    }
+});
+
+// ============================================================
+// 8. ADD SUB ITEMS LOGIC
+// ============================================================
+const workItemsTableBody = document.querySelector("#workItemsTable tbody");
+
+if (workItemsTableBody) {
+    workItemsTableBody.addEventListener("click", (e) => {
+        // ==============================
+        // OPEN ADD SUB ITEM MODAL
+        // ==============================
+        if (e.target.classList.contains("subItemBtn")) {
+            currentRow = e.target.closest("tr");
+
+            const tdFirst = currentRow.querySelector("td:first-child");
+            const itemName = tdFirst.innerText.trim();
+            const itemValue = tdFirst.querySelector("input").value;
+
+            modalItemType.value = itemName;
+            modalItemType.dataset.key = itemValue;
+
+            // Reset UI
+            document.querySelector("#subItemsOptions").innerHTML = "";
+            document.querySelector("#subItemDetailsContainer").innerHTML = "";
+            document.getElementById("subItemSearch").value = "";
+            document.getElementById("subItemDropdown").textContent =
+                "Select Sub Items";
+
+            // Filter only relevant sub items
+            const filtered = allSubItems.filter(
+                (si) => si.item_cd == itemValue,
+            );
+
+            // Populate checkbox list
+            document.getElementById("subItemsOptions").innerHTML = filtered
+                .map(
+                    (si) => `
+                <label>
+                    <input type="checkbox" 
+                           value="${si.sub_item_cd}" 
+                           data-name="${si.sub_item_name}" 
+                           class="dynamicSubItemCB">
+                    <span class="ms-2">${si.sub_item_name}</span>
+                </label>
+            `,
+                )
+                .join("");
+
+            // Re-bind checkbox event for dynamic fields
+            document.querySelectorAll(".dynamicSubItemCB").forEach((cb) => {
+                cb.addEventListener("change", generateDynamicSubItemRows);
+            });
+
+            showModal(addModal);
+        }
+
+        // ==============================
+        // OPEN VIEW MODAL
+        // ==============================
+        if (e.target.closest(".viewSubBtn")) {
+            const row = e.target.closest("tr");
+            const itemValue = row.querySelector("td:first-child input").value;
+            const itemName = row
+                .querySelector("td:first-child")
+                .innerText.trim();
+
+            const subs = subItemsData[itemValue] || {};
+            const subsArray = Object.values(subs);
+
+            viewSubItemsTableBody.innerHTML = subsArray
+                .map(
+                    (s, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${s.name}</td>
+                    <td>${s.quantity}</td>
+                    <td>${s.start}</td>
+                    <td>${s.end}</td>
+                </tr>
+            `,
+                )
+                .join("");
+
+            document.querySelector(
+                "#viewSubItemsModal .text-primary",
+            ).innerHTML =
+                `<i class="fa fa-bars"></i> Sub Items for: ${itemName}`;
+
+            showModal(viewModal);
+        }
+
+        // ==============================
+        // OPEN EDIT MODAL
+        // (You can tell me if you want edit modal also converted to dynamic)
+        // ==============================
+        if (e.target.classList.contains("editItemBtn")) {
+            currentRow = e.target.closest("tr");
+            const td = currentRow.querySelector("td:first-child");
+
+            const itemName = td.innerText.trim();
+            const itemValue = td.querySelector("input").value;
+
+            const dataObj = subItemsData[itemValue] || {};
+            const data = Object.values(dataObj);
+
+            document.getElementById("editModalItemType").value = itemName;
+            document.getElementById("editModalItemType").dataset.key =
+                itemValue;
+
+            const filtered = allSubItems.filter(
+                (si) => si.item_cd == itemValue,
+            );
+
+            const container = document.getElementById("editSubItemOptions");
+            container.innerHTML = filtered
+                .map(
+                    (si) => `
+                <label>
+                    <input type="checkbox" value="${si.sub_item_cd}">
+                    <span class="ms-2">${si.sub_item_name}</span>
+                </label>
+            `,
+                )
+                .join("");
+
+            const selectedNames = data.map((d) => d.name);
+
+            container.querySelectorAll("input").forEach((cb) => {
+                const label = cb.nextElementSibling.textContent.trim();
+                cb.checked = selectedNames.includes(label);
+            });
+
+            openEditModal(itemValue);
+
+            showModal(editModal);
+        }
+    });
+}
+
+// =================================================================
+//  DYNAMIC ROW GENERATION WHEN USER SELECTS CHECKBOXES
+// =================================================================
+
+function generateDynamicSubItemRows() {
+    const container = document.getElementById("subItemDetailsContainer");
+    container.innerHTML = "";
+
+    const checked = document.querySelectorAll(".dynamicSubItemCB:checked");
+
+    if (checked.length === 0) {
+        document.getElementById("subItemDropdown").textContent =
+            "Select Sub Items";
+        return;
+    }
+
+    const names = [];
+    checked.forEach((cb) => names.push(cb.dataset.name));
+    document.getElementById("subItemDropdown").textContent = names.join(", ");
+
+    checked.forEach((cb) => {
+        const code = cb.value;
+        const name = cb.dataset.name;
+
+        container.innerHTML += `
+            <div class="border rounded p-2 mb-2">
+                <p class="fw-bold mb-1">${name}</p>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Quantity</label>
+                        <input type="number" 
+                               name="temp_subitems[${code}][qty]"
+                               placeholder="Quantity"
+                               class="form-control form-control-sm dynamicQty">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Start Date</label>
+                        <input type="date" 
+                               name="temp_subitems[${code}][start]" 
+                               class="form-control form-control-sm dynamicStart">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>End Date</label>
+                        <input type="date" 
+                               name="temp_subitems[${code}][end]" 
+                               class="form-control form-control-sm dynamicEnd">
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// =================================================================
+//  SAVE HANDLER
+// =================================================================
+
+const addSubItemBtn = document.getElementById("addSubItemBtn");
+
+if (addSubItemBtn) {
+    addSubItemBtn.addEventListener("click", () => {
+        if (!currentRow) return;
+
+        const checked = document.querySelectorAll(".dynamicSubItemCB:checked");
+        if (checked.length === 0) {
+            alert("Select at least one sub item.");
+            return;
+        }
+
+        const parentKey = modalItemType.dataset.key;
+        const typeName = modalItemType.value;
+
+        // TEMP STORAGE so we don't overwrite data unless valid
+        let tempSubItems = {};
+
+        for (let index = 0; index < checked.length; index++) {
+            const cb = checked[index];
+            const code = cb.value;
+            const name = cb.dataset.name;
+
+            const qty =
+                document.querySelector(
+                    `input[name="temp_subitems[${code}][qty]"]`,
+                )?.value || "";
+            const start =
+                document.querySelector(
+                    `input[name="temp_subitems[${code}][start]"]`,
+                )?.value || "";
+            const end =
+                document.querySelector(
+                    `input[name="temp_subitems[${code}][end]"]`,
+                )?.value || "";
+
+            // Date Validation
+            if (start && end) {
+                const startDate = new Date(start);
+                const endDate = new Date(end);
+
+                if (startDate > endDate) {
+                    alert(
+                        `End Date should be later than Start Date for ${name}.`,
+                    );
+                    return;
+                }
+            }
+
+            // Store in temporary object
+            tempSubItems[`sub_item_${index + 1}`] = {
+                type: typeName,
+                code,
+                name,
+                quantity: qty,
+                start,
+                end,
+            };
+        }
+
+        // After full validation, NOW copy to main data
+        subItemsData[parentKey] = tempSubItems;
+
+        // Update hidden input
+        document.getElementById("subItems").value =
+            JSON.stringify(subItemsData);
+
+        // Update table cell only after success
+        const subItemCell = currentRow.querySelector("td:nth-child(6)");
+        subItemCell.innerHTML = `
+            <button type="button" class="text-primary border-0 bg-transparent outline-0 viewSubBtn">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm editItemBtn">+ Edit item</button>
+        `;
+
+        // Close modal ONLY after successful validation
+        hideModal(addModal);
+    });
+}
+
+function openEditModal(parentKey) {
+    const editOptions = document.getElementById("editSubItemOptions");
+    const container = document.getElementById("editsubItemDetailsContainer");
+
+    container.innerHTML = "";
+
+    const saved = subItemsData[parentKey] || {};
+
+    // Mark selected options
+    editOptions.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+        const name = cb.nextElementSibling.textContent.trim();
+        cb.checked = Object.values(saved).some((s) => s.name === name);
+    });
+
+    // Generate dynamic rows for selected subitems
+    Object.values(saved).forEach((s) => {
+        container.innerHTML += generateEditRow(
+            s.code,
+            s.name,
+            s.quantity,
+            s.start,
+            s.end,
+        );
+    });
+
+    // When clicking/unticking checkboxes → regenerate dynamic rows
+    editOptions.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+        cb.addEventListener("change", () => rebuildEditRows(parentKey));
+    });
+}
+
+function rebuildEditRows(parentKey) {
+    const container = document.getElementById("editsubItemDetailsContainer");
+    container.innerHTML = "";
+
+    const saved = subItemsData[parentKey] || {};
+
+    // For all checked subitems in edit dropdown
+    document
+        .querySelectorAll("#editSubItemOptions input[type='checkbox']:checked")
+        .forEach((cb) => {
+            const code = cb.value;
+            const name = cb.nextElementSibling.textContent.trim();
+
+            const existing = Object.values(saved).find((s) => s.code == code);
+
+            container.innerHTML += generateEditRow(
+                code,
+                name,
+                existing ? existing.quantity : "",
+                existing ? existing.start : "",
+                existing ? existing.end : "",
+            );
+        });
+}
+
+function generateEditRow(code, name, qty, start, end) {
+    return `
+        <div class="border rounded p-2 mb-2">
+            <p class="fw-bold mb-1">${name}</p>
+
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label>Quantity</label>
+                    <input type="number" 
+                           class="form-control form-control-sm editQty"
+                           data-code="${code}"
+                           value="${qty}">
+                </div>
+
+                <div class="col-md-4">
+                    <label>Start Date</label>
+                    <input type="date" 
+                           class="form-control form-control-sm editStart"
+                           data-code="${code}"
+                           value="${start}">
+                </div>
+
+                <div class="col-md-4">
+                    <label>End Date</label>
+                    <input type="date" 
+                           class="form-control form-control-sm editEnd"
+                           data-code="${code}"
+                           value="${end}">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+const saveEditSubItemBtn = document.getElementById("saveEditSubItemBtn");
+
+saveEditSubItemBtn.addEventListener("click", () => {
+    const typeField = document.getElementById("editModalItemType");
+    const parentKey = typeField.dataset.key;
+
+    const checked = document.querySelectorAll(
+        "#editSubItemOptions input[type='checkbox']:checked",
+    );
+    if (checked.length === 0) {
+        alert("Select at least one sub item.");
+        return;
+    }
+
+    const typeName = typeField.value;
+
+    // Temporary object (only saved after full validation)
+    let tempSubItems = {};
+
+    for (let index = 0; index < checked.length; index++) {
+        const cb = checked[index];
+        const code = cb.value;
+        const name = cb.nextElementSibling.textContent.trim();
+
+        const qty =
+            document.querySelector(`.editQty[data-code="${code}"]`)?.value ||
+            "";
+        const start =
+            document.querySelector(`.editStart[data-code="${code}"]`)?.value ||
+            "";
+        const end =
+            document.querySelector(`.editEnd[data-code="${code}"]`)?.value ||
+            "";
+
+        // Validate Dates
+        if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+
+            if (startDate > endDate) {
+                alert(`End Date should be later than Start Date for ${name}.`);
+                return;
+            }
+        }
+
+        // Add to temp object if valid
+        tempSubItems[`sub_item_${index + 1}`] = {
+            type: typeName,
+            code: code,
+            name: name,
+            quantity: qty,
+            start: start,
+            end: end,
+        };
+    }
+
+    // All valid, now it is safe to update main data
+    subItemsData[parentKey] = tempSubItems;
+
+    // Update hidden field
+    document.getElementById("subItems").value = JSON.stringify(subItemsData);
+
+    // Close modal only after success
+    hideModal(editModal);
+});

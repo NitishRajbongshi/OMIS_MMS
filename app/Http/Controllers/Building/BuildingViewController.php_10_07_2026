@@ -1,0 +1,183 @@
+<?php
+
+namespace App\Http\Controllers\Building;
+
+use App\Http\Controllers\Controller;
+use App\Models\Building\AssetBuildingDetail;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class BuildingViewController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $user = Auth::user();
+        $office_cd = $user->office;
+        $users_office_type_cd = $user->office_type_cd;
+        $zone_cd = null;
+        $circle_cd = null;
+        $division_cd = null;
+        $sub_division_cd = null;
+        $userMapping = DB::table('asset_user_mappings')
+            ->select('zone_cd', 'circle_cd', 'division_cd', 'sub_division_cd')
+            ->where('user_id', '=', $user->id)
+            ->get()->first();
+
+        $zone_cd = $userMapping->zone_cd;
+        $circle_cd = $userMapping->circle_cd;
+        $division_cd = $userMapping->division_cd;
+        $sub_division_cd = $userMapping->sub_division_cd;
+        if (session('office_charge_type') == 1) {
+            $office_cd = session('office_cd');
+            $users_office_type_cd = session('users_office_type_cd');
+            $officeDivisionDtls = DB::table('office_details as ofd')
+                ->select('ofd.zone_cd', 'ofd.circle_cd', 'ofd.division_cd', 'ofd.sub_division_cd')
+                ->where('ofd.id', '=', $office_cd)
+                ->get()->first();
+            if ($officeDivisionDtls) {
+                $zone_cd = $officeDivisionDtls->zone_cd;
+                $circle_cd = $officeDivisionDtls->circle_cd;
+                $division_cd = $officeDivisionDtls->division_cd;
+                $sub_division_cd = $officeDivisionDtls->sub_division_cd;
+            }
+        }
+
+        $buildings = [];
+        $query = AssetBuildingDetail::with([
+            'buildingType',
+            'buildingClass',
+            'division'
+        ])
+            ->where('is_partial_data', 'Y') // TODO: change it further to N
+            ->orderBy('asset_name');
+
+        if ($users_office_type_cd == 'HQ' || $users_office_type_cd == 'ADM' || $users_office_type_cd == 'ECO' || $users_office_type_cd == 'DA' || $users_office_type_cd == 'SO') {
+            $buildings = $query->get();
+        }
+        if ($users_office_type_cd == 'ZO') {
+            $ZOOffices = [];
+            $offices = DB::table('office_details')
+                ->where('zone_cd', $zone_cd)
+                ->where('department_id', session('user_dept_cd'))
+                ->select('id')->get();
+            foreach ($offices as $item) {
+                $ZOOffices[] = $item->id;
+            }
+            $buildings = $query
+                ->whereIn('created_at_office_cd', $ZOOffices)
+                ->get();
+        }
+        if ($users_office_type_cd == 'CO') {
+            $COOffices = [];
+            $offices = DB::table('office_details')
+                ->where('circle_cd', $circle_cd)
+                ->where('department_id', session('user_dept_cd'))
+                ->select('id')->get();
+            foreach ($offices as $item) {
+                $COOffices[] = $item->id;
+            }
+            $buildings = $query
+                ->whereIn('created_at_office_cd', $COOffices)
+                ->get();
+        }
+        if ($users_office_type_cd == 'DO') {
+            $DOOffices = [];
+            $offices = DB::table('office_details')
+                ->where('division_cd', $division_cd)
+                ->where('department_id', session('user_dept_cd'))
+                ->select('id')->get();
+            foreach ($offices as $item) {
+                $DOOffices[] = $item->id;
+            }
+            $buildings = $query
+                ->whereIn('created_at_office_cd', $DOOffices)
+                ->get();
+        }
+
+        if ($users_office_type_cd == 'SDO') {
+            $SDOffices = [];
+            $offices = DB::table('office_details')
+                ->where('sub_division_cd', $sub_division_cd)
+                ->where('department_id', session('user_dept_cd'))
+                ->select('id')->get();
+            foreach ($offices as $item) {
+                $SDOffices[] = $item->id;
+            }
+            $buildings = $query
+                ->whereIn('created_at_office_cd', $SDOffices)
+                ->get();
+        }
+
+        return view('building.others.show_non_partial_list', compact('buildings'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+    }
+}

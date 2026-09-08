@@ -1,0 +1,2034 @@
+$(document).on('click', '.requestEditBtn', function () {
+
+    // reset
+    $('#requestModificationForm')[0].reset();
+    $('#projectDetailsContainer').empty();
+    $('#project_cd').val('');
+
+    let project = $(this).data('project');
+    let id = project.project_cd;
+    let others = project.others ? JSON.parse(project.others) : {};
+
+    $('#project_cd').val(id);
+
+    let labels = {
+        project_name: 'Project Name',
+        project_end_date: 'Project End Date',
+                //by dipshikha
+        project_awarded_to: 'Project Awarded To',
+        //end
+        est_proj_cost: 'Estimated Cost',
+        defect_liability_period: 'Defect Liability Period',
+        work_order_amount: 'Work Order Amount',
+        //by dipshikha
+        work_order_no: 'Work Order Number',
+        work_order_issue_date: 'Work Order Issue Date'
+        //end
+    };
+
+	//by dipshikha
+    let schemeHtml = `
+        <div>
+            <b>Scheme:</b> ${project.scheme_name || 'N/A'}
+        </div>
+    `;
+
+    if (project.funding_agencies?.length) {
+
+        schemeHtml += `
+            <div class="mt-2">
+                <b>Funding Agencies:</b><br>
+        `;
+
+        project.funding_agencies.forEach((agency, index) => {
+
+            schemeHtml += `
+                <div class="ms-3 mb-2">
+
+                    ${index + 1}. ${agency.agency_name}<br>
+
+                    <small>
+                        Percentage:
+                        ${agency.funding_percentage}%<br>
+
+                        Amount:
+                        ${agency.funding_amount}
+                    </small>
+
+                </div>
+            `;
+        });
+
+        schemeHtml += `</div>`;
+    }
+    //end
+    let values = {
+        project_name: project.project_name || 'N/A',
+		 //by dipshikha
+        project_end_date: formatDate(project.project_end_date) || 'N/A',
+        project_awarded_to: project.contractor_name || 'N/A',
+        //end
+        est_proj_cost: project.est_proj_cost || 'N/A',
+        defect_liability_period: project.defect_liability_period || 'N/A',
+        work_order_amount: project.work_order_amount || 'N/A',
+        //by dipshikha
+        work_order_no: project.work_order_no || 'N/A',
+        work_order_issue_date: formatDate(project.work_order_issue_date) || 'N/A',
+        scheme_name: schemeHtml || 'N/A'
+        //end
+    };
+
+    //by dipshikha
+    Object.assign(labels, {
+        scheme_name: 'Scheme'
+    });
+    //end
+    if (project.project_type_cd === 'NEW') {
+
+        Object.assign(labels, {
+            new_road_name: 'Road Name',
+            new_road_length: 'Road Length',
+            number_of_bridge: 'No. of Bridge',
+            number_of_culvert: 'No. of Culvert',
+            number_of_retain_wall: 'No. of Retaining Wall'
+        });
+
+        Object.assign(values, {
+            new_road_name: others.new_road_name || 'N/A',
+            new_road_length: others.new_road_length || 'N/A',
+            number_of_bridge: others.number_of_bridge || 0,
+            number_of_culvert: others.number_of_culvert || 0,
+            number_of_retain_wall: others.number_of_retain_wall || 0
+        });
+
+        renderTable(labels, values, id);
+    }else if (project.project_type_cd === 'MTN') {
+
+        $.ajax({
+            type: "GET",
+            url: "/project-management/get-maintenance-detail/" + encodeURIComponent(id),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: {
+                table: 'approved'
+            },
+            success: function (response) {
+
+                let maintenanceAsset = 'NA';
+
+                if (response.status === 'success') {
+
+                    let data = response.data;
+
+                    let parts = [];
+
+                    if (data.road_names?.length) {
+                        parts.push(`<b>Roads:</b> ${data.road_names.join(', ')}`);
+                    }
+
+                    if (data.culverts?.length) {
+                        parts.push(`<b>Culverts:</b> ${data.culverts.join(', ')}`);
+                    }
+
+                    if (data.bridges?.length) {
+                        parts.push(`<b>Bridges:</b> ${data.bridges.join(', ')}`);
+                    }
+
+                    if (data.walls?.length) {
+                        parts.push(`<b>Walls:</b> ${data.walls.join(', ')}`);
+                    }
+
+                    maintenanceAsset = parts.length
+                        ? parts.join('<br>')
+                        : 'NA';
+                }
+
+                Object.assign(labels, {
+                    redefine_existing_asset: 'Redefine Of Existing Asset'
+                });
+
+                Object.assign(values, {
+                    redefine_existing_asset: maintenanceAsset
+                });
+
+                renderTable(labels, values, id);
+            },
+            error: function () {
+
+                Object.assign(labels, {
+                    redefine_existing_asset: 'Redefine Of Existing Asset'
+                });
+
+                Object.assign(values, {
+                    redefine_existing_asset: 'NA'
+                });
+
+                renderTable(labels, values, id);
+            }
+        });
+    }else if (project.project_type_cd === 'UPG') {
+        $('#projectDetailsContainer').html(`
+            <div class="text-center py-4 text-primary">
+                Loading project details...
+            </div>
+        `);
+
+        $.ajax({
+            type: "GET",
+            url: "/project-management/get-upgradation-detail/" + encodeURIComponent(id),
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: {
+                table: 'approved'
+            },
+            success: function (response) {
+
+                let existingAsset = 'NA';
+                let newAsset = 'NA';
+
+                if (response.status === "success") {
+
+                    let data = response.data;
+
+                    // -----------------------------
+                    // Existing Assets Summary
+                    // -----------------------------
+                    if (data.roads && data.roads.length) {
+
+                        existingAsset = data.roads.map((r, index) => {
+
+                            let culverts = (r.culverts && r.culverts.length)
+                                ? `<b>Culverts:</b> ${r.culverts.join(', ')}<br>`
+                                : '';
+
+                            let bridges = (r.bridges && r.bridges.length)
+                                ? `<b>Bridges:</b> ${r.bridges.join(', ')}<br>`
+                                : '';
+
+                            let walls = (r.walls && r.walls.length)
+                                ? `<b>Walls:</b> ${r.walls.join(', ')}<br>`
+                                : '';
+
+                            let newAdded = [];
+
+                            if (r.new_bridges_existing > 0) {
+                                newAdded.push(`Bridges: ${r.new_bridges_existing}`);
+                            }
+
+                            if (r.new_culverts_existing > 0) {
+                                newAdded.push(`Culverts: ${r.new_culverts_existing}`);
+                            }
+
+                            if (r.new_walls_existing > 0) {
+                                newAdded.push(`Walls: ${r.new_walls_existing}`);
+                            }
+
+                            let newAddedHtml = newAdded.length
+                                ? `<b>Newly Added →</b> ${newAdded.join(', ')}`
+                                : '';
+
+                            return `
+                                <div class="mb-2">
+                                    <b>Road ${index + 1}:</b> ${r.road_name || 'NA'}<br>
+
+                                    ${culverts}
+                                    ${bridges}
+                                    ${walls}
+
+                                    ${newAddedHtml}
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                    // -----------------------------
+                    // New Asset Summary
+                    // -----------------------------
+                    newAsset = `
+                        <div>
+                            <b>Road Name:</b> ${data.new_road_name || 'NA'} <br>
+                            <b>Road Length:</b> ${data.new_road_length || 0} <br>
+                            <b>Bridges:</b> ${data.new_bridges || 0} <br>
+                            <b>Culverts:</b> ${data.new_culverts || 0} <br>
+                            <b>Walls:</b> ${data.new_walls || 0}
+                        </div>
+                    `;
+
+                    Object.assign(labels, {
+                        redefine_existing_asset: 'Redefine Of Existing Asset',
+                        creation_of_new_asset: 'Creation Of New Asset'
+                    });
+
+                    Object.assign(values, {
+                        redefine_existing_asset: existingAsset,
+                        creation_of_new_asset: newAsset
+                    });
+                }
+
+                renderTable(labels, values, id);
+            },
+            error: function () {
+
+                Object.assign(labels, {
+                    redefine_existing_asset: 'Redefine Of Existing Asset',
+                    creation_of_new_asset: 'Creation Of New Asset'
+                });
+
+                Object.assign(values, {
+                    redefine_existing_asset: 'NA',
+                    creation_of_new_asset: 'NA'
+                });
+
+                renderTable(labels, values, id);
+            }
+        });
+    }
+});
+
+
+// ======================================================
+// Render Table + Load Work Items
+// ======================================================
+function renderTable(labels, values, id) {
+
+    let html = `
+        <table class="table table-bordered table-sm text-xs">
+            <thead class="bg-light">
+                <tr>
+                    <th width="10%">Select</th>
+                    <th width="35%">Field</th>
+                    <th width="55%">Current Value</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    Object.keys(labels).forEach(key => {
+
+        html += `
+            <tr>
+                <td class="text-center align-middle">
+                    <input
+                        type="checkbox"
+                        class="projectFieldCheckbox"
+                        name="fields[]"
+                        value="${key}">
+                </td>
+
+                <td class="align-middle">
+                    ${labels[key]}
+                </td>
+
+                <td class="align-middle">
+                    ${values[key] ?? 'N/A'}
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+        <tr class="table-primary">
+            <td colspan="3" class="fw-bold text-center">
+                Items of Work (select item(s) to modify)
+            </td>
+        </tr>
+
+        <tr id="loadingRow">
+            <td colspan="3" class="text-center">
+                Loading items...
+            </td>
+        </tr>
+    `;
+
+    html += `</tbody></table>`;
+
+    $('#projectDetailsContainer').html(html);
+
+    // load work items
+    $.ajax({
+        url: `/get-items-detail/${encodeURIComponent(id)}`,
+        type: "GET",
+        success: function (response) {
+
+            $('#loadingRow').remove();
+
+            let rows = '';
+
+            if (
+                response.status === 'success' &&
+                response.value &&
+                response.value.length > 0
+            ) {
+
+                response.value.forEach((item, index) => {
+
+                    rows += `
+                        <tr>
+                            <td class="text-center align-middle">
+                                <input
+                                    type="checkbox"
+                                    class="workItemCheckbox"
+                                    name="work_item[]"
+                                    value="${item.id}">
+                            </td>
+
+                            <td class="align-middle">
+                                Item ${index + 1}
+                            </td>
+
+                            <td>
+                                <b>${item.name || 'N/A'}</b><br>
+                                Qty: ${item.qty || 'N/A'} |
+                                Start Date: ${item.start_date || 'N/A'} |
+                                End Date: ${item.end_date || 'N/A'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+            } else {
+
+                rows = `
+                    <tr>
+                        <td colspan="3" class="text-danger text-center">
+                            No items found
+                        </td>
+                    </tr>
+                `;
+            }
+
+            $('#projectDetailsContainer table tbody').append(rows);
+        },
+        error: function () {
+
+            $('#loadingRow').html(`
+                <td colspan="3" class="text-danger text-center">
+                    Failed to load items
+                </td>
+            `);
+        }
+    });
+}
+
+
+$('#requestModificationForm').on('submit', function(e) {
+    e.preventDefault();
+
+    let checked =
+        $('.projectFieldCheckbox:checked').length +
+        $('.workItemCheckbox:checked').length;
+
+    let reason = $('textarea[name="reason"]').val().trim();
+    let file = $('#supporting_document')[0].files[0];
+
+    if (checked < 1) {
+        showDashboardModal('Please select at least 1 field/item to edit.');
+        return;
+    }
+
+    if (reason === '') {
+        showDashboardModal('Reason is required.');
+        return;
+    }
+
+    //by dipshikha
+    if (!file) {
+        showDashboardModal('Modification Order document is required.');
+        return;
+    }
+    //end
+
+    if (file.type !== 'application/pdf') {
+        showDashboardModal('Only PDF file allowed.');
+        return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+        showDashboardModal('PDF must be under 2MB.');
+        return;
+    }
+
+    let formData = new FormData(this);
+
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        cache: false,
+        success: function(response) {
+
+            if (response.status === 200) {
+
+                $('#requestModificationModal').modal('hide');
+                $('#requestModificationForm')[0].reset();
+                $('#projectDetailsContainer').empty();
+
+                showSuccessModal(response.message);
+
+            } else {
+                showDashboardModal(response.message);
+            }
+        },
+        error: function() {
+            showDashboardModal('Something went wrong.');
+        }
+    });
+});
+
+$(document).on("click", ".viewProjectBtn", function () {
+    let project = $(this).data("project");
+    let fields = $(this).data("fields") || [];
+    let selectedItems = $(this).data("selecteditems") || [];
+    let others = $(this).data("others") || {};
+    let workItems = $(this).data("workitems") || [];
+    let reason = $(this).data("reason") || "N/A";
+    let documentUrl = $(this).data("document") || null;
+
+    let fieldMap = {
+        new_road_name: others.new_road_name || "N/A",
+        new_road_length: others.new_road_length || "N/A",
+        number_of_bridge: others.number_of_bridge || "0",
+        number_of_culvert: others.number_of_culvert || "0",
+        number_of_retain_wall: others.number_of_retain_wall || "0",
+    };
+
+    const isEditable = (field) => fields.includes(field);
+
+    const editBadge = (field) =>
+        isEditable(field)
+            ? `<span class="badge bg-warning text-dark ms-2"
+                    style="font-size:11px;">
+                    Requested for Edit
+               </span>`
+            : "";
+
+    $("#modalTitle").html(
+        `<small class="fw-semibold">${project.project_cd}</small>`
+    );
+
+    let html = `
+        <div class="small">
+
+            <div class="border rounded p-3 mb-3 bg-light shadow-sm">
+                <h6 class="fw-bold text-primary mb-3">
+                    Project Details
+                </h6>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <b>Project Name:</b>
+                        ${project.project_name || "N/A"}
+                        ${editBadge("project_name")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Project Type:</b>
+                        ${project.project_type || "N/A"}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Owner Department:</b>
+                        ${project.owner_department || "N/A"}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Division:</b>
+                        ${project.division_name || "N/A"}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Sub Division:</b>
+                        ${project.sub_div_name || "N/A"}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Awarded To:</b>
+                        ${project.contractor_name || "N/A"}
+                        ${editBadge("project_awarded_to")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Start Date:</b>
+                        ${formatDate(project.project_start_date) || "N/A"}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>End Date:</b>
+                        ${formatDate(project.project_end_date) || "N/A"}
+                        ${editBadge("project_end_date")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Estimated Cost:</b>
+                        ₹ ${project.est_proj_cost || 0}
+                        ${editBadge("est_proj_cost")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Defect Liability:</b>
+                        ${project.defect_liability_period || 0} Month
+                        ${editBadge("defect_liability_period")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Work Order Amount:</b>
+                        ₹ ${project.work_order_amount || 0}
+                        ${editBadge("work_order_amount")}
+                    </div>
+
+					<!-- by dipshikha -->
+
+                    <div class="col-md-6">
+                        <b>Work Order Number:</b>
+                        ${project.work_order_no || "N/A"}
+                        ${editBadge("work_order_no")}
+                    </div>
+
+                    <div class="col-md-6">
+                        <b>Work Order Issue Date:</b>
+                        ${formatDate(project.work_order_issue_date) || "N/A"}
+                        ${editBadge("work_order_issue_date")}
+                    </div>
+
+                    <!-- end -->
+
+                </div>
+            </div>
+    `;
+    if (project.project_type_cd === "NEW") {
+        html += `
+            <div class="border rounded p-3 mb-3 shadow-sm">
+                <h6 class="fw-bold text-success mb-3">
+                    Road / Asset Details
+                </h6>
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <b>Road Name:</b>
+                        ${fieldMap.new_road_name}
+                        ${editBadge("new_road_name")}
+                    </div>
+
+                    <div class="col-md-4">
+                        <b>Road Length:</b>
+                        ${fieldMap.new_road_length} Km
+                        ${editBadge("new_road_length")}
+                    </div>
+
+                    <div class="col-md-4">
+                        <b>No. of Bridge:</b>
+                        ${fieldMap.number_of_bridge}
+                        ${editBadge("number_of_bridge")}
+                    </div>
+
+                    <div class="col-md-4">
+                        <b>No. of Culvert:</b>
+                        ${fieldMap.number_of_culvert}
+                        ${editBadge("number_of_culvert")}
+                    </div>
+
+                    <div class="col-md-4">
+                        <b>No. of Retaining Wall:</b>
+                        ${fieldMap.number_of_retain_wall}
+                        ${editBadge("number_of_retain_wall")}
+                    </div>
+
+                </div>
+            </div>
+        `;
+    }
+    else if (project.project_type_cd === "MTN") {
+
+        let maintenanceAssets = $(this).data("maintenanceassets") || {};
+
+        let maintenanceHtml = "";
+
+        if (maintenanceAssets.roads?.length) {
+            maintenanceHtml += `<b>Roads:</b> ${maintenanceAssets.roads.join(", ")}<br>`;
+        }
+
+        if (maintenanceAssets.culverts?.length) {
+            maintenanceHtml += `<b>Culverts:</b> ${maintenanceAssets.culverts.join(", ")}<br>`;
+        }
+
+        if (maintenanceAssets.bridges?.length) {
+            maintenanceHtml += `<b>Bridges:</b> ${maintenanceAssets.bridges.join(", ")}<br>`;
+        }
+
+        if (maintenanceAssets.walls?.length) {
+            maintenanceHtml += `<b>Walls:</b> ${maintenanceAssets.walls.join(", ")}<br>`;
+        }
+        if (!maintenanceHtml) {
+            maintenanceHtml = "N/A";
+        }
+
+        html += `
+            <div class="border rounded p-3 mb-3 shadow-sm">
+                <h6 class="fw-bold text-success mb-3">
+                    Maintenance Asset Details
+                </h6>
+
+                <div>
+                    <b>Redefine Of Existing Asset:</b>
+                    ${editBadge("redefine_existing_asset")}
+
+                    <div class="mt-2 border rounded p-2 bg-light">
+                        ${maintenanceHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    else if (project.project_type_cd === "UPG") {
+        let existingAssets = $(this).data("existingassets") || [];
+        let newAsset = $(this).data("newasset") || {};
+
+        let existingHtml = "N/A";
+
+        if (existingAssets.length) {
+            existingHtml = existingAssets.map((r, index) => {
+                let newAdded = [];
+
+                if (r.new_bridges > 0) newAdded.push(`Bridges: ${r.new_bridges}`);
+                if (r.new_culverts > 0) newAdded.push(`Culverts: ${r.new_culverts}`);
+                if (r.new_walls > 0) newAdded.push(`Walls: ${r.new_walls}`);
+
+                return `
+                    <div class="mb-3">
+                        <b>Road ${index + 1}:</b> ${r.road_name || "N/A"}<br>
+
+                        ${r.culverts.length ? `<b>Culverts:</b> ${r.culverts.join(", ")}<br>` : ""}
+                        ${r.bridges.length ? `<b>Bridges:</b> ${r.bridges.join(", ")}<br>` : ""}
+                        ${r.walls.length ? `<b>Walls:</b> ${r.walls.join(", ")}<br>` : ""}
+
+                        ${newAdded.length ? `<b>Newly Added →</b> ${newAdded.join(", ")}` : ""}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        html += `
+            <div class="border rounded p-3 mb-3 shadow-sm">
+                <h6 class="fw-bold text-success mb-3">Upgradation Asset Details</h6>
+
+                <div class="mb-3">
+                    <b>Redefine Of Existing Asset:</b>
+                    ${editBadge("redefine_existing_asset")}
+                    <div class="mt-2 border rounded p-2 bg-light">
+                        ${existingHtml || "N/A"}
+                    </div>
+                </div>
+
+                <div>
+                    <b>Creation Of New Asset:</b>
+                    ${editBadge("creation_of_new_asset")}
+                    <div class="mt-2 border rounded p-2 bg-light">
+                        <b>Road Name:</b> ${newAsset.road_name  || "N/A"}<br>
+                        <b>Road Length:</b> ${newAsset.road_length  || 0} Km<br>
+                        <b>Bridges:</b> ${newAsset.bridges  || 0}<br>
+                        <b>Culverts:</b> ${newAsset.culverts  || 0}<br>
+                        <b>Walls:</b> ${newAsset.retaining_walls  || 0}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+	//by dipshikha
+    let schemeHtml = `
+        <div class="border rounded p-3 mb-3 shadow-sm">
+            <h6 class="fw-bold text-info mb-3">
+                Scheme Details
+            </h6>
+
+            <div class="mb-2">
+                <b>Scheme:</b>
+                ${project.scheme_name || "N/A"}
+                ${editBadge("scheme_name")}
+            </div>
+    `;
+
+    if (project.funding_agencies?.length) {
+
+        schemeHtml += `
+            <div class="mt-3">
+                <b>Funding Agencies:</b>
+        `;
+
+        project.funding_agencies.forEach((agency, index) => {
+
+            schemeHtml += `
+                <div class="border rounded p-2 mt-2 bg-light">
+
+                    <div>
+                        <b>${index + 1}. ${agency.agency_name || "N/A"}</b>
+                    </div>
+
+                    <div class="small mt-1">
+                        <b>Funding Percentage:</b>
+                        ${agency.funding_percentage || 0}% <br>
+
+                        <b>Funding Amount:</b>
+                        ₹ ${agency.funding_amount || 0}
+                    </div>
+
+                </div>
+            `;
+        });
+
+        schemeHtml += `</div>`;
+    }
+
+    schemeHtml += `</div>`;
+
+    html += schemeHtml;
+    //end			 
+    html += `
+        <div class="alert alert-warning shadow-sm mb-3">
+            <div class="fw-bold mb-1">Reason for Modification</div>
+            <div>${reason}</div>
+        </div>
+    `;
+
+    if (documentUrl) {
+        html += `
+            <!-- by dipshikha -->
+            <div class="border rounded p-3 mb-3 shadow-sm">
+                <h6 class="fw-bold text-danger mb-2">
+                    Modification order
+                </h6>
+            <!-- end -->
+
+                ${
+                    documentUrl
+                        ? `
+                            <a href="${documentUrl}"
+                            target="_blank"
+                            class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-file-pdf"></i>
+                                View PDF
+                            </a>
+                        `
+                        : `
+                            <span class="text-danger">
+                                No document uploaded
+                            </span>
+                        `
+                }
+            </div>
+        `;
+    }
+
+    if (workItems.length) {
+        html += `
+            <div class="border rounded p-3 shadow-sm mt-3">
+                <h6 class="fw-bold text-primary mb-3">
+                    Work Items Details
+                </h6>
+
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Qty</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        workItems.forEach(item => {
+            const badge = selectedItems.includes(item.id)
+                ? `<span class="badge bg-warning text-dark ms-2"
+                        style="font-size:11px;">
+                        Requested for Edit
+                </span>`
+                : "";
+
+            html += `
+                <tr>
+                    <td>
+                        ${item.item_name || "N/A"}
+                        ${badge}
+                    </td>
+                    <td>${item.quantity || 0}</td>
+                    <td>${item.est_start_date || 0}</td>
+                    <td>${item.est_end_date || 0}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+
+    $("#projectModalBody").html(html);
+});
+
+$(document).on('click', '.rejectBtn', function () {
+    let requestId = $(this).data('id');
+    $('#reject_request_id').val(requestId);
+});
+
+$(document).on('click', '.approveBtn', function () {
+    let requestId = $(this).data('id');
+    $('#accept_request_id').val(requestId);
+});
+
+$('#rejectModificationForm').on('submit', function(e) {
+    e.preventDefault();
+
+
+    let requestId = $('#reject_request_id').val();
+    let reason = $('textarea[name="reject_reason"]').val().trim();
+
+    if (reason === '') {
+        showDashboardModal('Reason is required.');
+        return;
+    }
+
+    let formData = new FormData(this);
+
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        cache: false,
+        success: function(response) {
+            if (response.status === 200) {
+                $('#rejectModificationModal').modal('hide');
+                $('#rejectModificationForm')[0].reset();
+                $('#reject_request_id').val('');
+                showSuccessModal(response.message);
+            } else {
+                showDashboardModal(response.message);
+            }
+        },
+        error: function() {
+            showDashboardModal('Something went wrong.');
+        }
+    });
+});
+
+$('#acceptModificationForm').on('submit', function(e) {
+    e.preventDefault();
+
+    let requestId = $('#accept_request_id').val();
+    let reason = $('textarea[name="approve_remark"]').val().trim();
+
+    if (reason === '') {
+        showDashboardModal('Remark is required.');
+        return;
+    }
+
+    let formData = new FormData(this);
+
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        cache: false,
+        success: function(response) {
+            if (response.status === 200) {
+                $('#acceptModificationModal').modal('hide');
+                $('#acceptModificationForm')[0].reset();
+                $('#accept_request_id').val('');
+                showSuccessModal(response.message);
+            } else {
+                showDashboardModal(response.message);
+            }
+        },
+        error: function() {
+            showDashboardModal('Something went wrong.');
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        new bootstrap.Tooltip(el);
+    });
+});
+async function loadDataIntoForm(draft, changesData, workItems, itemOfWorks, documents = [], department) {
+
+    const editText = document.getElementById("editModeText");
+    editText.innerText = `Project is under edit mode for Project Id: ${draft.project_cd}`;
+
+    const rawFields = changesData?.project_fields || [];
+    const editableFields = rawFields.filter(f =>
+        f !== "creation_of_new_asset" &&
+        f !== "redefine_existing_asset"
+    );
+    const isNewAsset = rawFields.includes("creation_of_new_asset");
+    const isRedefineAsset = rawFields.includes("redefine_existing_asset");
+
+    const dom = {
+        projectTypeSelect: document.getElementById("projectTypeSelect"),
+        project_name: document.getElementById("project_name"),
+        divisionSelect: document.getElementById("division_cd"),
+        sub_division_cd: document.getElementById("sub_division_cd"),
+        owner_dept_cd: document.getElementById("owner_dept_cd"),
+        project_start_date: document.getElementById("project_start_date"),
+        project_end_date: document.getElementById("project_end_date"),
+        project_awarded_to: document.getElementById("project_awarded_to"),
+        est_proj_cost: document.getElementById("est_proj_cost"),
+        defect_liability_period: document.getElementById("defect_liability_period"),
+        work_order_amount: document.getElementById("work_order_amount"),
+        addConstructor: document.getElementById("add-constructor"),
+		//by dipshikha
+        work_order_no: document.getElementById("work_order_no"),
+        work_order_issue_date: document.getElementById("work_order_issue_date"),
+        scheme_cd: document.getElementById("scheme_cd"),
+        //end												
+
+        // road section
+        slnewRdNew: document.getElementById("slnewRdNew"),
+        noOfCl: document.getElementById("noOfCl"),
+        noOfBr: document.getElementById("noOfBr"),
+        noOfRtw: document.getElementById("noOfrtw"),
+        noOfPvm: document.getElementById("noOfPvm"),
+        rdLength_new: document.getElementById("rdLength"),
+
+        // upgradation
+        rdoRoadWithSubAsset: document.getElementById("rdoRoadWithSubAsset"),
+        rdoSubAsset: document.getElementById("rdoSubAsset"),
+        new_road_name: document.getElementById("new_road_name"),
+        road_length: document.getElementById("road_length"),
+        new_culverts: document.getElementById("new_culverts"),
+        new_bridges: document.getElementById("new_bridges"),
+        new_retaining_walls: document.getElementById("new_retaining_walls"),
+        new_pavements: document.getElementById("new_pavements"),
+    };
+
+    if (dom.projectTypeSelect && draft.project_type_cd) {
+        dom.projectTypeSelect.innerHTML = `
+            <option value="${draft.project_type_cd}" selected>
+                ${draft.proj_type_descr}
+            </option>
+        `;
+        dom.projectTypeSelect.readOnly = true;
+        dom.projectTypeSelect.dispatchEvent(new Event("change"));
+    }
+
+    if (dom.project_name) dom.project_name.value = draft.project_name || "";
+    if (dom.owner_dept_cd) {
+        dom.owner_dept_cd.value = draft.owner_dept_cd || "";
+        dom.owner_dept_cd.readOnly = true;
+    }
+
+    if (draft.division_cd && dom.divisionSelect) {
+        dom.divisionSelect.value = draft.division_cd;
+        dom.divisionSelect.disabled = true;
+    }
+
+    if (draft.sub_division_cd && dom.sub_division_cd) {
+        const select = dom.sub_division_cd;
+        select.dataset.selected = draft.sub_division_cd;
+
+        loadSubDivisions(draft.division_cd,draft.sub_division_cd);
+
+        const observer = new MutationObserver(() => {
+
+            const saved = dom.sub_division_cd.dataset.selected;
+
+            if (saved && dom.sub_division_cd.value !== saved) {
+                dom.sub_division_cd.value = saved;
+                 dom.sub_division_cd.dispatchEvent(new Event("change"));
+                  observer.disconnect();
+                   dom.sub_division_cd.readOnly = true;
+            }
+        });
+
+        observer.observe(dom.sub_division_cd, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+
+    if (dom.project_start_date)
+        dom.project_start_date.value = formatDate(draft.project_start_date);
+
+    if (dom.project_end_date)
+        dom.project_end_date.value = formatDate(draft.project_end_date);
+
+    if (dom.project_awarded_to)
+        dom.project_awarded_to.value = draft.project_awarded_to || "";
+
+    if (dom.est_proj_cost)
+        dom.est_proj_cost.value = draft.est_proj_cost || "";
+
+    if (dom.defect_liability_period)
+        dom.defect_liability_period.value = draft.defect_liability_period || "";
+
+    if (dom.work_order_amount)
+        dom.work_order_amount.value = draft.work_order_amount || "";
+
+	//by dipshikha
+    if (dom.work_order_no)
+        dom.work_order_no.value = draft.work_order_no || "";
+
+    if (dom.work_order_issue_date)
+        dom.work_order_issue_date.value = formatDate(draft.work_order_issue_date) || "";
+
+    if (draft.scheme_cd && dom.scheme_cd) {
+        dom.scheme_cd.value = draft.scheme_cd;
+        dom.scheme_cd.dispatchEvent(new Event("change"));
+    }
+    //end										  
+
+
+    const fieldMap = {
+        project_name: dom.project_name,
+        project_end_date: dom.project_end_date,
+        project_awarded_to: dom.project_awarded_to,
+        est_proj_cost: dom.est_proj_cost,
+        defect_liability_period: dom.defect_liability_period,
+        work_order_amount: dom.work_order_amount,
+    };
+
+    //by dipshikha
+    if (String(department) === "14" || String(department) === "3") {
+        //end
+        const type = String(draft.project_type_cd).trim().toUpperCase();
+        if (type === "NEW") {
+            Object.assign(fieldMap, {
+                new_road_name: dom.slnewRdNew,
+                new_road_length: dom.rdLength_new,
+                number_of_culvert: dom.noOfCl,
+                number_of_bridge: dom.noOfBr,
+                number_of_retain_wall: dom.noOfRtw,
+            });
+        }
+
+        if (type === "UPG") {
+            const newAssetFields = [
+                dom.new_road_name,
+                dom.road_length,
+                dom.new_culverts,
+                dom.new_bridges,
+                dom.new_retaining_walls,
+                dom.new_pavements,
+                document.getElementById("addRefAssetNewBtn"),
+                document.getElementById("closeNewAssetsForm")
+            ];
+
+            newAssetFields.forEach(el => {
+                if (!el) return;
+
+                if (isNewAsset) {
+                    el.readOnly = false;
+                } else {
+                    el.readOnly = true;
+                }
+            });
+
+            const addRefAssetNewBtn = document.getElementById("addRefAssetNewBtn");
+            const closeNewAssetsForm = document.getElementById("closeNewAssetsForm");
+
+            if (addRefAssetNewBtn) {
+                addRefAssetNewBtn.disabled = !isNewAsset;
+            }
+
+            if (closeNewAssetsForm) {
+                closeNewAssetsForm.disabled = !isNewAsset;
+            }
+
+            const redefineFields = [
+                dom.rdoRoadWithSubAsset,
+                dom.rdoSubAsset,
+                document.getElementById("refRoadSelect"),
+                document.getElementById("txt_start_chainage"),
+                document.getElementById("txt_end_chainage"),
+                document.getElementById("refCulvertSelect"),
+                document.getElementById("refBridgeSelect"),
+                document.getElementById("refWallSelect"),
+                document.getElementById("refPVSelect"),
+                document.getElementById("addRefAssetBtn")
+            ];
+
+            redefineFields.forEach(el => {
+                if (!el) return;
+
+                if (isRedefineAsset) {
+                    el.readOnly = false;
+                } else {
+                    el.readOnly = true;
+                }
+            });
+
+            const addRefAssetBtn = document.getElementById("addRefAssetBtn");
+            if (addRefAssetBtn) {
+                addRefAssetBtn.disabled = !isRedefineAsset;
+            }
+
+            const table = document.getElementById("refAssetTable");
+
+            if (table) {
+                table.style.pointerEvents = isRedefineAsset ? "auto" : "none";
+                table.style.opacity = isRedefineAsset ? "1" : "0.5";
+            }
+
+            if (!isRedefineAsset) {
+                dom.rdoRoadWithSubAsset.checked = false;
+                dom.rdoSubAsset.checked = false;
+            }
+        }
+
+        if (type === "MTN") {
+            const redefineFields = [
+                document.getElementById("maintRoads"),
+                document.getElementById("maintCulverts"),
+                document.getElementById("maintBridges"),
+                document.getElementById("maintWalls"),
+                document.getElementById("maintPv"),
+                document.getElementById("addMaintAssetBtn")
+            ];
+
+            redefineFields.forEach(el => {
+                if (!el) return;
+
+                if (isRedefineAsset) {
+                    el.readOnly = false;
+                } else {
+                    el.readOnly = true;
+                }
+            });
+            const table = document.getElementById("mtnAssetTable");
+
+            if (table) {
+                table.style.pointerEvents = isRedefineAsset ? "auto" : "none";
+                table.style.opacity = isRedefineAsset ? "1" : "0.5";
+            }
+        }
+    }
+
+    Object.values(fieldMap).forEach(field => {
+        if (!field) return;
+
+        if (field.tagName === "INPUT" || field.tagName === "TEXTAREA") {
+            field.readOnly = true;
+        }
+    });
+
+    editableFields.forEach(key => {
+        const field = fieldMap[key];
+        if (!field) return;
+
+        if (field.tagName === "INPUT" || field.tagName === "TEXTAREA") {
+            field.readOnly = false;
+        }
+    });
+
+    if (!editableFields.includes("project_awarded_to")) {
+        if (dom.addConstructor) {
+            dom.addConstructor.style.pointerEvents = "none";
+            dom.addConstructor.style.opacity = "0.5";
+            dom.addConstructor.style.cursor = "not-allowed";
+            dom.addConstructor.removeAttribute("href");
+        }
+    } else {
+        if (dom.addConstructor) {
+            dom.addConstructor.style.pointerEvents = "auto";
+            dom.addConstructor.style.opacity = "1";
+            dom.addConstructor.style.cursor = "pointer";
+            dom.addConstructor.setAttribute("href", "javascript:void(0)");
+        }
+    }
+
+    const others = draft.others ? JSON.parse(draft.others) : {};
+
+    //by dipshikha
+    if (String(department) === "14" || String(department) === "3") {
+        //end
+
+        if (String(draft.project_type_cd).trim().toUpperCase() === "NEW") {
+
+            const newRoadName = (others.new_road_name ?? "").toString().trim();
+
+            if (newRoadName !== "") {
+
+                if (dom.slnewRdNew) dom.slnewRdNew.value = newRoadName;
+
+                if (dom.rdLength_new)
+                    dom.rdLength_new.value = parseFloat(others.new_road_length) || 0;
+
+                const opt1 = document.getElementById("opt1");
+                if (opt1) {
+                    opt1.checked = false;
+                }
+            }
+
+            if (others.new_road_length) {
+                if (dom.noOfCl)
+                    dom.noOfCl.value = parseInt(others.number_of_culvert) || 0;
+                if (dom.noOfBr)
+                    dom.noOfBr.value = parseInt(others.number_of_bridge) || 0;
+                if (dom.noOfRtw)
+                    dom.noOfRtw.value = parseInt(others.number_of_retain_wall) || 0;
+            }
+        }
+
+
+        if (String(draft.project_type_cd).trim().toUpperCase() === "UPG") {
+
+            const upg = others.upgradation || {};
+
+            const hasUpgradedRoads = Array.isArray(upg.upgraded_roads) && upg.upgraded_roads.length > 0;
+
+            if (hasUpgradedRoads) {
+                if (dom.rdoRoadWithSubAsset) {
+                    dom.rdoRoadWithSubAsset.checked = true;
+                }
+            } else {
+                if (dom.rdoSubAsset) {
+                    dom.rdoSubAsset.checked = true;
+                }
+            }
+
+            const tbody = document.querySelector("#refAssetTable tbody");
+
+            if (!tbody) return;
+
+            tbody.innerHTML = "";
+
+            const rows = upg.upgraded_asset_dtls || [];
+
+            rowIndex = 0;
+
+            rows.forEach((item) => {
+                rowIndex++;
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>
+                        ${item.parent_asset_id ?? ""}
+                        <input type="hidden" name="roads[]" value="${item.parent_asset_id}">
+                    </td>
+
+                    <td>
+                        ${(item.culverts || []).map(c => `
+                            <input type="hidden" name="culverts_${rowIndex}[]" value="${c}">
+                            <span class="badge bg-info me-1">${c}</span>
+                        `).join("")}
+                    </td>
+
+                    <td>
+                        ${(item.bridges || []).map(b => `
+                            <input type="hidden" name="bridges_${rowIndex}[]" value="${b}">
+                            <span class="badge bg-warning text-dark me-1">${b}</span>
+                        `).join("")}
+                    </td>
+
+                    <td>
+                        ${(item.retaining_walls || []).map(w => `
+                            <input type="hidden" name="walls_${rowIndex}[]" value="${w}">
+                            <span class="badge bg-secondary me-1">${w}</span>
+                        `).join("")}
+                    </td>
+
+
+                    <td><input type="number" name="new_culverts_${rowIndex}" value="${item.new_culverts || 0}" class="form-control"></td>
+                    <td><input type="number" name="new_bridges_${rowIndex}" value="${item.new_bridges || 0}" class="form-control"></td>
+                    <td><input type="number" name="new_walls_${rowIndex}" value="${item.new_retaining_walls || 0}" class="form-control"></td>
+
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger deleteRowBtn">Delete</button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("rowCount").value = rowIndex;
+
+            const newAsset = upg.new_asset;
+
+            const newAssetsForm = document.getElementById("newAssetsForm");
+
+            if (newAsset) {
+                if (newAssetsForm) {
+                    newAssetsForm.style.display = "block";
+                }
+
+                if (dom.new_road_name) {
+                    dom.new_road_name.value = newAsset.road_name || "";
+                }
+
+                if (dom.road_length) {
+                    dom.road_length.value = newAsset.road_length || "";
+                }
+
+                if (dom.new_culverts) {
+                    dom.new_culverts.value = newAsset.culverts || 0;
+                }
+
+                if (dom.new_bridges) {
+                    dom.new_bridges.value = newAsset.bridges || 0;
+                }
+
+                if (dom.new_retaining_walls) {
+                    dom.new_retaining_walls.value = newAsset.retaining_walls || 0;
+                }
+
+            } else {
+                if (newAssetsForm) {
+                    newAssetsForm.style.display = "none";
+                }
+            }
+        }
+
+        if (String(draft.project_type_cd).trim().toUpperCase() === "MTN") {
+
+            const mtn = others.maintenance || {};
+            const assetList = mtn.asset_dtls?.asset_list || [];
+            const subAssets = mtn.sub_asset_dtls || [];
+            const rowBase = assetList.length ? assetList : ["--"];
+
+            const tbody = document.querySelector("#mtnAssetTable tbody");
+            if (!tbody) return;
+
+            tbody.innerHTML = "";
+
+            mnt_rowIndex = 0;
+
+            rowBase.forEach((road) => {
+
+                mnt_rowIndex++;
+
+                const culverts = subAssets.find(s => s.sub_asset_type_cd === 0)?.sub_asset_list || [];
+                const bridges  = subAssets.find(s => s.sub_asset_type_cd === 1)?.sub_asset_list || [];
+                const retaining_walls = subAssets.find(s => s.sub_asset_type_cd === 16)?.sub_asset_list || [];
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>
+                        <input type="hidden" name="roads_mnt${mnt_rowIndex}[]" value="${road === '--' ? '' : road}">
+                        <span class="badge bg-info me-1">${road === '--' ? 'N/A' : road}</span>
+                    </td>
+
+                    <td>
+                        ${(culverts || []).map(c => `
+                            <input type="hidden" name="culverts_mnt_${mnt_rowIndex}[]" value="${c}">
+                            <span class="badge bg-info me-1">${c}</span>
+                        `).join("")}
+                    </td>
+
+                    <td>
+                        ${(bridges || []).map(b => `
+                            <input type="hidden" name="bridges_mnt_${mnt_rowIndex}[]" value="${b}">
+                            <span class="badge bg-warning text-dark me-1">${b}</span>
+                        `).join("")}
+                    </td>
+
+                    <td>
+                        ${(retaining_walls || []).map(w => `
+                            <input type="hidden" name="walls_mnt_${mnt_rowIndex}[]" value="${w}">
+                            <span class="badge bg-secondary me-1">${w}</span>
+                        `).join("")}
+                    </td>
+
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger deleteRowBtn">Delete</button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+
+
+                tr.querySelector(".deleteRowBtn").addEventListener("click", () => {
+                    tr.remove();
+                });
+            });
+
+            document.getElementById("mnt_rowCount").value = mnt_rowIndex;
+
+        }
+    }
+
+    const changedWorkItems = changesData?.work_item || [];
+    const tbody = document.querySelector("#workItemTable tbody");
+
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    work_rowIndex = 0;
+
+    workItems.forEach(item => {
+        work_rowIndex++;
+
+        const editable = changedWorkItems.includes(Number(item.id));
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>
+                ${
+                    editable
+                    ? `
+                        <select name="item_cd_${work_rowIndex}"
+                            class="form-select form-select-sm">
+                            ${itemOfWorks.map(opt => `
+                                <option value="${opt.item_cd}"
+                                    ${Number(opt.item_cd) === Number(item.item_cd) ? "selected" : ""}>
+                                    ${opt.item_name}
+                                </option>
+                            `).join("")}
+                        </select>
+                    `
+                    : `
+                        <input type="hidden" name="item_cd_${work_rowIndex}" value="${item.item_cd}">
+                        ${item.item_name}
+                    `
+                }
+            </td>
+
+            <td>
+                <input type="number"
+                    name="quantity_${work_rowIndex}"
+                    value="${item.quantity}"
+                    class="form-control form-control-sm qty"
+                    ${editable ? "" : "readonly"}>
+            </td>
+
+            <td>
+                <input type="date"
+                    name="est_start_date_${work_rowIndex}"
+                    value="${item.est_start_date || ''}"
+                    class="form-control form-control-sm start-date"
+                    ${editable ? "" : "readonly"}>
+            </td>
+
+            <td>
+                <input type="date"
+                    name="est_end_date_${work_rowIndex}"
+                    value="${item.est_end_date || ''}"
+                    class="form-control form-control-sm end-date"
+                    ${editable ? "" : "readonly"}>
+            </td>
+
+            <td>
+                ${
+                    editable
+                    ? `<button type="button" class="btn btn-danger btn-sm deleteWorkBtn">Delete</button>`
+                    : `<button type="button" class="btn btn-secondary btn-sm" disabled>Locked</button>`
+                }
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+
+        if (editable) {
+            tr.querySelector(".deleteWorkBtn")?.addEventListener("click", () => tr.remove());
+        }
+    });
+
+    document.getElementById("work_rowCount").value = work_rowIndex;
+
+    loadDocuments(documents);
+
+}
+
+const formatDate = (dateStr) => {
+    return dateStr ? dateStr.split(" ")[0] : "";
+};
+
+function ensureDbDocumentContainer() {
+    let container = document.getElementById("dbDocumentsPreview");
+
+    if (!container) {
+        const uploadSection = document.getElementById("asset_document_container");
+
+        container = document.createElement("div");
+        container.id = "dbDocumentsPreview";
+        container.className = "mt-2";
+
+        uploadSection.appendChild(container);
+    }
+
+    return container;
+}
+
+function loadDocuments(documents = []) {
+    const container = ensureDbDocumentContainer();
+    container.innerHTML = "";
+
+    loadedDocuments = documents; // keep full state
+
+    const docMapReverse = {
+        SO: "workOrder",
+        WO: "projectPlan",
+        WP: "drpDocument",
+        PA: "designDoc"
+    };
+
+    existingDocTypes = documents
+        .map(doc => doc.doc_catg)
+        .map(code => docMapReverse[code])
+        .filter(Boolean);
+
+
+    const fileInputs = document.querySelectorAll("#asset_document_container input[type='file']");
+
+    fileInputs.forEach(input => {
+        const docType = input.name;
+
+        const msgId = "msg_" + docType;
+
+        if (existingDocTypes.includes(docType)) {
+
+            input.disabled = true;
+            input.classList.add("bg-light");
+
+            let msg = document.getElementById(msgId);
+            if (!msg) {
+                msg = document.createElement("small");
+                msg.id = msgId;
+                msg.className = "text-danger d-block mt-1";
+                input.parentNode.appendChild(msg);
+            }
+
+            msg.innerText = "Already uploaded. Remove existing document to upload new one.";
+
+        } else {
+            input.disabled = false;
+            input.classList.remove("bg-light");
+
+            const msg = document.getElementById(msgId);
+            if (msg) msg.remove();
+        }
+    });
+
+    renderDocumentList(documents);
+}
+
+function renderDocumentList(documents) {
+    const container = ensureDbDocumentContainer();
+    container.innerHTML = "";
+
+    documents.forEach(doc => {
+        const div = document.createElement("div");
+        div.className = "d-flex align-items-center border p-2 mb-2 position-relative";
+
+        div.innerHTML = `
+            <a href="${doc.file_url}" target="_blank" class="me-3">
+                <i class="fa fa-file-pdf text-danger"></i>
+                ${doc.label ?? 'Document'}
+            </a>
+
+            <button type="button"
+                class="btn btn-sm btn-danger remove-db-doc"
+                data-id="${doc.id}"
+                data-type="${doc.doc_catg}"
+                style="position:absolute; right:5px; top:5px; width:22px; height:22px; padding:0;">
+                ×
+            </button>
+
+            <input type="hidden" name="existing_documents[]" value="${doc.id}">
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+document.addEventListener("click", function (e) {
+
+    if (e.target.classList.contains("remove-db-doc")) {
+
+        const docId = e.target.getAttribute("data-id");
+        const docType = e.target.getAttribute("data-type");
+
+        const parent = e.target.closest(".d-flex");
+        if (parent) parent.remove();
+
+        let input = document.getElementById("deleted_documents");
+
+        if (!input) {
+            input = document.createElement("input");
+            input.type = "hidden";
+            input.id = "deleted_documents";
+            input.name = "deleted_documents";
+            input.value = "[]";
+            document.querySelector("form").appendChild(input);
+        }
+
+        let deleted = JSON.parse(input.value || "[]");
+
+        if (!deleted.includes(docId)) {
+            deleted.push(docId);
+        }
+
+        input.value = JSON.stringify(deleted);
+
+        loadedDocuments = loadedDocuments.filter(d => d.id != docId);
+
+        loadDocuments(loadedDocuments);
+    }
+});
+
+
+let work_rowIndex = 0;
+
+
+document.getElementById("addWorkItemBtn")
+    ?.addEventListener("click", addWorkItem);
+
+
+function addWorkItem() {
+
+    const itemSelect = document.getElementById("item_cd");
+    const qtyInput = document.getElementById("quantity");
+    const startDateInput = document.getElementById("start_date");
+    const endDateInput = document.getElementById("end_date");
+	const startDateError = document.getElementById("start_date_error").innerText.trim();
+    const endDateError = document.getElementById("end_date_error").innerText.trim();																				 
+
+    const item_cd = itemSelect.value;
+    const item_name = itemSelect.options[itemSelect.selectedIndex]?.text || "";
+    const quantity = qtyInput.value;
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+
+    if (!item_cd) {
+        alert("Select Item of Work");
+        return;
+    }
+
+    if (!quantity || Number(quantity) <= 0) {
+        alert("Enter Quantity");
+        return;
+    }
+
+    if (!startDate || Date(startDate) <= 0) {
+        alert("Enter Start Date");
+        return;
+    }
+
+    if (!endDate || Date(endDate) <= 0) {
+        alert("Enter End Date");
+        return;
+    }
+
+	if (startDateError || endDateError) {
+        return;
+    }									  
+    work_rowIndex++;
+
+    const tbody = document.querySelector("#workItemTable tbody");
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+        <td>
+            <input type="hidden"
+                name="item_cd_${work_rowIndex}"
+                value="${item_cd}">
+            ${item_name}
+        </td>
+
+        <td>
+            <input type="hidden"
+                name="quantity_${work_rowIndex}"
+                value="${quantity}">
+            ${quantity}
+        </td>
+
+        <td>
+            <input type="hidden"
+                name="est_start_date_${work_rowIndex}"
+                value="${startDate}">
+            ${startDate}
+        </td>
+
+        <td>
+            <input type="hidden"
+                name="est_end_date_${work_rowIndex}"
+                value="${endDate}">
+            ${endDate}
+        </td>
+
+        <td>
+            <button type="button"
+                class="btn btn-danger btn-sm deleteWorkBtn">
+                Delete
+            </button>
+        </td>
+    `;
+
+    tbody.appendChild(tr);
+
+    tr.querySelector(".deleteWorkBtn")
+        .addEventListener("click", () => {
+            tr.remove();
+        });
+
+    document.getElementById("work_rowCount").value = work_rowIndex;
+
+    itemSelect.value = "";
+    qtyInput.value = "";
+    startDateInput.value = "";
+    endDateInput.value = "";
+}
+
+document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
+
+    const projectType = document.getElementById("projectTypeSelect").value;
+    const departmentName = document.getElementById("owner_dept_cd").value;
+
+    const dom = {
+        project_name: document.getElementById("project_name"),
+        division: document.getElementById("division_cd"),
+        sub_division: document.getElementById("sub_division_cd"),
+        start_date: document.getElementById("project_start_date"),
+        end_date: document.getElementById("project_end_date"),
+        project_awarded_to: document.getElementById("project_awarded_to"),
+        cost: document.getElementById("est_proj_cost"),
+        period: document.getElementById("defect_liability_period"),
+        work_order: document.getElementById("work_order_amount"),
+        road_name: document.getElementById("slnewRdNew"),
+        road_length: document.getElementById("rdLength"),
+		//by dipshikha
+        work_order_no: document.getElementById("work_order_no"),
+        work_order_issue_date: document.getElementById("work_order_issue_date"),
+        scheme_cd: document.getElementById("scheme_cd"),
+        //end
+    };
+
+    const table = document.getElementById('refAssetTable');
+    const mtnTable = document.getElementById('mtnAssetTable');
+
+    const rowCount = table ? table.querySelectorAll('tbody tr').length : 0;
+    const mtnRowCount = mtnTable ? mtnTable.querySelectorAll('tbody tr').length : 0;
+
+    const newAssetsForm = document.getElementById('newAssetsForm');
+
+    let hasError = false;
+
+    // 🔄 Remove old errors
+    document.querySelectorAll(".dynamic-error").forEach(el => el.remove());
+
+    // 🔧 helper to show error
+    const showError = (input, message) => {
+        if (!input) return;
+
+        const error = document.createElement("div");
+        error.className = "text-danger dynamic-error";
+        error.style.fontSize = "12px";
+        error.textContent = message;
+
+        input.style.borderColor = "red";
+
+        // place after input
+        input.parentNode.appendChild(error);
+    };
+
+    // Validation
+    if (!dom.project_name.value.trim()) {
+        showError(dom.project_name, "Project Name is required");
+        hasError = true;
+    }
+
+    if (!dom.division.value) {
+        showError(dom.division, "Division is required");
+        hasError = true;
+    }
+
+    if (!dom.sub_division.value) {
+        showError(dom.sub_division, "Sub Division is required");
+        hasError = true;
+    }
+
+    if (!dom.start_date.value) {
+        showError(dom.start_date, "Start Date is required");
+        hasError = true;
+    }
+
+    if (!dom.end_date.value) {
+        showError(dom.end_date, "End Date is required");
+        hasError = true;
+    }
+
+    if (!dom.project_awarded_to.value) {
+        showError(dom.project_awarded_to, "Project Awarded to is required");
+        hasError = true;
+    }
+
+
+    if (!dom.cost.value) {
+        showError(dom.cost, "Cost is required");
+        hasError = true;
+    }
+
+    if (!dom.period.value) {
+        showError(dom.period, "Period is required");
+        hasError = true;
+    }
+
+    if (!dom.work_order.value) {
+        showError(dom.work_order, "Work Order Amount is required");
+        hasError = true;
+    }
+
+	    //Done By Dipshikha -- start
+    if (!dom.work_order_no.value) {
+        showError(dom.work_order_no, "Work Order Number is required");
+        hasError = true;
+    }
+    if (!dom.work_order_issue_date.value) {
+        showError(dom.work_order_issue_date, "Work Order Issue Date is required");
+        hasError = true;
+    }
+    if (!dom.scheme_cd.value) {
+        showError(dom.scheme_cd, "Scheme is required");
+        hasError = true;
+    }
+    //Done By Dipshikha -- end
+
+
+    //by dipshikha
+    if(departmentName === "14" || departmentName === "3"){
+        //end
+        if (projectType === "NEW") {
+
+            if (!dom.road_name.value.trim()) {
+                showError(dom.road_name, "Road Name is required");
+                hasError = true;
+            }
+
+            if (!dom.road_length.value || parseFloat(dom.road_length.value) <= 0) {
+                showError(dom.road_length, "Enter valid length");
+                hasError = true;
+            }
+        }
+
+        if (projectType === 'UPG' && rowCount === 0) {
+            alert('Please add at least one asset.');
+            hasError = true;
+        }
+
+        if (projectType === 'MTN' && mtnRowCount === 0) {
+            alert('Please add at least one asset.');
+            hasError = true;
+        }
+
+        if (projectType === 'UPG') {
+
+            if (newAssetsForm && newAssetsForm.style.display !== 'none') {
+
+                const roadNameInput = newAssetsForm.querySelector('input[name="new_road_name"]');
+                const roadLengthInput = newAssetsForm.querySelector('input[name="road_length"]');
+
+                const otherFields = [
+                    'new_culverts',
+                    'new_bridges',
+                    'new_retaining_walls',
+                    'new_pavements'
+                ];
+
+                const anyOtherFilled = otherFields.some(name => {
+                    const el = newAssetsForm.querySelector(`input[name="${name}"]`);
+                    return el && el.value && parseInt(el.value) > 0;
+                });
+
+                const roadNameEmpty = !roadNameInput?.value.trim();
+                const roadLengthEmpty = !roadLengthInput?.value.trim();
+
+                const roadLengthFilled = roadLengthInput?.value.trim() !== '';
+
+                if (
+                    (anyOtherFilled && (roadNameEmpty || roadLengthEmpty)) ||
+                    (roadLengthFilled && roadNameEmpty)
+                ) {
+
+                    if (roadNameEmpty) {
+                        showError(roadNameInput, "Road Name is required");
+                    }
+
+                    if (roadLengthEmpty) {
+                        showError(roadLengthInput, "Road Length is required");
+                    }
+
+                    hasError = true;
+                }
+            }
+        }
+    }
+
+    if (!hasError) {
+		if (dom.division.disabled) {
+            dom.division.disabled = false;
+        }								  
+        document.getElementById("myForm").submit();
+    } else {
+        e.preventDefault();
+    }
+});
+
+document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", () => {
+        el.style.borderColor = "";
+        const error = el.parentNode.querySelector(".dynamic-error");
+        if (error) error.remove();
+    });
+});
+
+
+$('#start_date').on('change', function () {
+
+    let startDate = $(this).val();
+    let endDate = $('#end_date').val();
+
+    $('#start_date_error').text('');
+    $('#end_date_error').text('');
+
+    $(this).removeClass('is-invalid');
+    $('#end_date').removeClass('is-invalid');
+
+    // Validation only
+    if (endDate && startDate > endDate) {
+
+        $('#start_date_error')
+            .text('Start Date cannot be greater than End Date');
+
+        $(this).addClass('is-invalid');
+    }
+});
+
+
+$('#end_date').on('change', function () {
+
+    let startDate = $('#start_date').val();
+    let endDate = $(this).val();
+
+    $('#start_date_error').text('');
+    $('#end_date_error').text('');
+
+    $(this).removeClass('is-invalid');
+    $('#start_date').removeClass('is-invalid');
+
+    // Validation only
+    if (startDate && endDate < startDate) {
+
+        $('#end_date_error')
+            .text('End Date cannot be earlier than Start Date');
+
+        $(this).addClass('is-invalid');
+    }
+});

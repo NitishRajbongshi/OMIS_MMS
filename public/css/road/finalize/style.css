@@ -1,0 +1,15 @@
+label {
+    font-size: 12px;
+}
+
+/* .modal-header {
+    background-image: linear-gradient(to right, #858585, #C2C0C0);
+    color: white;
+} */
+
+legend {
+    text-transform: uppercase;
+    color: black;
+    padding: 2px 2px 2px 2px;
+    border: 2px solid #5677E7;
+}

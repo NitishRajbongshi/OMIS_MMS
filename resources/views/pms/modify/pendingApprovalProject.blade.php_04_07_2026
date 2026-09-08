@@ -1,0 +1,412 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="content-header mb-1">
+        <div class="container-fluid">
+            <ol class="breadcrumb float-sm-left text-sm">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('home') }}">Home</a>
+                </li>
+                <li class="breadcrumb-item">Pending Modification Approval</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container-fluid mainBody">
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF NEW PROJECTS PENDING MODIFICATION APPROVAL
+            </span>
+        </h6>
+
+        <div class="container-fluid border py-2">
+            <div class="table-responsive">
+                <table class="text-xs table table-bordered table-striped rounded-0 user_list"
+                    id="new_project_details_table">
+
+                    <thead class="text-white" style="background-color:#417DBE">
+                        <tr>
+                            <th class="text-center">Sl No.</th>
+                            <th class="text-center">Project Code</th>
+                            <th class="text-center">Project Name</th>
+                            <th class="text-center">Project Type</th>
+                            <th class="text-center">Owner Department</th>
+                            <th class="text-center">Division</th>
+                            <th class="text-center">Sub Division</th>
+                            <th class="text-center">Requested On</th>
+                            <th class="text-center">Editing Fields</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($projectDetailsNew as $index => $draft)
+                            @php
+                                $changes = json_decode($draft->changes_applied ?? '{}', true);
+                                $projectFields = $changes['project_fields'] ?? [];
+                                $selectedWorkItems = $changes['work_item'] ?? [];
+                                $others = json_decode($draft->others ?? '{}', true);
+                            @endphp
+
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    {{ \Carbon\Carbon::parse($draft->requested_on)->format('d-m-Y') }}
+                                </td>
+
+                                <td class="text-center">
+                                    <button
+                                        class="btn btn-outline-info btn-xs fw-bold viewProjectBtn"
+                                        data-project='@json($draft)'
+                                        data-fields='@json($projectFields)'
+                                        data-selecteditems='@json($selectedWorkItems)'
+                                        data-others='@json($others)'
+                                        data-workitems='@json($draft->work_item_details)'
+                                        data-document="{{ $draft->supporting_document_url}}"
+                                        data-reason="{{ $draft->reason }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#projectDetailsModal"
+                                    >
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="mb-1">
+                                        <button class="approveBtn btn btn-outline-primary btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#acceptModificationModal">
+                                            <i class="fa-solid fa-circle-check"></i> Approve
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <button class="rejectBtn btn btn-outline-danger btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#rejectModificationModal">
+                                            <i class="fa-solid fa-circle-xmark"></i> Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-3">
+                                    No pending modification approval requests found
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF UPGRADATION PROJECTS PENDING MODIFICATION APPROVAL
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <div class="table-responsive">
+                <table class="text-xs table table-bordered table-striped rounded-0 user_list"
+                    id="upg_project_details_table">
+                    <thead class="theader text-white" style="background-color:#417DBE">
+                        <th class="text-center">Sl No.</th>
+                        <th class="text-center">Project Code</th>
+                        <th class="text-center">Project Name</th>
+                        <th class="text-center">Project Type</th>
+                        <th class="text-center">Owner Department</th>
+                        <th class="text-center">Division</th>
+                        <th class="text-center">Sub Division</th>
+                        <th class="text-center">Requested On</th>
+                        <th class="text-center">Editing Fields</th>
+                        <th class="text-center">Action</th>
+                    </thead>
+                    <tbody>
+                        @forelse ($projectDetailsUpgrade as $index => $draft)
+                            @php
+                                $changes = json_decode($draft->changes_applied ?? '{}', true);
+                                $projectFields = $changes['project_fields'] ?? [];
+                                $selectedWorkItems = $changes['work_item'] ?? [];
+                                $others = json_decode($draft->others ?? '{}', true);
+                            @endphp
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    {{ \Carbon\Carbon::parse($draft->requested_on)->format('d-m-Y') }}
+                                </td>
+                                <td class="text-center">
+                                    <button
+                                        class="btn btn-outline-info btn-xs fw-bold viewProjectBtn"
+                                        data-project='@json($draft)'
+                                        data-fields='@json($projectFields)'
+                                        data-selecteditems='@json($selectedWorkItems)'
+                                        data-others='@json($others)'
+                                        data-workitems='@json($draft->work_item_details)'
+                                        data-document="{{ $draft->supporting_document_url}}"
+                                        data-reason="{{ $draft->reason }}"
+                                        data-existingassets='@json($draft->existing_assets)'
+                                        data-newasset='@json($draft->new_asset_details)'
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#projectDetailsModal"
+                                    >
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <div class="mb-1">
+                                        <button class="approveBtn btn btn-outline-primary btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#acceptModificationModal">
+                                            <i class="fa-solid fa-circle-check"></i> Approve
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <button class="rejectBtn btn btn-outline-danger btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#rejectModificationModal">
+                                            <i class="fa-solid fa-circle-xmark"></i> Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-3">
+                                    No pending modification approval requests found
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h6 class="p-2 mt-5 border border-primary text-light bg-primary">
+            <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                LIST OF MAINTENANCE PROJECTS PENDING MODIFICATION APPROVAL
+            </span>
+        </h6>
+        <div class="container-fluid border py-2">
+            <div class="table-responsive">
+                <table class="text-xs table table-bordered table-striped rounded-0 user_list"
+                    id="mtn_project_details_table">
+                    <thead class="theader text-white" style="background-color:#417DBE">
+                        <th class="text-center">Sl No.</th>
+                        <th class="text-center">Project Code</th>
+                        <th class="text-center">Project Name</th>
+                        <th class="text-center">Project Type</th>
+                        <th class="text-center">Owner Department</th>
+                        <th class="text-center">Division</th>
+                        <th class="text-center">Sub Division</th>
+                        <th class="text-center">Requested On</th>
+                        <th class="text-center">Editing Fields</th>
+                        <th class="text-center">Action</th>
+                    </thead>
+                    <tbody>
+                        @forelse ($projectDetailsMaintenance as $index => $draft)
+                            @php
+                                $changes = json_decode($draft->changes_applied ?? '{}', true);
+                                $projectFields = $changes['project_fields'] ?? [];
+                                $selectedWorkItems = $changes['work_item'] ?? [];
+                                $others = json_decode($draft->others ?? '{}', true);
+                            @endphp
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    {{ \Carbon\Carbon::parse($draft->requested_on)->format('d-m-Y') }}
+                                </td>
+                                <td class="text-center">
+                                    <button
+                                        class="btn btn-outline-info btn-xs fw-bold viewProjectBtn"
+                                        data-project='@json($draft)'
+                                        data-fields='@json($projectFields)'
+                                        data-selecteditems='@json($selectedWorkItems)'
+                                        data-others='@json($others)'
+                                        data-workitems='@json($draft->work_item_details)'
+                                        data-document="{{ $draft->supporting_document_url}}"
+                                        data-reason="{{ $draft->reason }}"
+                                        data-maintenanceassets='@json($draft->maintenance_assets)'
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#projectDetailsModal"
+                                    >
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <div class="mb-1">
+                                        <button class="approveBtn btn btn-outline-primary btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#acceptModificationModal">
+                                            <i class="fa-solid fa-circle-check"></i> Approve
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <button class="rejectBtn btn btn-outline-danger btn-xs fw-bold"
+                                            style="width:6rem"
+                                            data-id="{{ $draft->request_id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#rejectModificationModal">
+                                            <i class="fa-solid fa-circle-xmark"></i> Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-3">
+                                    No pending modification approval requests found
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="projectDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title" id="modalTitle">
+                        Project Details
+                    </h6>
+                    <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="projectModalBody">
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="rejectModificationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Reject Modification Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="rejectModificationForm" method="POST" action="{{ route('reject.modification') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="request_id" id="reject_request_id">
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Rejection Reason
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <textarea class="form-control" name="reject_reason" id="reject_reason" rows="4" placeholder="Enter rejection reason..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-danger">
+                            Reject Request
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="acceptModificationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Approve Modification Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="acceptModificationForm" method="POST" action="{{ route('approve.modification') }}">
+                    @csrf
+                    <input type="hidden" name="request_id" id="accept_request_id">
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Remarks
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <textarea class="form-control" name="approve_remark" id="approve_remark" rows="4" placeholder="Enter approval remarks..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-primary">
+                            Approve Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <x-success-modal />
+    <x-warning-modal />
+@endsection
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/pms/common/modal/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modal/style.css') }}">
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('js/modal/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/modification/requestMdfy.js') }}"></script>
+
+    <script>
+        $(function () {
+            $('#new_project_details_table').DataTable();
+        });
+    </script>
+@endpush

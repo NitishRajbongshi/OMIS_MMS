@@ -1,0 +1,1626 @@
+@extends('layouts.app')
+@section('content')
+    <section class="content">
+
+        {{-- alert section --}}
+        <div id="alertContainer">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+                    <strong>Success!</strong> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                    <strong>Error!</strong> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+        </div>
+
+        {{-- draft list section --}}
+        {{-- @if (!isset($project))
+            <div class="text-end my-1">
+                <button class="btn btn-info btn-sm" id="listDraft">Saved Draft List</button>
+            </div>
+        @endif --}}
+        <form id="myForm"
+            action="{{ isset($project) ? route('project.update', $project->project_cd) : route('manage-project') }}"
+            method="POST" enctype="multipart/form-data" class="mt-2">
+            @csrf
+            @if (isset($project))
+                @method('PUT')
+                @php
+                    $others = json_decode($project->others ?? '{}', true);
+                @endphp
+            @endif
+            <h4 id="editModeText" style="display:none;"></h4>
+            <input type="hidden" id="project_cd" name="project_cd">
+            <input type="hidden" id="deleted_images" name="deleted_images">
+            <input type="hidden" id="deleted_documents" name="deleted_documents">
+
+            <input type="hidden" name="draft_id" value="">
+
+            {{-- project information section --}}
+            <div class="card mb-2">
+                <div class="card-header text-light fw-bold text-uppercase">Project Information</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Type <span class="text-danger">*</span></label>
+                            <select name="projectTypeSelect" id="projectTypeSelect" class="form-select form-select-sm"
+                                required>
+                                <option value="">Select</option>
+
+                                @foreach ($projectTypes as $projectType)
+                                    <option value="{{ $projectType->proj_type_cd }}"
+                                        {{ old('projectTypeSelect', $others['project_type'] ?? '') === $projectType->proj_type_cd ? 'selected' : '' }}>
+                                        {{ $projectType->proj_type_descr }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Name <span class="text-danger">*</span></label>
+                            <input type="text" name="project_name" id="project_name" class="form-control form-control-sm"
+                                value="{{ old('project_name', $project->project_name ?? '') }}" minlength="3"
+                                maxlength="100" placeholder="Enter project name" required />
+                            <small id="projectNameError" class="text-danger"></small>
+                        </div>
+
+                        <!-- Owner Department -->
+                        <div class="col-sm-3">
+                            <label class="form-label">Owner Department <span class="text-danger">*</span></label>
+                            <select name="owner_dept_cd" id="owner_dept_cd" class="form-select form-select-sm" required>
+                                <option value="{{ $department->id }}"
+                                    {{ old('owner_dept_cd', $project->owner_dept_cd ?? '') == $department->id ? 'selected' : '' }}>
+                                    {{ $department->department_name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Division Name <span class="text-danger">*</span></label>
+                            <!-- required and name tag added by dipshikha -->
+                            <select name= "division_cd" id="division_cd" class="form-select form-select-sm"
+                                data-user-subdivision="{{ session('userMapping')->sub_division_cd ?? '' }}"
+                                @if (session('userMapping')->office_type_cd === 'DO' || session('userMapping')->office_type_cd === 'SDO') selected
+                                    disabled @endif required>
+                                    <!-- end -->
+                                <option value="">Select Division</option>
+                                @foreach ($div as $d)
+                                    <option value="{{ $d->division_cd }}"
+                                        @if (session('userMapping')->office_type_cd === 'DO' || session('userMapping')->office_type_cd === 'SDO') selected @endif>
+                                        {{ $d->division_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- division field not required because for higher-level users, they are not mapped to a single/main division by dipshikha--}}
+                        {{-- <input type="hidden" name="division_cd" value="{{ session('userMapping')->division_cd }}"> --}}
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Sub Division Name <span class="text-danger">*</span></label>
+                            <select name="sub_division_cd" id="sub_division_cd" class="form-select form-select-sm" required>
+                                <option value="" disable selected hidden>Choose One</option>
+                                {{-- Dynamic content --}}
+                            </select>
+                        </div>
+
+                        <!-- Project Start Date -->
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="project_start_date" id="project_start_date"
+                                class="form-control form-control-sm"
+                                value="{{ old('project_start_date', $project->project_start_date ?? '') }}" required/>
+                        </div>
+
+                        <!-- Project End Date -->
+                        <div class="col-sm-3">
+                            <label class="form-label">Stipulated End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="project_end_date" id="project_end_date"
+                                class="form-control form-control-sm"
+                                value="{{ old('project_end_date', $project->project_end_date ?? '') }}" required/>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Awarded To <span class="text-danger">*</span></label>
+                            <select name="project_awarded_to" id="project_awarded_to" class="form-select form-select-sm" required>
+                                <option value="">Select Constructor</option>
+                                @foreach ($constructors as $constructor)
+                                    <option value="{{ $constructor->regn_no }}"
+                                        {{ old('project_awarded_to', $project->project_awarded_to ?? '') == $constructor->regn_no ? 'selected' : '' }}>
+                                        {{ $constructor->contractors_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">
+                                Have not found what you are looking for?
+                                <a href="javascript:void(0)" class="text-primary" id="add-constructor">Click to add</a>
+                            </small>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Estimated Cost (₹)<span class="text-danger">*</span></label>
+                            <input type="number" name="est_proj_cost" id="est_proj_cost"
+                                class="form-control form-control-sm"
+                                value="{{ old('est_proj_cost', $project->est_proj_cost ?? '') }}"
+                                placeholder="Enter the estimated cost" required/>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Defect Liability Period <span class="text-danger">*</span></label>
+                            <input type="number" name="defect_liability_period" id="defect_liability_period"
+                                class="form-control form-control-sm"
+                                value="{{ old('defect_liability_period', $project->defect_liability_period ?? '') }}"
+                                placeholder="Enter the no of months" required/>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label">Work Order Amount (₹)<span class="text-danger">*</span></label>
+                            <input type="number" name="work_order_amount" id="work_order_amount"
+                                class="form-control form-control-sm"
+                                value="{{ old('work_order_amount', $project->work_order_amount ?? '') }}"
+                                placeholder="Enter the work order amount" required/>
+                        </div>
+                        {{-- New fields added: nitish --}}
+                        <div class="col-sm-3">
+                            <label class="form-label">Work Order Number <span class="text-danger">*</span></label>
+                            <input type="text" name="work_order_no" id="work_order_no"
+                                class="form-control form-control-sm"
+                                value="{{ old('work_order_no', $project->work_order_no ?? '') }}"
+                                placeholder="Enter work order number" required />
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Work Order Issue Date <span class="text-danger">*</span></label>
+                            <input type="date" name="work_order_issue_date" id="work_order_issue_date"
+                                class="form-control form-control-sm"
+                                value="{{ old('work_order_issue_date', $project->work_order_issue_date ?? '') }}" required/>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Project Scheme <span class="text-danger">*</span></label>
+                            <select name="scheme_cd" id="scheme_cd" class="form-select form-select-sm" required>
+                                <option value="">Select Scheme</option>
+                                @foreach ($schemes as $scheme)
+                                    <option value="{{ $scheme->scheme_id }}"
+                                        {{ old('scheme_cd', $project->scheme_cd ?? '') == $scheme->scheme_id ? 'selected' : '' }}>
+                                        {{ $scheme->scheme_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- <div class="col-sm-3">
+                            <label class="form-label">Funding Agency <span class="text-danger">*</span></label>
+                            <select name="funding_agency_cd" id="funding_agency_cd" class="form-select form-select-sm">
+                                <option value="">Select Agency</option>
+                                @foreach ($agencies as $agency)
+                                    <option value="{{ $agency->funding_agency_id }}"
+                                        {{ old('funding_agency_cd', $project->funding_agency_cd ?? '') == $agency->funding_agency_id ? 'selected' : '' }}>
+                                        {{ $agency->agency_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div> --}}
+                        {{-- End of new fields: nitish --}}
+                    </div>
+                    <div id="fundingAgencyContainer" class="text-xs mt-2"></div>
+                </div>
+            </div>
+
+            {{-- New Section || Nitish --}}
+            <div class="card mb-2" id="newAssetSubAssetCountSection" style="display: none;">
+                <div class="card-header text-light fw-bold text-uppercase">
+                    Add New Building Details
+                </div>
+                <div class="card-body">
+                    <div class="col-md-12">
+                        <div class="row form-1-box">
+                            <div class="col-md-12">
+                                <label for="">Is Maintained by NPWD? <span
+                                        class="star text-danger">*</span></label>
+                                <label for="yes">Yes</label>
+                                <input type="radio" id="rdo_yes" name="rdo_maintained_by" value="Y" checked>
+                                <label for="no">No</label>
+                                <input type="radio" id="rdo_no" name="rdo_maintained_by" value="N"><br>
+                                <span class="spanHide text-danger text-xs mt-2" id="maintained_by_error"></span>
+                                <input type="hidden" id="maintained_by" name="maintained_by" value="Y">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="">Set Geo Location From Google Map: </label>
+                            </div>
+
+                            <div class="col-md-4">
+                                <input type="text" id="asset_geo_location" name="asset_geo_location" value=""
+                                    class="form-control form-control-sm" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button"
+                                    class="classSetGeoLocation btn btn-xs btn-primary text-xm py-1 rounded-1"
+                                    id="btnSetGeoLocation">
+                                    Set Geo Location
+                                </button>
+                            </div>
+                            <div class="col-md-12">
+                                OR
+                            </div>
+                            <div class="col-md-3">
+                                <label for="asset_geo_location_lat">Enter Latitude <span class="star text-danger">*
+                                    </span></label>
+
+                                <input type="text" id="asset_geo_location_lat" class="form-control form-control-sm"
+                                    name="asset_geo_location_lat" value="" placeholder="Enter Latitude">
+
+                            </div>
+                            <div class="col-md-3">
+                                <label for="asset_geo_location_lng">Enter Longitude <span class="star text-danger">*
+                                    </span></label>
+                                <input type="text" id="asset_geo_location_lng" class="form-control form-control-sm"
+                                    name="asset_geo_location_lng" value="" placeholder="Enter Longitude">
+                            </div>
+                        </div>
+
+                        <div class="row form-1-box border my-2 py-2">
+                            <div class="col-sm-12 col-md-4">
+                                <label for="">Building Category:<span
+                                        class="star text-danger">*</span></label><br>
+                                <label for="residential">Residential</label>
+                                <input type="radio" id="residential" name="building_class_cd" value="0">
+                                <label for="nonResidential">Non Residential</label>
+                                <input type="radio" id="nonResidential" name="building_class_cd" value="1">
+                                <label for="rental">Rental</label>
+                                <input type="radio" id="rental" name="building_class_cd" value="2"><br>
+                                <span class="spanHide text-danger text-xs mt-2" id="building_class_cd_error"></span>
+                            </div>
+                            <div class="col-sm-12 col-md-3">
+                                <label for="building_location_cd">
+                                    Location:
+                                    <span class="star text-danger">*</span>
+                                </label>
+                                <select class="form-control form-control-sm" id="building_location_cd"
+                                    name="building_location_cd">
+                                    <option value="">Choose one</option>
+                                </select>
+                                <span class="spanHide text-danger text-xs mt-2" id="building_location_cd_error"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- New Section --}}
+
+            {{-- Maintenance Section || Dipshikha --}}
+            <div class="card mb-2" id="maintenanceSection" style="display: none;">
+                <div class="card-header text-light fw-bold text-uppercase">Select Asset for Maintenance</div>
+                <div class="card-body">
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Existing Vehicles:</label>
+                            <input type="text" id="vehicleSearchMaint" class="form-control form-control-sm mb-2"
+                                placeholder="Search vehicles...">
+
+                            <div id="vehicleListMaint" class="border rounded p-2"
+                                style="max-height:200px; overflow-y:auto;">
+
+                            </div>
+                            <span class="spanHide text-danger text-xs mt-2" id="vehicle_type_cd_error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Select Existing Equipments:</label>
+                            <input type="text" id="equipmentSearchUpg" class="form-control form-control-sm mb-2"
+                                placeholder="Search equipments...">
+
+                            <div id="equipmentListMaint" class="border rounded p-2"
+                                style="max-height:200px; overflow-y:auto;">
+
+                            </div>
+                            <span class="spanHide text-danger text-xs mt-2" id="equipment_type_cd_error"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- Maintenance Section --}}
+
+            {{-- Upgradation Section || Dipshikha --}}
+            <div class="card mb-2" id="upgradationSection" style="display: none;">
+                <div class="card-header text-light fw-bold text-uppercase">
+                    Upgradation Asset Section
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Existing Vehicles:</label>
+                            <input type="text" id="vehicleSearchUpg" class="form-control form-control-sm mb-2"
+                                placeholder="Search vehicles...">
+
+                            <div id="vehicleListUpg" class="border rounded p-2"
+                                style="max-height:200px; overflow-y:auto;">
+
+                            </div>
+                            <span class="spanHide text-danger text-xs mt-2" id="vehicle_type_cd_error_upg"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Select Existing Equipments:</label>
+                            <input type="text" id="equipmentSearchMaint" class="form-control form-control-sm mb-2"
+                                placeholder="Search equipments...">
+
+                            <div id="equipmentListUpg" class="border rounded p-2"
+                                style="max-height:200px; overflow-y:auto;">
+
+                            </div>
+                            <span class="spanHide text-danger text-xs mt-2" id="equipment_type_cd_error_upg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- Upgradation Section --}}
+
+            <!-- Upload Documents -->
+            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_image_container">
+                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
+                    <fieldset class="">
+                        <legend class="w-auto px-2" style="font-size:13px ">
+                            Upload Site Images
+                        </legend>
+                        <div class="p-2">
+                            <div>
+                                <p class="text-sm text-info text-underline"><strong>
+                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
+                                    </strong></p>
+                                <ul class="text-xs text-secondary">
+                                    <li>
+                                        <strong>
+                                            File Type:
+                                        </strong>
+                                        Only JPG, JPEG files are supported for upload in this section.
+                                    </li>
+                                    <li>
+                                        <strong>
+                                            File Size Limit:
+                                        </strong>
+                                        The maximum allowed file size is 1 MB.
+                                    </li>
+                                    <li>
+                                        <strong>
+                                            Note:
+                                        </strong>
+                                        Multiple files can be uploaded.
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="row form-1-box my-1">
+                                <div class="col-md-4">
+                                    <label for="images">Upload Site Images: </label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" class="text-xs text-success" id="images" name="images[]"
+                                        accept=".jpg,.jpeg" multiple>
+                                    <div id="imagesPreview" class="row mt-2"></div>
+                                    @error('images')
+                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_document_container">
+                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
+                    <fieldset class="">
+                        <legend class="w-auto px-2" style="font-size:13px ">
+                            Upload Documents
+                        </legend>
+                        <div class="p-2">
+                            <div>
+                                <p class="text-sm text-info text-underline"><strong>
+                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
+                                    </strong></p>
+                                <ul class="text-xs text-secondary">
+                                    <li>
+                                        <strong>
+                                            File Size Limit:
+                                        </strong>
+                                        The maximum allowed file size is 2 MB.
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="row form-1-box my-1">
+                                <div class="col-md-4">
+                                    <label for="workorder">1. Upload Saction Order (PDF):</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" class="text-xs text-success" id="workOrder" name="workOrder"
+                                        accept=".pdf">
+                                    <button type="button" id="removeBtn_workOrder"
+                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                        style="background:rgb(252, 217, 217); display:none;"
+                                        onclick="removeFile('workOrder')">
+                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                        Remove
+                                    </button>
+                                    @error('workOrder')
+                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row form-1-box my-1">
+                                <div class="col-md-4">
+                                    <label for="projectPlan">2. Upload Work Order (PDF):</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" name="projectPlan" id="projectPlan"
+                                        class="text-xs text-success" accept=".pdf">
+                                    <button type="button" id="removeBtn_projectPlan"
+                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                        style="background:rgb(252, 217, 217); display:none;"
+                                        onclick="removeFile('projectPlan')">
+                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                        Remove
+                                    </button>
+                                    @error('projectPlan')
+                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row form-1-box my-1">
+                                <div class="col-md-4">
+                                    <label for="drpDocument">3. Upload Work Plans (PDF):</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" class="text-xs text-success" id="drpDocument"
+                                        name="drpDocument" accept=".pdf">
+                                    <button type="button" id="removeBtn_drpDocument"
+                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                        style="background:rgb(252, 217, 217); display:none;"
+                                        onclick="removeFile('drpDocument')">
+                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                        Remove
+                                    </button>
+                                    @error('drpDocument')
+                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row form-1-box my-1">
+                                <div class="col-md-4">
+                                    <label for="design_doc">4. Upload Agreement (PDF):</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" class="text-xs text-success" id="designDoc" name="designDoc"
+                                        accept=".pdf">
+                                    <button type="button" id="removeBtn_designDoc"
+                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
+                                        style="background:rgb(252, 217, 217); display:none;"
+                                        onclick="removeFile('designDoc')">
+                                        <i class="fa fa-trash mr-1 text-xs"></i>
+                                        Remove
+                                    </button>
+                                    @error('designDoc')
+                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="submit" id="PmsSaveBtn" class="btn btn-success btn-sm rounded-0 mt-2">
+                    <i class="fa fa-save"></i> Submit
+                </button>
+                <button type="button" id="PmsUpdateBtn" class="btn btn-primary btn-sm rounded-0 mt-2"
+                    style="display: none;">
+                    <i class="fa fa-save"></i> Update
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm rounded-0 mt-2"
+                    onclick="{{ isset($project_cd) && !empty($project_cd) ? 'history.back()' : 'location.reload()' }}">
+                    <i class="fa fa-backward"></i> Cancel
+                </button>
+
+            </div>
+            <input type="hidden" id="subItems" name="sub_items">
+        </form>
+
+        {{-- coded by nitish: modal to add master data --}}
+        <div class="modal fade" id="contractorModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Add Contractor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="contractorForm" class="row">
+                            @csrf
+                            <div class="col-md-6 mb-2">
+                                <label>Registration No</label>
+                                <input type="text" name="regn_no" class="form-control form-control-sm"
+                                    placeholder="Enter registration number" required>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Contractor Name</label>
+                                <input type="text" name="contractors_name" class="form-control form-control-sm"
+                                    placeholder="Enter Contractor Name" required>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Category</label>
+                                <select name="category_cd" class="form-control form-control-sm">
+                                    @foreach ($contractorCategories as $cat)
+                                        <option value="{{ $cat->category_cd }}">{{ $cat->category_descr }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Address line 1</label>
+                                <input type="text" name="address_line_1" class="form-control form-control-sm"
+                                    placeholder="Enter Address Line 1">
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Address line 2</label>
+                                <input type="text" name="address_line_2" class="form-control form-control-sm"
+                                    placeholder="Enter Address Line 2">
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>District</label>
+                                <select name="district_cd" class="form-control form-control-sm">
+                                    @foreach ($districts as $dist)
+                                        <option value="{{ $dist->dist_code }}">{{ $dist->dist_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>State</label>
+                                <select name="state_cd" class="form-control form-control-sm">
+                                    @foreach ($states as $state)
+                                        <option value="{{ $state->state_code }}">{{ $state->state_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Phone</label>
+                                <input type="tel" maxlength="10" minlength="10" pattern="[0-9]{10}" name="phone_no"
+                                    placeholder="Enter Phone Number" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label>Email</label>
+                                <input type="email" name="email" placeholder="Enter Email Address"
+                                    class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-primary">Save Contractor</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- Modal code ended --}}
+
+        <!-- Draft Project Details Table -->
+        @if (!isset($project))
+         <div id="draftSection">
+            <h6 class="p-2 mt-2 border border-primary text-light bg-primary">
+                <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                    LIST OF DRAFT PROJECT DETAILS FOR NEW WORKS
+                </span>
+            </h6>
+            <div class="container-fluid border py-2">
+                <table class="table-responsive text-xs rounded-0 table table-bordered table-striped user_list"
+                    id="project_details_table">
+                    <thead class="theader text-white" style="background-color:#417DBE">
+                        <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                        <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Name</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                        <th class="text-center" style="min-width: 4rem;">Owner Department</th>
+                        <th class="text-center" style="min-width: 6rem;">Division</th>
+                        <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Start Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project End Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Status</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Awarded To</th>
+                        <th class="text-center" style="min-width: 8rem;">Estimated Project Cost</th>
+                        <th class="text-center" style="min-width: 8rem;">Defect Liability Period (in Month)</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Amount(Rs.)</th>
+                        {{-- New: Nitish --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Order Number</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
+                        <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
+                        {{-- End: Nitish --}}
+                         <th class="text-center" style="min-width: 8rem;">Rejection Reason</th>
+                        <th class="text-center" style="min-width: 8rem;">New Asset</th>
+                        {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Funding Agency</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Item</th>
+                         {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 10rem;">Action</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Select</th>
+                    </thead>
+                    <tbody>
+                        @foreach ($draftDetailsForNewWorks as $index => $draft)
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_start_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_end_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
+                                {{-- New: Nitish --}}
+                                <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
+                                {{-- by dipshikha --}}
+                                <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
+                                {{-- end --}}
+                                {{-- End: Nitish --}}
+                                <!-- by dipshikha -->
+                                <td></td>
+                                <td class="text-center">
+                                    <button
+                                        class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal"
+                                        data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
+                                        onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                </td>
+                                <!-- end -->
+                                <td class="text-center">
+                                    @if (in_array($draft->project_cd, $workItems_exist))
+                                        <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            data-toggle="modal" data-target="#ItemsModal{{ $draft->project_cd }}"
+                                            onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                    @endif
+                                    <!-- by dipshikha -->
+                                    <a href="{{ route('pms.work-item.index', ['project' => $draft->project_cd]) }}"
+                                        class="btn btn-xs btn-outline-primary fw-bold rounded-0"
+                                        style="padding: 0.27rem;">
+                                        <i class="fas fa-plus-circle text-xs"></i>
+                                        Add
+                                    </a>
+                                    <!-- end -->
+                                </td>
+                                <!-- by dipshikha -->
+                                <td class="text-center">
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-primary inline fw-bold rounded-0"
+                                        onclick="editWithLocal('{{ $draft->project_cd }}', '{{ $department->id }}')">
+
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+
+
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-danger inline fw-bold rounded-0 ms-1"
+
+                                        onclick="openDeleteModal('{{ $draft->project_cd }}')">
+
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                                <!-- end -->
+                                <td class="text-center">
+                                    <input type="checkbox" class="selected-asset"
+                                        data-project-cd="{{ $draft->project_cd }}" />
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        @if (!isset($project))
+        <div id="draftSectionUpg">
+            <h6 class="p-2 mt-2 border border-primary text-light bg-primary">
+                <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                    LIST OF DRAFT PROJECT DETAILS FOR UPGRADATION
+                </span>
+            </h6>
+            <div class="container-fluid border py-2">
+                <table class="table-responsive text-xs rounded-0 table table-bordered table-striped user_list"
+                    id="project_details_table_upg">
+                    <thead class="theader text-white" style="background-color:#417DBE">
+                        <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                        <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Name</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                        <th class="text-center" style="min-width: 4rem;">Owner Department</th>
+                        <th class="text-center" style="min-width: 6rem;">Division</th>
+                        <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Start Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project End Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Status</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Awarded To</th>
+                        <th class="text-center" style="min-width: 8rem;">Estimated Project Cost</th>
+                        <th class="text-center" style="min-width: 8rem;">Defect Liability Period (in Month)</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Amount(Rs.)</th>
+                        {{-- New: Nitish --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Order Number</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
+                        <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
+                        {{-- End: Nitish --}}
+                        <th class="text-center" style="min-width: 8rem;">Rejection Reason</th>
+                        <th class="text-center" style="min-width: 8rem;">Asset</th>
+                        {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Funding Agency</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Item</th>
+                        {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 10rem;">Action</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Select</th>
+                    </thead>
+                    <tbody>
+                        @foreach ($draftDetailsforUpgradation as $index => $draft)
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_start_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_end_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
+                                {{-- New: Nitish --}}
+                                <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
+                                {{-- End: Nitish --}}
+                                {{-- by dipshikha --}}
+                                <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
+                                {{-- end --}}
+                                <td class="text-center">
+                                    @if ($hasUpgradationAssets)
+                                        <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            onclick="showModalNewAssetDetailMecha('{{ $draft->project_cd }}', 'upg')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                        </button>
+                                    @else
+                                        <span class="text-danger text-bold">NA</span>
+                                    @endif
+                                </td>
+                                <!-- by dipshikha -->
+                                <td class="text-center">
+                                    <button
+                                        class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal"
+                                        data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
+                                        onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                </td>
+                                <!-- end -->
+                                <td class="text-center">
+                                    @if (in_array($draft->project_cd, $workItems_exist))
+                                        <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            data-toggle="modal" data-target="#ItemsModal{{ $draft->project_cd }}"
+                                            onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                    @endif
+                                    <!-- by dipshikha -->
+                                    <a href="{{ route('pms.work-item.index', ['project' => $draft->project_cd]) }}"
+                                        class="btn btn-xs btn-outline-primary fw-bold rounded-0"
+                                        style="padding: 0.27rem;">
+                                        <i class="fas fa-plus-circle text-xs"></i>
+                                        Add
+                                    </a>
+                                    <!-- end -->
+                                </td>
+                                <!-- by dipshikha -->
+                                <td class="text-center">
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-primary inline fw-bold rounded-0"
+                                        onclick="editWithLocal('{{ $draft->project_cd }}', '{{ $department->id }}')">
+
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+
+
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-danger inline fw-bold rounded-0 ms-1"
+
+                                        onclick="openDeleteModal('{{ $draft->project_cd }}')">
+
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="selected-asset"
+                                        data-project-cd="{{ $draft->project_cd }}" />
+                                </td>
+                                <!-- end -->
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        @if (!isset($project))
+        <div id="draftSectionUpMaint">
+            <h6 class="p-2 mt-2 border border-primary text-light bg-primary">
+                <span class="border border-primary text-light bg-primary text-sm text-uppercase">
+                    LIST OF DRAFT PROJECT DETAILS FOR MAINTENANCE
+                </span>
+            </h6>
+            <div class="container-fluid border py-2">
+                <table class="table-responsive text-xs rounded-0 table table-bordered table-striped user_list"
+                    id="project_details_table_maintenance">
+                    <thead class="theader text-white" style="background-color:#417DBE">
+                        <th class="text-center" style="min-width: 3rem;">Sl No.</th>
+                        <th class="text-center" style="min-width: 6rem;">Project Code</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Name</th>
+                        <th class="text-center" style="min-width: 5rem;">Project Type</th>
+                        <th class="text-center" style="min-width: 4rem;">Owner Department</th>
+                        <th class="text-center" style="min-width: 6rem;">Division</th>
+                        <th class="text-center" style="min-width: 6rem;">Sub Division</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Start Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project End Date</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Status</th>
+                        <th class="text-center" style="min-width: 8rem;">Project Awarded To</th>
+                        <th class="text-center" style="min-width: 8rem;">Estimated Project Cost</th>
+                        <th class="text-center" style="min-width: 8rem;">Defect Liability Period (in Month)</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Amount(Rs.)</th>
+                        {{-- New: Nitish --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Order Number</th>
+                        <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
+                        <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
+                        {{-- End: Nitish --}}
+                        <th class="text-center" style="min-width: 8rem;">Rejection Reason</th>
+                        <th class="text-center" style="min-width: 8rem;">Asset</th>
+                         {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Funding Agency</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Work Item</th>
+                        {{-- New: Dipshikha --}}
+                        <th class="text-center" style="min-width: 10rem;">Action</th>
+                        {{-- End: Dipshikha --}}
+                        <th class="text-center" style="min-width: 8rem;">Select</th>
+                    </thead>
+                    <tbody>
+                        @foreach ($draftDetailsforMaintenance as $index => $draft)
+                            <tr data-project-type="{{ $draft->project_type_cd }}">
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $draft->project_cd }}</td>
+                                <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_start_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_end_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
+                                {{-- New: Nitish --}}
+                                <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
+                                <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
+                                {{-- End: Nitish --}}
+
+                                <td class="text-center">
+                                    @if ($hasMaintenanceAssets)
+                                        <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            onclick="showModalNewAssetDetailMecha('{{ $draft->project_cd }}', 'maint')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                        </button>
+                                    @else
+                                        <span class="text-danger text-bold">NA</span>
+                                    @endif
+                                </td>
+                                <!-- by dipshikha -->
+                                <td class="text-center">
+                                    <button
+                                        class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                        data-toggle="modal"
+                                        data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
+                                        onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}')">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        View
+                                    </button>
+                                </td>
+                                <!-- end -->
+                                <td class="text-center">
+                                    @if (in_array($draft->project_cd, $workItems_exist))
+                                        <button
+                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                            data-toggle="modal" data-target="#ItemsModal{{ $draft->project_cd }}"
+                                            onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            View
+                                        </button>
+                                    @endif
+                                     <!-- by dipshikha -->
+                                    <a href="{{ route('pms.work-item.index', ['project' => $draft->project_cd]) }}"
+                                        class="btn btn-xs btn-outline-primary fw-bold rounded-0"
+                                        style="padding: 0.27rem;">
+                                        <i class="fas fa-plus-circle text-xs"></i>
+                                        Add
+                                    </a>
+                                    <!-- end -->
+                                </td>
+                                <!-- by dipshikha -->
+                                <td class="text-center">
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-primary inline fw-bold rounded-0"
+                                        onclick="editWithLocal('{{ $draft->project_cd }}', '{{ $department->id }}')">
+
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+
+
+                                    <button class="text-sm outline-0 btn btn-xs btn-outline-danger inline fw-bold rounded-0 ms-1"
+
+                                        onclick="openDeleteModal('{{ $draft->project_cd }}')">
+
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="selected-asset"
+                                        data-project-cd="{{ $draft->project_cd }}" />
+                                </td>
+                                <!-- end -->
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        <x-building.coordinates.set-coordinate />
+    </section>
+    <x-success-modal />
+    <x-warning-modal />
+    <!-- Custom Show Modal -->
+    <div id="showModal" class="showModal">
+        <!-- Modal content -->
+        <div class="showModalContent">
+            <span class="closeShowModal">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                List of Sub Asset Details
+            </p>
+            <div class="row text-xs" id="modalValContainer">
+            </div>
+        </div>
+    </div>
+
+    <div id="showModalNewAsset" class="showModalNewAsset">
+        <div class="showModalNewAssetContent">
+            <span class="closeShowModalNewAsset">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Asset Details
+            </p>
+
+            <div id="modalValContainerNewAsset" class="row text-xs"></div>
+        </div>
+    </div>
+
+
+    <div id="showModalMaintenance" class="showModalMaintenance">
+        <div class="showModalContentMaintenanace">
+            <span class="closeShowModalMaintenance">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Asset Details
+            </p>
+            <div class="row text-xs" id="modalValContainerMaintenance">
+            </div>
+        </div>
+    </div>
+
+
+    <div id="ItemsModal" class="ItemsModal">
+        <!-- Modal content -->
+        <div class="ItemsModalContent">
+            <span class="closeItemsModal">&times;</span>
+            <p class="text-md text-bold text-primary">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                List of Sub Asset Details
+            </p>
+            <div class="row text-xs" id="modalItemsContainer">
+            </div>
+        </div>
+    </div>
+
+    <!-- Partial Draft Projects Modal -->
+    <div class="modal fade" id="partialProjectsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Saved Drafts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="draftList" class="list-group"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Add Sub Items Modal -->
+    <div id="subItemModal" class="showModal">
+        <div class="showModalContent modal-lg">
+            <span class="closeShowModal">&times;</span>
+
+            <p class="text-md text-bold text-primary mb-2">
+                <i class="fa fa-bars"></i> Add Sub Items
+            </p>
+
+            <!-- ITEM TYPE -->
+            <div class="mb-3">
+                <label class="form-label">Item Type</label>
+                <input type="text" id="modalItemType" class="form-control form-control-sm " readonly>
+            </div>
+
+            <!-- SUB ITEMS DROPDOWN -->
+            <div class="mb-3">
+                <label class="form-label">Sub Items</label>
+                <div class="dropdown-checkbox">
+                    <button type="button" id="subItemDropdown" class="form-control form-control-sm  text-start">
+                        Select subitems
+                    </button>
+                    <div id="subItemMenu" class="dropdown-checkbox-menu shadow-sm">
+                        <input type="search" id="subItemSearch" placeholder="Search..." />
+                        <div id="subItemsOptions">
+                            @foreach ($workSubItems as $item)
+                                <label>
+                                    <input type="checkbox" class="subItemCheckbox" value="{{ $item->sub_item_cd }}"
+                                        data-name="{{ $item->sub_item_name }}">
+                                    <span class="ms-2">{{ $item->sub_item_name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC FIELDS GENERATED HERE -->
+            <div id="subItemDetailsContainer"></div>
+            <div class="text-end mt-3">
+                <button type="button" id="addSubItemBtn" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> ADD
+                </button>
+                <button type="button" class="btn btn-sm btn-danger closeButton">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom add edit Sub Items Modal -->
+    <div id="editSubItemModal" class="showModal">
+        <!-- Modal content -->
+        <div class="showModalContent">
+            <span class="closeShowModal">&times;</span>
+            <p class="text-md text-bold text-primary mb-2">
+                <i class="fa fa-edit" aria-hidden="true"></i>
+                Edit Sub Items
+            </p>
+
+            <!-- Item Type -->
+            <div class="mb-3">
+                <label class="form-label">Item Type</label>
+                <input type="text" id="editModalItemType" class="form-control form-control-sm " readonly>
+            </div>
+
+            <!-- Select Sub Items -->
+            <div class="mb-3">
+                <label class="form-label">Select Sub Items</label>
+
+                <div class="dropdown-checkbox">
+                    <button type="button" id="editSubItemDropdown" class="form-control form-control-sm  text-start">
+                        Select Sub Items
+                    </button>
+
+                    <div id="editSubItemMenu" class="dropdown-checkbox-menu shadow-sm">
+                        <input type="search" id="editSubItemSearch" class="form-control form-control-sm  mb-2"
+                            placeholder="Search sub items..." />
+
+                        <div id="editSubItemOptions">
+                            @foreach ($workSubItems as $item)
+                                <label>
+                                    <input type="checkbox" value="{{ $item->sub_item_cd }}">
+                                    <span class="ms-2">{{ $item->sub_item_name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- <input type="hidden" name="editSubItemSelect[]" id="editSubItemHidden"> --}}
+            </div>
+
+            <!-- DYNAMIC FIELDS GENERATED HERE -->
+            <div id="editsubItemDetailsContainer"></div>
+
+            <!-- Buttons -->
+            <div class="text-end">
+                <button type="button" id="saveEditSubItemBtn" class="btn btn-primary btn-sm">Save Changes</button>
+                <button type="button" class="btn btn-sm btn-danger closeButton">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- View Sub Items Modal -->
+    <div id="viewSubItemsModal" class="showModal">
+        <!-- Modal content -->
+        <div class="showModalContent">
+            <span class="closeShowModal" id="closeViewSubItems">&times;</span>
+            <p class="text-md text-bold text-primary mb-2">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Sub Items Details
+            </p>
+
+            <!-- Table inside modal -->
+            <div class="table-responsive text-xs">
+                <table class="table table-bordered table-sm mb-0" id="viewSubItemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Sub Item</th>
+                            <th>Quantity</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Upgradation Sub Assets Modal -->
+    <div id="viewUpgradationSubAssetsModal" class="showModal">
+        <div class="showModalContent">
+            <span class="closeShowModal" id="closeUpgradationSubAssets">&times;</span>
+
+            <p class="text-md text-bold text-primary mb-2">
+                <i class="fa fa-road" aria-hidden="true"></i>
+                Upgradation Sub-Asset Details
+            </p>
+
+            <div class="table-responsive text-xs">
+                <table class="table table-bordered table-sm mb-0" id="viewUpgradationSubAssetsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Road</th>
+                            <th>Start Chainage</th>
+                            <th>End Chainage</th>
+                            <th>Culverts</th>
+                            <th>Bridges</th>
+                            <th>Walls</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <!-- View Maintenance Sub Assets Modal -->
+    <div id="viewMaintenanceSubAssetsModal" class="showModal">
+        <div class="showModalContent">
+            <span class="closeShowModal" id="closeMaintenanceSubAssets">&times;</span>
+
+            <p class="text-md text-bold text-primary mb-2">
+                <i class="fa fa-wrench" aria-hidden="true"></i>
+                Maintenance Sub-Asset Details
+            </p>
+
+            <div class="table-responsive text-xs">
+                <table class="table table-bordered table-sm mb-0" id="viewMaintenanceSubAssetsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Road</th>
+                            <th>Start Chainage</th>
+                            <th>End Chainage</th>
+                            <th>Culverts</th>
+                            <th>Bridges</th>
+                            <th>Walls</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteDraftModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Draft</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="delete_project_cd">
+
+                    <div class="mb-3">
+                        <label>Remarks</label>
+
+
+
+                        <textarea id="delete_remarks" class="form-control" placeholder="Enter reason for deletion..."></textarea>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- by dipshikha -->
+    <div id="showFundingAgencyDetails" class="showFundingAgencyDetails">
+            <!-- Modal content -->
+        <div class="ItemsModalContent modal-md">
+            <div class="modal-header m-1 p-0">
+                <h5 class="modal-title text-uppercase text-md text-primary font-bold" id="diseaseWiseTitle">
+                    Funding Agency Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row justify-content-center align-item-center text-xs p-1"
+                id="dataSectionForAgencyDetails">
+            </div>
+        </div>
+    </div>
+    <!-- end -->
+
+@endsection
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/pms/common/modal/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modal/style.css') }}">
+
+    <style>
+        :root {
+            --primary: var(--oamis-primary, #0b6b4a);
+            --secondary: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+            --accent: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+        }
+
+        .text-rose-primary {
+            color: var(--primary) !important;
+        }
+
+        .card-body {
+            border: none;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 10px;
+
+        }
+
+        .card-header {
+            background: #0b6b4a !important;
+            border: 1px solid #0b6b4a !important;
+            border-bottom: 0 !important;
+            color: #ffffff !important;
+            font-family: var(--oamis-font) !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            letter-spacing: .04em;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            text-transform: uppercase;
+
+        }
+
+        .card-header,
+        .card-header * {
+            color: #ffffff !important;
+        }
+
+        {{--  .form-control form-control-sm,
+		.form-select form-select-sm {
+			border-radius: 10px;
+			border: 2px solid #f3f4f6;
+			transition: all 0.3s;
+			overflow-x: auto;
+			font-size: small;
+		}  --}} {{--  .form-control form-control-sm:focus,
+		.form-select form-select-sm:focus {
+			border-color: #9fc9f6ff;
+			box-shadow: 0 0 0 0.2rem #9fc9f6ff;
+        }  --}} .btn-rose {
+            background: rgba(11, 107, 74, .1);
+            border: 1px solid rgba(11, 107, 74, .24);
+            border-radius: 999px;
+            color: var(--oamis-primary, #0b6b4a);
+            transition: all 0.3s;
+        }
+
+        .btn-rose:hover {
+            background-color: #0b6b4a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(11, 107, 74, .18);
+            color: white;
+        }
+
+        {{--
+		.form-check-input:checked {
+			background-color: var(--primary);
+			border-color: var(--primary);
+		}  --}} .table {
+            border-radius: 12px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--accent) 0%, #9fc9f6ff 100%);
+        }
+
+        .table thead th {
+            color: var(--primary);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .nested-card {
+            background: #f9fafb;
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+        }
+
+        .upload-zone {
+            border-radius: 12px;
+            padding: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .dropdown-checkbox {
+            position: relative;
+        }
+
+        .dropdown-checkbox-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1050;
+            display: none;
+        }
+
+        .dropdown-checkbox-menu.show {
+            display: block;
+        }
+
+        .dropdown-checkbox-menu label {
+            display: flex;
+            align-items: center;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-checkbox-menu label:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-checkbox input[type="search"] {
+            border: none;
+            border-bottom: 1px solid #ddd;
+            width: 100%;
+            padding: 5px 10px;
+            outline: none;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    {{-- script for dynamic section by project type --}}
+    <script src="{{ asset('js/pms/road/dynamicSectionByType/script.js') }}"></script>
+
+    {{-- script to inherite the buidling functionality --}}
+    <script src="{{ asset('js/modal/script.js') }}" defer></script>
+    <script src="{{ asset('js/building/script.js') }}" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnj1P_w0UVJGnX0vNSPMe5QS__d_E0goM"></script>
+
+    <script src="{{ asset('js/road/assets/removeSelectedFile/script.js') }}" defer></script>
+    <script src="{{ asset('js/common/restrict_decimal_points.js') }}" defer></script>
+    <script src="{{ asset('js/pms/finalization/scirpt.js') }}" defer></script>
+    <script src="{{ asset('js/modal/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/loadDraft/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/validation/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/mechanicals/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/showModalDetail/showWorkItems.js') }}"></script>
+    {{-- by dipshikha --}}
+    <script src="{{ asset('js/pms/common/showFundingAgencies.js') }}" defer></script>
+    <script src="{{ asset('js/pms/showModalDetail/fundingAgencyDetails.js') }}"></script>
+    {{-- end --}}
+    <script>
+        const allSubItems = @json($workSubItems);
+        {{--  $(function () {
+			$("#project_rejection_table").DataTable();
+		});		  --}}
+    </script>
+    <script src="{{ asset('js/pms/showModalDetail/script.js') }}" defer></script>
+    <script src="{{ asset('js/pms/editPms/script.js') }}" defer></script>
+
+    <script>
+        var table1, table2, table3;
+
+        $(document).ready(function() {
+            table1 = $("#project_details_table").DataTable();
+            table2 = $("#project_details_table_maintenance").DataTable();
+            table3 = $("#project_details_table_upg").DataTable();
+        });
+
+        // open modal
+        $('#add-constructor').click(function() {
+            $('#contractorModal').modal('show');
+        });
+
+        // submit contractor form
+        $('#contractorForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: "{{ route('contractor.store') }}",
+                method: "POST",
+                data: $(this).serialize(),
+                success: function(res) {
+
+                    // add new contractor to dropdown
+                    $('#project_awarded_to').append(
+                        `<option value="${res.regn_no}" selected>${res.contractors_name}</option>`
+                    );
+
+                    // close modal
+                    $('#contractorModal').modal('hide');
+
+                    // reset form
+                    $('#contractorForm')[0].reset();
+
+                    alert("Contractor added and selected successfully");
+                },
+                error: function(err) {
+                    alert("Something went wrong");
+                }
+            });
+        });
+
+
+        document.getElementById('myForm').addEventListener('submit', function(e) {
+
+            let isValid = true;
+
+            const projectType = document.getElementById('projectTypeSelect').value;
+
+            if (projectType === 'MTN'){
+
+                const section = document.getElementById("maintenanceSection");
+
+                if (section.classList.contains("d-none")) {
+                    return;
+                }
+
+                document.getElementById("vehicle_type_cd_error").innerText = "";
+                document.getElementById("equipment_type_cd_error").innerText = "";
+
+                const vehicles = document.querySelectorAll(".vehicle-checkbox:checked");
+                const equipments = document.querySelectorAll(".equipment-checkbox:checked");
+
+                if (vehicles.length === 0) {
+                    document.getElementById("vehicle_type_cd_error").innerText = "Please select at least one vehicle";
+                    isValid = false;
+                }
+
+                if (equipments.length === 0) {
+                    document.getElementById("equipment_type_cd_error").innerText = "Please select at least one equipment";
+                    isValid = false;
+                }
+            }
+
+            if (projectType === 'UPG'){
+
+                const section = document.getElementById("upgradationSection");
+
+                if (section.classList.contains("d-none")) {
+                    return;
+                }
+
+                document.getElementById("vehicle_type_cd_error_upg").innerText = "";
+                document.getElementById("equipment_type_cd_error_upg").innerText = "";
+
+                const vehicles = document.querySelectorAll(".vehicle-checkbox:checked");
+                const equipments = document.querySelectorAll(".equipment-checkbox:checked");
+
+                if (vehicles.length === 0) {
+                    document.getElementById("vehicle_type_cd_error_upg").innerText = "Please select at least one vehicle";
+                    isValid = false;
+                }
+
+                if (equipments.length === 0) {
+                    document.getElementById("equipment_type_cd_error_upg").innerText =
+                        "Please select at least one equipment";
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                return;
+            }
+
+            const division = document.getElementById('division_cd');
+            if (division && division.disabled) {
+                division.disabled = false;
+            }
+
+            $('#PmsSaveBtn')
+                .prop('disabled', true)
+                .html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        });
+    </script>
+@endpush

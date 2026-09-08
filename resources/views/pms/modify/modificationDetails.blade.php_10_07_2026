@@ -1,0 +1,2019 @@
+@extends('layouts.app')
+@section('content')
+
+    <div class="card-header container-fluid mainBody my-2 text-sm">
+
+        @php
+            $changesApplied = json_decode($modificationRequest->changes_applied, true);
+            $projectInfo = $changesApplied['project_info'] ?? [];
+        @endphp
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary py-2">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-folder-open me-2"></i>Project Details
+                </h5>
+            </div>
+
+            <div class="card-body">
+
+               {{-- Basic Info --}}
+                <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3">
+                    Basic Information
+                </h6>
+
+                <div class="row g-4">
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Project Code</label>
+                        <div class="fw-semibold">{{ $project->project_cd }}</div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Project Name</label>
+                        <div class="fw-semibold">{{ $project->project_name }}</div>
+
+                        @if(!empty($projectInfo['project_name']) && $projectInfo['project_name'] != $project->project_name)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> {{ $projectInfo['project_name'] }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Project Type</label>
+                        <div class="fw-semibold">{{ $project->project_type }}</div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Department</label>
+                        <div class="fw-semibold">{{ $project->owner_department }}</div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Division</label>
+                        <div class="fw-semibold">{{ $project->division_name }}</div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Sub Division</label>
+                        <div class="fw-semibold">{{ $project->sub_div_name }}</div>
+                    </div>
+
+                    <div class="col-lg-6 col-md-12">
+                        <label class="text-muted small mb-1">Contractor</label>
+                        <div class="fw-semibold">{{ $project->contractor_name }}</div>
+
+                        @if(!empty($requestedContractorName) && $requestedContractorName != $project->contractor_name)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> {{ $requestedContractorName }}
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+
+
+
+                {{-- Dates --}}
+                <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                    Timeline
+                </h6>
+
+
+                <div class="row g-4">
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Start Date</label>
+                        <div class="fw-semibold">
+                            {{ \Carbon\Carbon::parse($project->project_start_date)->format('d M Y') }}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">End Date</label>
+                        <div class="fw-semibold">
+                            {{ \Carbon\Carbon::parse($project->project_end_date)->format('d M Y') }}
+                        </div>
+
+                        @if(!empty($projectInfo['project_end_date']) && $projectInfo['project_end_date'] != $project->project_end_date)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong>
+                                {{ \Carbon\Carbon::parse($projectInfo['project_end_date'])->format('d M Y') }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Defect Liability Period</label>
+                        <div class="fw-semibold">
+                            {{ $project->defect_liability_period }} Months
+                        </div>
+
+                        @if(!empty($projectInfo['defect_liability_period']) && $projectInfo['defect_liability_period'] != $project->defect_liability_period)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong>
+                                {{ $projectInfo['defect_liability_period'] }} Months
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+
+                {{-- Financial --}}
+               <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                    Financial Details
+                </h6>
+
+                <div class="row g-4">
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Estimated Cost</label>
+                        <div class="fw-semibold">₹{{ $project->est_proj_cost }}</div>
+
+                        @if(!empty($projectInfo['est_proj_cost']) && $projectInfo['est_proj_cost'] != $project->est_proj_cost)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> ₹{{ $projectInfo['est_proj_cost'] }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Work Order Amount</label>
+                        <div class="fw-semibold">₹{{ $project->work_order_amount }}</div>
+
+                        @if(!empty($projectInfo['work_order_amount']) && $projectInfo['work_order_amount'] != $project->work_order_amount)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> ₹{{ $projectInfo['work_order_amount'] }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Work Order Number</label>
+                        <div class="fw-semibold">{{ $project->work_order_no }}</div>
+
+                        @if(!empty($projectInfo['work_order_no']) && $projectInfo['work_order_no'] != $project->work_order_no)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> {{ $projectInfo['work_order_no'] }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Work Order Issued</label>
+                        <div class="fw-semibold">{{ $project->work_order_issue_date }}</div>
+
+                        @if(!empty($projectInfo['work_order_issue_date']) && $projectInfo['work_order_issue_date'] != $project->work_order_issue_date)
+                            <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> {{ $projectInfo['work_order_issue_date'] }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="text-muted small mb-1">Scheme Name</label>
+                        <div class="fw-semibold">{{ $project->scheme_name }}</div>
+
+                        @if(!empty($requestedSchemeName) && $requestedSchemeName != $project->scheme_name)
+                           <div class="text-success mt-1" style="font-size: 13px;">
+                                <strong>Requested:</strong> {{ $requestedSchemeName }}
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+
+                <div id="fundingAgencyContainer" class="text-xs mt-4">
+
+                    {{-- Current Funding Agencies --}}
+                    <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                        Current Funding Agencies
+                    </h6>
+
+                    @if($fundingAgencies->isEmpty())
+                        <p class="text-muted">No funding agencies found.</p>
+                    @else
+                        <div class="row">
+                            @foreach($fundingAgencies as $agency)
+                                <div class="col-md-4 mb-3">
+                                    <div class="border rounded p-3 h-100">
+                                        <div>
+                                            <strong>Agency Name:</strong><br>
+                                            {{ $agency->agency_name }}
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <strong>Funding Percentage:</strong><br>
+                                            {{ $agency->funding_percentage }}%
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <strong>Funding Amount:</strong><br>
+                                            ₹{{ number_format($agency->funding_amount,2) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+
+                    {{-- Requested Funding Agencies --}}
+                    <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                        Requested Funding Agencies
+                    </h6>
+
+                    @if($requestedFundingAgencies->isEmpty())
+                        <p class="text-muted">No requested funding agencies found.</p>
+                    @else
+                        <div class="row">
+                            @foreach($requestedFundingAgencies as $agency)
+                                <div class="col-md-4 mb-3">
+                                    <div class="border border-success rounded p-3 h-100">
+
+                                        <div>
+                                            <strong>Agency Name:</strong><br>
+                                            {{ $agency->agency_name }}
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <strong>Funding Percentage:</strong><br>
+                                            {{ $agency->funding_percentage }}%
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <strong>Funding Amount:</strong><br>
+                                            ₹{{ number_format($agency->funding_amount,2) }}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                </div>
+
+                {{-- Others JSON --}}
+                @php
+                    $others = json_decode($project->others, true);
+                    $otherInfo = $changesApplied['others'] ?? [];
+                    $upgInfo = $otherInfo['upgradation'] ?? [];
+                    $newAssetReq = $upgInfo['new_asset'] ?? [];
+                @endphp
+
+                @if ($project->project_type_cd == 'NEW' && ($project->owner_dept_cd == '14' || $project->owner_dept_cd == '3'))
+
+                    <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                        New Works Details
+                    </h6>
+
+                    <div class="row g-4">
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="text-muted small mb-1">Road Name</label>
+                            <div class="fw-semibold">{{ $others['new_road_name'] ?? '-' }}</div>
+
+                            @if(!empty($otherInfo['new_road_name']) && $otherInfo['new_road_name'] != ($others['new_road_name'] ?? null))
+                                <div class="text-success mt-1" style="font-size: 13px;">
+                                    <strong>Requested:</strong> {{ $otherInfo['new_road_name'] }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="text-muted small mb-1">Road Category</label>
+                            <div class="fw-semibold">{{ $roadCategoryName ?? '-' }}</div>
+
+                            @if(!empty($otherInfo['road_category']) && $otherInfo['road_category'] != ($others['road_category'] ?? null))
+                                <div class="text-success mt-1" style="font-size: 13px;">
+                                    <strong>Requested:</strong> {{ $requestedRoadCategoryName }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="text-muted small mb-1">Road Type</label>
+                            <div class="fw-semibold">{{ $roadTypeName ?? '-' }}</div>
+
+                            @if(!empty($otherInfo['road_type']) && $otherInfo['road_type'] != ($others['road_type'] ?? null))
+                                <div class="text-success mt-1" style="font-size: 13px;">
+                                    <strong>Requested:</strong> {{ $requestedRoadTypeName }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="text-muted small mb-1">Road Length</label>
+                            <div class="fw-semibold">{{ $others['new_road_length'] ?? '-' }} km</div>
+
+                            @if(!empty($otherInfo['new_road_length']) && $otherInfo['new_road_length'] != ($others['new_road_length'] ?? null))
+                                <div class="text-success mt-1" style="font-size: 13px;">
+                                    <strong>Requested:</strong> {{ $otherInfo['new_road_length'] }} km
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="text-muted small mb-1">Road Owner</label>
+                            <div class="fw-semibold">{{ $roadOwnerName ?? '-' }}</div>
+
+                            @if(!empty($otherInfo['road_owner']) && $otherInfo['road_owner'] != ($others['road_owner'] ?? null))
+                                <div class="text-success mt-1" style="font-size: 13px;">
+                                    <strong>Requested:</strong> {{ $requestedRoadOwnerName }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <button
+                            class="viewInMapBtn btn btn-primary shadow-sm px-4"
+                            data-id="{{ $project->project_cd }}"
+                            data-road-name-id="{{ $others['new_road_name'] }}"
+                            data-div-name-id="{{ $project->division_name }}"
+                            data-request-id="{{ $modificationRequest->request_id }}">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            View Road on Map
+                        </button>
+
+                        @if(!empty($otherInfo['road_kml_file']) && !empty($otherInfo['road_geojson_file']))
+                            <button
+                                class="viewInMapReqBtn btn btn-success shadow-sm px-4"
+                                data-id="{{ $project->project_cd }}"
+                                data-div-name-id="{{ $project->division_name }}"
+                                data-kml="{{ $otherInfo['road_kml_file'] }}"
+                                data-file-path="{{ $otherInfo['road_geojson_file'] }}"
+                                data-request-id="{{ $modificationRequest->request_id }}">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                View Requested Road on Map
+                            </button>
+                        @endif
+                    </div>
+
+                @endif
+
+
+                {{-- Upgradation for R&B --}}
+                @if ($project->project_type_cd == 'UPG' && ($project->owner_dept_cd == '14' || $project->owner_dept_cd == '3'))
+                    @if (isset($others['upgradation']) || !empty($others['upgradation']['upgraded_roads']))
+
+                        <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                            Upgradation Details
+                        </h6>
+
+                        @if(!empty($others['upgradation']['upgraded_roads']))
+                            {{-- New Asset --}}
+                            @if (!empty($others['upgradation']['new_asset']))
+                                @php $new = $others['upgradation']['new_asset']; @endphp
+
+                                <div class="card mb-3">
+                                    <div class="card-header fw-bold text-white bg-primary">New Asset</div>
+                                    <div class="card-body">
+                                        <div class="row g-4">
+                                            <div class="col-md-4">
+                                                <label class="text-muted small">Road Name</label>
+                                                <div class="fw-semibold">{{ $new['road_name'] ?? '-' }}</div>
+
+                                                @if(!empty($newAssetReq['road_name']) && $newAssetReq['road_name'] != ($new['road_name'] ?? null))
+                                                    <div class="text-success mt-1" style="font-size: 13px;">
+                                                        <strong>Requested:</strong> {{ $newAssetReq['road_name'] }}
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="text-muted small">Road Category</label>
+                                                <div class="fw-semibold">{{ $roadCategoryName ?? '-' }}</div>
+
+                                                @if(!empty($newAssetReq['road_category'])  && $newAssetReq['road_category'] != ($new['road_category'] ?? null))
+                                                    <div class="text-success mt-1" style="font-size: 13px;">
+                                                        <strong>Requested:</strong> {{ $requestedRoadCategoryName }}
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="text-muted small">Road Type</label>
+                                                <div class="fw-semibold">{{ $roadTypeName ?? '-' }}</div>
+
+                                                @if(!empty($newAssetReq['road_type']) && $newAssetReq['road_type'] != ($new['road_type'] ?? null))
+                                                    <div class="text-success mt-1" style="font-size: 13px;">
+                                                        <strong>Requested:</strong> {{ $requestedRoadTypeName }}
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="text-muted small">Road Length</label>
+                                                <div class="fw-semibold">{{ (float)$new['road_length'] == 0 ? '-' : $new['road_length'] . ' km' }}</div>
+
+                                                @if(!empty($newAssetReq['road_length']) && $newAssetReq['road_length'] != ($new['road_length'] ?? null))
+                                                    <div class="text-success mt-1" style="font-size: 13px;">
+                                                        <strong>Requested:</strong> {{ (float)$newAssetReq['road_length'] == 0 ? '-' : $newAssetReq['road_length']}} km
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="text-muted small">Road Owner</label>
+                                                <div class="fw-semibold">{{ $roadOwnerName ?? '-' }}</div>
+
+                                                @if(!empty($newAssetReq['road_owner']) && $newAssetReq['road_owner'] != ($new['road_owner'] ?? null))
+                                                    <div class="text-success mt-1" style="font-size: 13px;">
+                                                        <strong>Requested:</strong> {{ $requestedRoadOwnerName }}
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            @endif
+
+
+                            @php
+                                $requestedUpgradedRoads = $otherInfo['upgradation']['upgraded_roads'] ?? [];
+                            @endphp
+
+                            {{-- Upgraded Roads --}}
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold text-white bg-primary">Upgraded Roads</div>
+                                <div class="card-body text-sm">
+
+                                    {{-- Actual Roads --}}
+                                    @if (!empty($others['upgradation']['upgraded_roads']))
+                                        <div class="mb-2">
+                                            <label class="text-muted small mb-1">Actual</label>
+                                            <ul class="mb-1">
+                                                @foreach ($others['upgradation']['upgraded_roads'] as $road)
+                                                    <li>{{ $road }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
+                                    {{-- Requested Roads --}}
+                                    @if (!empty($requestedUpgradedRoads))
+                                        <div class="mb-2">
+                                            <label class="text-muted small mb-1">Requested</label>
+                                            <ul class="mb-1">
+                                                @foreach ($requestedUpgradedRoads as $road)
+                                                    <li class="text-success">{{ $road }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
+                                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                                        <button
+                                            class="viewInMapBtn btn btn-primary shadow-sm px-4"
+                                            data-id="{{ $project->project_cd }}"
+                                            data-div-name-id="{{ $project->division_name }}"
+                                            data-request-id="{{ $modificationRequest->request_id }}">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            View Road on Map
+                                        </button>
+
+                                        @if(!empty($otherInfo['road_kml_file']) && !empty($otherInfo['road_geojson_file']))
+                                            <button
+                                                class="viewInMapReqBtn btn btn-success shadow-sm px-4"
+                                                data-id="{{ $project->project_cd }}"
+                                                data-div-name-id="{{ $project->division_name }}"
+                                                data-kml="{{ $otherInfo['road_kml_file'] }}"
+                                                data-file-path="{{ $otherInfo['road_geojson_file'] }}"
+                                                data-request-id="{{ $modificationRequest->request_id }}">
+                                                <i class="fas fa-map-marker-alt me-2"></i>
+                                                View Requested Road on Map
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Upgraded Asset Details (Actual) --}}
+                        @if (!empty($others['upgradation']['upgraded_asset_dtls']))
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold text-white bg-primary">
+                                    Upgraded Asset Details
+                                </div>
+                                <div class="card-body text-sm py-2">
+                                    @foreach ($others['upgradation']['upgraded_asset_dtls'] as $asset)
+
+                                        <div class="mb-2">
+
+                                            <div>
+                                                <span class="text-muted small">Parent Asset:</span>
+                                                <span class="fw-semibold">{{ $asset['parent_asset_id'] ?? 'N/A' }}</span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Chainage:</span>
+                                                <span class="fw-semibold">
+                                                    {{ $asset['start_chainage'] ?? 'N/A' }} -
+                                                    {{ $asset['end_chainage'] ?? 'N/A' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Bridges:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($asset['bridges']) ? implode(', ', $asset['bridges']) : '-' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Culverts:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($asset['culverts']) ? implode(', ', $asset['culverts']) : '-' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Retaining Walls:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($asset['retaining_walls']) ? implode(', ', $asset['retaining_walls']) : '-' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+
+                        @if (!empty($otherInfo['upgradation']['upgraded_asset_dtls']))
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold text-white bg-primary">
+                                    Requested Upgraded Asset Details
+                                </div>
+
+                                <div class="card-body text-sm py-2">
+                                    @foreach ($otherInfo['upgradation']['upgraded_asset_dtls'] as $reqAsset)
+
+                                        <div class="mb-2">
+
+                                            <div>
+                                                <span class="text-muted small">Parent Asset:</span>
+                                                <span class="fw-semibold">{{ $reqAsset['parent_asset_id'] ?? 'N/A' }}</span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Chainage:</span>
+                                                <span class="fw-semibold">
+                                                    {{ $reqAsset['start_chainage'] ?? 'N/A' }} -
+                                                    {{ $reqAsset['end_chainage'] ?? 'N/A' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Bridges:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($reqAsset['bridges']) ? implode(', ', $reqAsset['bridges']) : '-' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Culverts:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($reqAsset['culverts']) ? implode(', ', $reqAsset['culverts']) : '-' }}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-muted small">Retaining Walls:</span>
+                                                <span class="fw-semibold">
+                                                    {{ !empty($reqAsset['retaining_walls']) ? implode(', ', $reqAsset['retaining_walls']) : '-' }}
+                                                </span>
+                                            </div>
+
+                                        </div>
+
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+						@php
+                            $actualRoadSequence = $others['upgradation']['road_sequence'] ?? [];
+                            $requestedRoadSequence = $otherInfo['upgradation']['road_sequence'] ?? [];
+                        @endphp
+
+                        @if (count($actualRoadSequence) > 0 || count($requestedRoadSequence) > 0)
+
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold text-white bg-primary">
+                                    Upgraded Roads Sequence (Actual vs Requested)
+                                </div>
+
+                                <div class="card-body">
+
+                                    <div class="row">
+
+                                        {{-- ================= ACTUAL ================= --}}
+                                        <div class="col-md-6 border-end">
+
+                                            <h6 class="text-muted mb-3">Actual</h6>
+
+                                            @if(count($actualRoadSequence) > 0)
+
+                                                @foreach (collect($actualRoadSequence)->sortBy('sequence') as $road)
+
+                                                    @php
+                                                        $displayRoadName = $road['road_id'];
+
+                                                        if (
+                                                            !empty($others['upgradation']['new_asset']['road_name']) &&
+                                                            !empty($others['upgradation']['new_asset']['road_id']) &&
+                                                            $others['upgradation']['new_asset']['road_id'] == $road['road_id']
+                                                        ) {
+                                                            $displayRoadName = $others['upgradation']['new_asset']['road_name'];
+                                                        }
+                                                    @endphp
+
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <span class="badge text-white me-2"
+                                                            style="background-color: var(--primary);">
+                                                            {{ $road['sequence'] }}
+                                                        </span>
+                                                        <strong>{{ $displayRoadName }}</strong>
+                                                    </div>
+
+                                                @endforeach
+
+                                            @else
+                                                <span class="text-muted small">No actual sequence</span>
+                                            @endif
+
+                                        </div>
+
+                                        {{-- ================= REQUESTED ================= --}}
+                                        <div class="col-md-6">
+
+                                            <h6 class="text-muted mb-3">Requested</h6>
+
+                                            @if(count($requestedRoadSequence) > 0)
+
+                                                @foreach (collect($requestedRoadSequence)->sortBy('sequence') as $road)
+
+                                                    @php
+                                                        $displayRoadName = $road['road_id'];
+
+                                                        if (
+                                                            !empty($otherInfo['upgradation']['new_asset']['road_name']) &&
+                                                            !empty($otherInfo['upgradation']['new_asset']['road_id']) &&
+                                                            $otherInfo['upgradation']['new_asset']['road_id'] == $road['road_id']
+                                                        ) {
+                                                            $displayRoadName = $otherInfo['upgradation']['new_asset']['road_name'];
+                                                        }
+                                                    @endphp
+
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <span class="badge text-white me-2"
+                                                            style="background-color: var(--primary);">
+                                                            {{ $road['sequence'] }}
+                                                        </span>
+                                                        <strong>{{ $displayRoadName }}</strong>
+                                                    </div>
+
+                                                @endforeach
+
+                                            @else
+                                                <span class="text-muted small">No requested sequence</span>
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        @endif
+                    @endif
+                @endif
+
+                {{-- Upgradation for Housing --}}
+
+                {{-- Maintenance for R&B --}}
+               @php
+                    $actualAsset = $others['maintenance']['asset_dtls'] ?? [];
+                    $requestedAsset = $otherInfo['maintenance']['asset_dtls'] ?? [];
+
+                    $actualSubAssets = $others['maintenance']['sub_asset_dtls'] ?? [];
+                    $requestedSubAssets = $otherInfo['maintenance']['sub_asset_dtls'] ?? [];
+                @endphp
+
+                @if (
+                    isset($others['project_type']) &&
+                    $others['project_type'] === 'MTN' &&
+                    ($project->owner_dept_cd == '14' || $project->owner_dept_cd == '3') &&
+                    (!empty($actualAsset) || !empty($requestedAsset) || !empty($actualSubAssets) || !empty($requestedSubAssets))
+                )
+
+                <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                    Maintenance Details
+                </h6>
+
+                <div class="card mb-3">
+                    <div class="card-header fw-bold text-white bg-primary">
+                        Asset Details
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row">
+
+                            {{-- ===================== ACTUAL ===================== --}}
+                            <div class="col-md-6 border-end">
+
+                                <h6 class="text-muted mb-3">Actual</h6>
+
+                                @if(!empty($actualAsset))
+
+                                    @php
+                                        $assetType = 'N/A';
+                                        foreach($assetLists as $item){
+                                            if(($actualAsset['asset_type_cd'] ?? '') == $item['sub_asset_cd']){
+                                                $assetType = $item['sub_assets_descr'];
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+
+                                    <div class="mb-3">
+                                        <strong>Asset Type:</strong> {{ $assetType }}
+
+                                        @if(!empty($actualAsset['asset_list']))
+                                            <div class="mt-2">
+                                                <strong>Assets:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($actualAsset['asset_list'] as $asset)
+                                                        <li>{{ $asset }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                @endif
+
+
+                                @if(!empty($actualSubAssets))
+
+                                    @foreach($actualSubAssets as $sub)
+
+                                        @php
+                                            $subType = 'N/A';
+                                            foreach($assetLists as $item){
+                                                if(($sub['sub_asset_type_cd'] ?? '') == $item['sub_asset_cd']){
+                                                    $subType = $item['sub_assets_descr'];
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <div class="border rounded p-2 mb-3">
+
+                                            <strong>Sub Asset Type:</strong>
+                                            {{ $subType }}
+
+                                            @if(!empty($sub['sub_asset_list']))
+                                                <ul class="mb-0 mt-2">
+                                                    @foreach($sub['sub_asset_list'] as $s)
+                                                        <li>{{ $s }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+
+                                        </div>
+
+                                    @endforeach
+
+                                @endif
+
+                                @if(empty($actualAsset) && empty($actualSubAssets))
+                                    <span class="text-muted">No details available.</span>
+                                @endif
+
+                            </div>
+
+                            {{-- ===================== REQUESTED ===================== --}}
+                            <div class="col-md-6">
+
+                                <h6 class="text-success mb-3">Requested</h6>
+
+                                @if(!empty($requestedAsset))
+
+                                    @php
+                                        $assetType = 'N/A';
+                                        foreach($assetLists as $item){
+                                            if(($requestedAsset['asset_type_cd'] ?? '') == $item['sub_asset_cd']){
+                                                $assetType = $item['sub_assets_descr'];
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+
+                                    <div class="mb-3">
+                                        <strong>Asset Type:</strong> {{ $assetType }}
+
+                                        @if(!empty($requestedAsset['asset_list']))
+                                            <div class="mt-2">
+                                                <strong>Assets:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($requestedAsset['asset_list'] as $asset)
+                                                        <li>{{ $asset }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                @endif
+
+
+                                @if(!empty($requestedSubAssets))
+
+                                    @foreach($requestedSubAssets as $sub)
+
+                                        @php
+                                            $subType = 'N/A';
+                                            foreach($assetLists as $item){
+                                                if(($sub['sub_asset_type_cd'] ?? '') == $item['sub_asset_cd']){
+                                                    $subType = $item['sub_assets_descr'];
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <div class="border rounded p-2 mb-3">
+
+                                            <strong>Sub Asset Type:</strong>
+                                            {{ $subType }}
+
+                                            @if(!empty($sub['sub_asset_list']))
+                                                <ul class="mb-0 mt-2">
+                                                    @foreach($sub['sub_asset_list'] as $s)
+                                                        <li>{{ $s }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+
+                                        </div>
+
+                                    @endforeach
+
+                                @endif
+
+                                @if(empty($requestedAsset) && empty($requestedSubAssets))
+                                    <span class="text-muted">No requested details.</span>
+                                @endif
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                @endif
+
+
+                {{-- Documents --}}
+                <h6 class="fw-bold text-rose-primary border-bottom pb-2 mb-3 mt-4">
+                    Documents
+                </h6>
+
+                @if($documents->isEmpty() && $documentsRequested->isEmpty())
+
+                    <p class="text-muted">No documents available.</p>
+
+                @else
+
+                    <div class="row">
+
+                        {{-- ===================== Actual Documents ===================== --}}
+                        <div class="col-md-6 border-end">
+
+                            <h6 class="text-muted mb-3">Actual</h6>
+
+                            @if($documents->isEmpty())
+
+                                <p class="text-muted">No documents uploaded.</p>
+
+                            @else
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th width="10%">#</th>
+                                                <th>Document Type</th>
+                                                <th width="30%">Action</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach($documents as $index => $document)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $document['label'] }}</td>
+                                                    <td>
+                                                        <a href="{{ $document['file_url'] }}"
+                                                        target="_blank"
+                                                        class="btn btn-sm btn-primary">
+                                                            <i class="fa fa-eye"></i>
+                                                        </a>
+
+                                                        <a href="{{ $document['file_url'] }}"
+                                                        download
+                                                        class="btn btn-sm btn-success">
+                                                            <i class="fa fa-download"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+
+                                    </table>
+                                </div>
+
+                            @endif
+
+                        </div>
+
+
+                        {{-- ===================== Requested Documents ===================== --}}
+                        <div class="col-md-6">
+
+                            <h6 class="text-success mb-3">Requested</h6>
+
+                            @if($documentsRequested->isEmpty())
+
+                                <p class="text-muted">No requested documents.</p>
+
+                            @else
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-success">
+                                            <tr>
+                                                <th width="10%">#</th>
+                                                <th>Document Type</th>
+                                                <th width="30%">Action</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach($documentsRequested as $index => $document)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $document['label'] }}</td>
+                                                    <td>
+                                                        <a href="{{ $document['file_url'] }}"
+                                                        target="_blank"
+                                                        class="btn btn-sm btn-primary">
+                                                            <i class="fa fa-eye"></i>
+                                                        </a>
+
+                                                        <a href="{{ $document['file_url'] }}"
+                                                        download
+                                                        class="btn btn-sm btn-success">
+                                                            <i class="fa fa-download"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+
+                                    </table>
+                                </div>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                @endif
+
+                <h6 class="fw-bold text-rose-primary border-bottom pb-2 mt-4 mb-3">
+                    Modification Details
+                </h6>
+
+                <div class="card">
+                    <div class="card-body">
+
+                        {{-- Supporting Document --}}
+                        <div class="mb-4">
+                            <label class="text-muted small mb-1">Supporting Document</label>
+
+                            @if($modificationDocument->isNotEmpty())
+
+                                @php
+                                    $doc = $modificationDocument->first();
+                                @endphp
+
+                                <div class="mt-1">
+                                    <a href="{{ $doc['file_url'] }}"
+                                    target="_blank"
+                                    class="btn btn-sm btn-primary me-2">
+                                        <i class="fa fa-eye"></i> View
+                                    </a>
+
+                                    <a href="{{ $doc['file_url'] }}"
+                                    download
+                                    class="btn btn-sm btn-success">
+                                        <i class="fa fa-download"></i> Download
+                                    </a>
+                                </div>
+
+                            @else
+                                <div class="fw-semibold text-muted">
+                                    No supporting document uploaded.
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Reason --}}
+                        <div>
+                            <label class="text-muted small mb-1">Reason for Modification</label>
+
+                            <div class="fw-semibold">
+                                {{ $modificationRequest->reason ?? 'N/A' }}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                {{-- end --}}
+
+				@php
+                    $disableButtons = (($project->project_type_cd == 'NEW' && ($project->owner_dept_cd == '14' || $project->owner_dept_cd == '3')) || ($project->project_type_cd == 'UPG' && ($project->owner_dept_cd == '14' || $project->owner_dept_cd == '3') && !empty($others['upgradation']['upgraded_roads'])));
+                @endphp
+
+
+
+                {{-- Action Buttons --}}
+                <h6 class="border-bottom pb-2 mt-4 mb-3">Actions</h6>
+                <div class="d-flex gap-1 justify-content-end">
+                    <div style="margin-bottom: 0.1rem;">
+                        <button class="approveBtn btn btn-outline-primary btn-md text-xs fw-bold rounded-0"
+                            id="btnApprove_{{ $modificationRequest->request_id }}" data-id="{{ $modificationRequest->request_id }}"
+                            {{ $disableButtons ? 'disabled' : '' }}>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Approve Project
+                        </button>
+                    </div>
+                    <div>
+                        <button class="rejectBtn btn btn-outline-danger btn-md text-xs fw-bold rounded-0"
+                            id="btnReject_{{ $modificationRequest->request_id }}" data-id="{{ $modificationRequest->request_id }}"
+                            {{ $disableButtons ? 'disabled' : '' }}>
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            Reject Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Reject Reason Modal --}}
+    <div class="modal fade" id="rejectModificationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Reason for Rejection</h6>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="rejectRequestCode" value="">
+                    <textarea id="rejectReason" class="form-control" rows="4" placeholder="Enter reason..." required></textarea>
+                    <span id="rejectReasonError" class="text-danger small d-none">
+                        Reason for rejection is required.
+                    </span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="submitRejectReason" class="btn btn-danger btn-sm">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="approveModificationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Remark</h6>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="approveRequestCode" value="">
+                    <textarea id="approveReason" class="form-control" rows="4" placeholder="Enter remark..." required></textarea>
+                    <span id="approveReasonError" class="text-danger small d-none">
+                        Remark is required.
+                    </span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="submitApprove" class="btn btn-danger btn-sm">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="modal fade" id="mapModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <label class="modal-title" id="mapTitle">Nagaland PWD Road Map, </label>
+                    &nbsp;&nbsp;&nbsp;
+                    <label id="lblRoadId" name="lblRoadId">
+
+                    </label>
+                    &nbsp;&nbsp;&nbsp;
+                    <label id="lblRoadName" name="lblRoadName">
+
+                    </label>
+
+                    &nbsp;&nbsp;&nbsp;
+                    <label id="lblDivName" name="lblDivName">
+
+                    </label>
+                    <button type="button" class="btn-close" id="btnClose" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="row justify-content-center align-item-center">
+                    <div class="col-md-10 mb-1">
+                        <div class="modal-body modal-dialog-centered" id='map' style='width: 100%; height: 500px;'>
+                            <form action="#" id="frm_map_modal">
+                                @csrf
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" id='mapFooter'>
+
+                    <div class="col-md-7">
+                        <div class="form-check form-switch">
+
+                            <input class="form-check-input form-control" type="checkbox" name="mapShowHideSwitch"
+                                id="mapShowHideSwitch" role="switch" checked />
+                            <label for="mapShowHideSwitch" id="lblShowHideMap">Show/Hide Current
+                                Road</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-1" id="newConfirm">
+                        <label id="lblMapOK">Is the Road Correct:</label>
+                        <input type="hidden" id="hdnRoadId" name="hdnRoadId" value="" />
+                        <button class="mapCorrectBtn btn btn-outline-primary btn-xs text-xs" style="width: 4rem;">
+                            Yes
+                        </button>
+                        <button class="mapNotCorrectBtn btn btn-outline-danger btn-xs text-xs" style="width: 4rem;">
+                            No
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('styles')
+<style>
+    :root {
+        --primary: var(--oamis-primary, #0b6b4a);
+        --secondary: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+        --accent: color-mix(in srgb, var(--oamis-primary, #0b6b4a) 14%, #ffffff);
+    }
+
+    .text-rose-primary {
+        color: var(--primary) !important;
+    }
+
+    .card-header {
+        background: #0b6b4a !important;
+    }
+
+</style>
+@endpush
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/road/finalize/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modal/style.css') }}">
+@endpush
+@push('scripts')
+    <script>
+        const finalizeUrl = "{{ route('pendingproject.request.list') }}";
+    </script>
+    <script>
+        $(document).ready(function () {
+
+            const changesApplied = @json($changesApplied);
+            const otherInfo = changesApplied.others || {};
+            const hasRequestedRoad = !!otherInfo.road_kml_file && !!otherInfo.road_geojson_file;
+
+            if (!hasRequestedRoad) {
+                $('#btnApprove_{{ $modificationRequest->request_id }}').prop('disabled', false);
+                $('#btnReject_{{ $modificationRequest->request_id }}').prop('disabled', false);
+            }
+
+
+
+	    var approved_geojson_data = null;
+        var draft_road_geojson_data = null;
+        var data_layer = null;
+        var data_layer_2 = null;
+        var all_states_geojson_data = null;
+        var sh_nh_mdr_geojson_data = null;
+        let map;
+        $(function () {
+
+            (g => {
+                var h, a, k, p = "The Google Maps JavaScript API",
+                    c = "google",
+                    l = "importLibrary",
+                    q = "__ib__",
+                    m = document,
+                    b = window;
+                b = b[c] || (b[c] = {});
+                var d = b.maps || (b.maps = {}),
+                    r = new Set,
+                    e = new URLSearchParams,
+                    u = () => h || (h = new Promise(async (f, n) => {
+                        await (a = m.createElement("script"));
+                        e.set("libraries", [...r] + "");
+                        for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[
+                            k]);
+                        e.set("callback", c + ".maps." + q);
+                        a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                        d[q] = f;
+                        a.onerror = () => h = n(Error(p + " could not load."));
+                        a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                        m.head.append(a)
+                    }));
+                d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u()
+                    .then(
+                        () => d[l](f, ...n))
+            })({
+                key: "AIzaSyBnj1P_w0UVJGnX0vNSPMe5QS__d_E0goM",
+                v: "beta",
+                // Use the 'v' parameter to indicate the version to use (weekly, beta, alpha, etc.).
+                // Add other bootstrap parameters as needed, using camel case.
+            });
+
+            fetch('/getAllStatesRoadsGeoJsonData')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.status) {
+                        let compressedArray = Uint8Array.from(atob(data.all_states_geojson_data), c => c
+                            .charCodeAt(0));
+
+                        // Decompress using pako
+                        let decompressedData = pako.inflate(compressedArray, {
+                            to: 'string'
+                        });
+                        // all_states_geojson_data = JSON.parse(decompressedData);
+                        all_states_geojson_data = decompressedData;
+                    } else {
+                        console.error("Invalid response format");
+                    }
+                })
+                .catch(error => console.error("Fetch error:", error));
+
+
+            fetch('/getAllSHNHMDRRoadsGeoJsonData')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.status) {
+                        let compressedArray = Uint8Array.from(atob(data.all_sh_nh_mdr_geojson_data), c => c
+                            .charCodeAt(0));
+
+                        // Decompress using pako
+                        let decompressedData = pako.inflate(compressedArray, {
+                            to: 'string'
+                        });
+                        // sh_nh_mdr_geojson_data = JSON.parse(decompressedData);
+                        sh_nh_mdr_geojson_data = decompressedData;
+                    } else {
+                        console.error("Invalid response format");
+                    }
+                })
+                .catch(error => console.error("Fetch error:", error));
+        });
+
+
+        $("#mapShowHideSwitch").change(function () {
+
+            var ischecked = $(this).is(':checked');
+
+            if (!ischecked)
+                data_layer_2.setStyle({
+                    visible: false
+                });
+            else {
+                data_layer_2.setStyle({
+                    visible: true
+                });
+                data_layer_2.setStyle(function (feature) {
+                    var roadCatg = feature.getProperty('road_category');
+                    var strokeColor;
+                    var fillColor;
+                    var strokeWeight;
+                    var strokeOpacity;
+                    switch (roadCatg) {
+                        case 'NH':
+                            strokeColor = '#ffff00';
+                            fillColor = '#ffff00';
+                            strokeWeight = 2.0;
+                            break;
+                        case 'SH':
+                        case 'State Highway':
+                            strokeColor = '#005500';
+                            fillColor = '#005500';
+                            strokeWeight = 1.7;
+                            break;
+                        case 'MDR':
+                        case 'Major District Roads':
+                            strokeColor = '#000000';
+                            fillColor = '#000000';
+                            strokeWeight = 1.7;
+                            break;
+                        case 'ODR':
+                            strokeColor = '#00007f';
+                            fillColor = '#00007f';
+                            strokeWeight = 1.0;
+                            break;
+                        case 'VR':
+                            strokeColor = '#ff5500';
+                            fillColor = '#ff5500';
+                            strokeWeight = 1.0;
+                            break;
+                        case 'ALR':
+                            strokeColor = '#55ff7f';
+                            fillColor = '#55ff7f';
+                            strokeWeight = 1.0;
+                            break;
+                        case 'UR':
+                            strokeColor = '#aa00ff';
+                            fillColor = '#aa00ff';
+                            strokeWeight = 1.0;
+                            break;
+                        case 'RD':
+                            strokeColor = '#ffaa7f';
+                            fillColor = '#ffaa7f';
+                            strokeWeight = 1.0;
+                            break;
+                        case 'INTER':
+                            strokeColor = '#FA0017';
+                            fillColor = '#FA0017';
+                            strokeWeight = 1.0;
+                            break;
+
+
+                        default:
+                            strokeColor = "green";
+                            fillColor = "green";
+                            strokeWeight = 2.0;
+
+                    }
+
+                    return {
+                        strokeColor: strokeColor,
+                        fillColor: fillColor,
+                        strokeWeight: 4,
+                        strokeOpacity: 1.0,
+                        fillOpacity: 0.3
+                    };
+                });
+            }
+        });
+
+
+
+        $(document).on('click', '.rejectBtn', function() {
+            let RequestedCode = $(this).data('id');
+            $('#rejectRequestCode').val(RequestedCode);
+            $('#rejectReason').val("");
+            $('#rejectModificationModal').modal('show');
+        });
+
+        $(document).on('click', '.approveBtn', function() {
+            let RequestedCode = $(this).data('id');
+            $('#approveRequestCode').val(RequestedCode);
+            $('#approveReason').val("");
+            $('#approveModificationModal').modal('show');
+        });
+
+        // approve a single housing data
+         $(document).on('click', '#submitApprove', function() {
+            let RequestedCode = $('#approveRequestCode').val();
+            let reason = $('#approveReason').val().trim();
+
+            if (reason === '') {
+                $('#approveReasonError').removeClass('d-none');
+                $('#approveReason').focus();
+                return;
+            } else {
+                $('#approveReasonError').addClass('d-none');
+            }
+
+            $.ajax({
+                url: "{{ route('modificationproject.update') }}",
+                type: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    request_id: RequestedCode,
+                    approve_reason: reason,
+                },
+                success: function(response) {
+                    $('#approveModificationModal').modal('hide');
+                    if (response.status === 200) {
+                        Swal.fire({
+                            title: 'Success',
+                            text: response.message,
+                            icon: 'success',
+                            confirmButtonText: 'Okay'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = finalizeUrl;
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Notice',
+                            text: response.message,
+                            icon: 'info',
+                            confirmButtonText: 'Okay'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('An error occurred while rejecting the project');
+                }
+			});
+        });
+
+
+        $(document).on('click', '#submitRejectReason', function() {
+            let RequestedCode = $('#rejectRequestCode').val();
+            let reason = $('#rejectReason').val().trim();
+
+            if (reason === '') {
+                $('#rejectReasonError').removeClass('d-none');
+                $('#rejectReason').focus();
+                return;
+            } else {
+                $('#rejectReasonError').addClass('d-none');
+            }
+
+            $.ajax({
+                url: "{{ route('reject.modification') }}",
+                type: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    request_id: RequestedCode,
+                    reject_reason: reason,
+                },
+                success: function(response) {
+                    $('#rejectModificationModal').modal('hide');
+                    if (response.status === 200) {
+                        Swal.fire({
+                            title: 'Success',
+                            text: response.message,
+                            icon: 'success',
+                            confirmButtonText: 'Okay'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = finalizeUrl;
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Notice',
+                            text: response.message,
+                            icon: 'info',
+                            confirmButtonText: 'Okay'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('An error occurred while rejecting the project');
+                }
+			});
+		});
+
+        $('.viewInMapReqBtn').on('click', function () {
+            const projectID = $(this).data('id');
+            const reqId = $(this).data('request-id');
+            const filePath = $(this).data('file-path');
+            const divName = $(this).data('div-name-id');
+            if (projectID) {
+
+                $.ajax({
+                    type: 'GET',
+                    url: "/project-management/getRequestedRoadsKml/" + projectID,
+                    data: {
+                        filePath: filePath
+                    },
+                    contentType: "application/json; charset=utf-8",
+                    crossDomain: true,
+                    dataType: "json",
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    cache: false,
+                    success: function (response, status, jqXHR) {
+                        if (response.status === true) {
+                            approved_geojson_data = response.approved_geojson_data;
+                            draft_road_geojson_data = response.draft_road_geojson_data;
+                            div_lat = response.div_lat;
+                            div_lng = response.div_lng;
+
+                            if (approved_geojson_data == null) {
+                                approved_geojson_data = all_states_geojson_data;
+                            }
+                            $('#mapModal').on('shown.bs.modal', function (e) {
+
+                                $('#hdnRoadId').prop("value", reqId);
+                                $('#lblRoadId').text("  Road Id : " + projectID);
+                                $('#lblDivName').text("  Division Name : " + divName);
+                                $('#newConfirm').show();
+
+                                // Enable Approve & Reject buttons
+                                $('#btnApprove_' + reqId).prop('disabled', true);
+                                $('#btnReject_' + reqId).prop('disabled', true);
+                                initMap(JSON.parse(approved_geojson_data),
+                                    JSON.parse(draft_road_geojson_data), JSON.parse(
+                                        sh_nh_mdr_geojson_data), div_lat, div_lng);
+                            }).modal('show');
+
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        console.log("Some Technical Issue!!Map Data Could Not Fetched From Server,Please Contact Administrator!!");
+                    }
+                });
+            }
+        });
+
+
+        $('.viewInMapBtn').on('click', function () {
+            const projectID = $(this).data('id');
+            const reqId = $(this).data('request-id');
+            const divName = $(this).data('div-name-id');
+            if (projectID) {
+
+                $.ajax({
+                    type: 'GET',
+                    url: "/project-management/getDraftedRoadsKml/" + projectID,
+                    data: {
+                        verified: 'verified'
+                    },
+                    contentType: "application/json; charset=utf-8",
+                    crossDomain: true,
+                    dataType: "json",
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    cache: false,
+                    success: function (response, status, jqXHR) {
+                        if (response.status === true) {
+                            approved_geojson_data = response.approved_geojson_data;
+                            draft_road_geojson_data = response.draft_road_geojson_data;
+                            div_lat = response.div_lat;
+                            div_lng = response.div_lng;
+
+                            if (approved_geojson_data == null) {
+                                approved_geojson_data = all_states_geojson_data;
+                            }
+                            $('#mapModal').on('shown.bs.modal', function (e) {
+
+                                $('#hdnRoadId').prop("value", reqId);
+                                $('#lblRoadId').text("  Road Id : " + projectID);
+                                $('#lblDivName').text("  Division Name : " + divName);
+                                $('#newConfirm').hide();
+
+                                // Enable Approve & Reject buttons
+
+                                $('#btnApprove_' + reqId).prop('disabled', false);
+                                $('#btnReject_' + reqId).prop('disabled', false);
+                                initMap(JSON.parse(approved_geojson_data),
+                                    JSON.parse(draft_road_geojson_data), JSON.parse(
+                                        sh_nh_mdr_geojson_data), div_lat, div_lng);
+                            }).modal('show');
+
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        console.log("Some Technical Issue!!Map Data Could Not Fetched From Server,Please Contact Administrator!!");
+                    }
+                });
+            }
+        });
+
+        const styleNH = {
+            strokeColor: "#ffff00",
+            strokeWeight: 2.0,
+            strokeOpacity: 1.0,
+            fillColor: "#ffff00",
+            fillOpacity: 0.3,
+        };
+        const styleSH = {
+            strokeColor: "#005500",
+            strokeWeight: 1.7,
+            strokeOpacity: 1.0,
+            fillColor: "#005500",
+            fillOpacity: 0.3,
+        };
+        const styleMDR = {
+            strokeColor: "#000000",
+            strokeWeight: 1.7,
+            strokeOpacity: 1.0,
+            fillColor: "#000000",
+            fillOpacity: 0.3,
+        };
+        const styleODR = {
+            strokeColor: "#00007f",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#00007f",
+            fillOpacity: 0.3,
+        };
+        const styleVR = {
+            strokeColor: "#ff5500",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#ff5500",
+            fillOpacity: 0.3,
+        };
+        const styleALR = {
+            strokeColor: "#55ff7f",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#55ff7f",
+            fillOpacity: 0.3,
+        };
+        const styleUR = {
+            strokeColor: "#aa00ff",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#aa00ff",
+            fillOpacity: 0.3,
+        };
+        const styleRD = {
+            strokeColor: "#ffaa7f",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#ffaa7f",
+            fillOpacity: 0.3,
+        };
+        const styleINTER = {
+            strokeColor: "#FA0017",
+            strokeWeight: 1.0,
+            strokeOpacity: 1.0,
+            fillColor: "#FA0017",
+            fillOpacity: 0.3,
+        };
+
+        async function initMap(approved_geojson_data, draft_road_geojson_data, sh_nh_mdr_geojson_data, lt, ln) {
+            const {
+                Map
+            } = await google.maps.importLibrary("maps");
+
+
+            let startPosition = {
+                lat: 26.094757374299146,
+                lng: 94.58979407214116,
+            };
+
+            if (lt != null && ln != null)
+                startPosition = {
+                    lat: parseFloat(lt),
+                    lng: parseFloat(ln),
+                };
+
+            if (map) {
+                map = null;
+            }
+            map = new Map(document.getElementById('map'), {
+                center: startPosition,
+                zoom: 9
+            });
+
+            map.setZoom(Math.max(map.getZoom(), 10));
+            try {
+
+                data_layer = new google.maps.Data({
+                    map: map
+                });
+                data_layer_2 = new google.maps.Data({
+                    map: map
+                });
+                data_layer_3 = new google.maps.Data({
+                    map: map
+                });
+                data_layer.addGeoJson(approved_geojson_data);
+                data_layer_2.addGeoJson(draft_road_geojson_data);
+                data_layer_3.addGeoJson(sh_nh_mdr_geojson_data);
+            } catch (e) {
+                console.log(e);
+            }
+
+            data_layer.setStyle(function (feature) {
+                var roadCatg = feature.getProperty('road_category');
+                var strokeColor;
+                var fillColor;
+                var strokeWeight;
+                var strokeOpacity;
+                switch (roadCatg) {
+
+                    case 'NH':
+                        strokeColor = '#ffff00';
+                        fillColor = '#ffff00';
+                        strokeWeight = 2.0;
+                        break;
+                    case 'SH':
+                    case 'State Highway':
+                        strokeColor = '#005500';
+                        fillColor = '#005500';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'MDR':
+                    case 'Major District Roads':
+                        strokeColor = '#000000';
+                        fillColor = '#000000';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'ODR':
+                        strokeColor = '#00007f';
+                        fillColor = '#00007f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'VR':
+                        strokeColor = '#ff5500';
+                        fillColor = '#ff5500';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'ALR':
+                        strokeColor = '#55ff7f';
+                        fillColor = '#55ff7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'UR':
+                        strokeColor = '#aa00ff';
+                        fillColor = '#aa00ff';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'RD':
+                        strokeColor = '#ffaa7f';
+                        fillColor = '#ffaa7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'INTER':
+                        strokeColor = '#FA0017';
+                        fillColor = '#FA0017';
+                        strokeWeight = 1.0;
+                        break;
+
+
+                    default:
+                        strokeColor = "green";
+                        fillColor = "green";
+                        strokeWeight = 2.0;
+
+                }
+
+                return {
+                    strokeColor: strokeColor,
+                    fillColor: fillColor,
+                    strokeWeight: strokeWeight,
+                    strokeOpacity: 1.0,
+                    fillOpacity: 0.3
+                };
+            });
+
+
+            data_layer_2.setStyle(function (feature) {
+                var roadCatg = feature.getProperty('road_category');
+                var strokeColor;
+                var fillColor;
+                var strokeWeight;
+                var strokeOpacity;
+                switch (roadCatg) {
+                    case 'NH':
+                        strokeColor = '#ffff00';
+                        fillColor = '#ffff00';
+                        strokeWeight = 2.0;
+                        break;
+                    case 'SH':
+                    case 'State Highway':
+                        strokeColor = '#005500';
+                        fillColor = '#005500';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'MDR':
+                    case 'Major District Roads':
+                        strokeColor = '#000000';
+                        fillColor = '#000000';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'ODR':
+                        strokeColor = '#00007f';
+                        fillColor = '#00007f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'VR':
+                        strokeColor = '#ff5500';
+                        fillColor = '#ff5500';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'ALR':
+                        strokeColor = '#55ff7f';
+                        fillColor = '#55ff7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'UR':
+                        strokeColor = '#aa00ff';
+                        fillColor = '#aa00ff';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'RD':
+                        strokeColor = '#ffaa7f';
+                        fillColor = '#ffaa7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'INTER':
+                        strokeColor = '#FA0017';
+                        fillColor = '#FA0017';
+                        strokeWeight = 1.0;
+                        break;
+
+
+                    default:
+                        strokeColor = "green";
+                        fillColor = "green";
+                        strokeWeight = 2.0;
+
+                }
+
+                return {
+                    strokeColor: strokeColor,
+                    fillColor: fillColor,
+                    strokeWeight: 4,
+                    strokeOpacity: 1.0,
+                    fillOpacity: 0.3
+                };
+            });
+
+            data_layer_3.setStyle(function (feature) {
+                var roadCatg = feature.getProperty('road_category');
+                var strokeColor;
+                var fillColor;
+                var strokeWeight;
+                var strokeOpacity;
+                switch (roadCatg) {
+
+                    case 'NH':
+                        strokeColor = '#ffff00';
+                        fillColor = '#ffff00';
+                        strokeWeight = 2.0;
+                        break;
+                    case 'SH':
+                    case 'State Highway':
+                        strokeColor = '#005500';
+                        fillColor = '#005500';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'MDR':
+                    case 'Major District Roads':
+                        strokeColor = '#000000';
+                        fillColor = '#000000';
+                        strokeWeight = 1.7;
+                        break;
+                    case 'ODR':
+                        strokeColor = '#00007f';
+                        fillColor = '#00007f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'VR':
+                        strokeColor = '#ff5500';
+                        fillColor = '#ff5500';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'ALR':
+                        strokeColor = '#55ff7f';
+                        fillColor = '#55ff7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'UR':
+                        strokeColor = '#aa00ff';
+                        fillColor = '#aa00ff';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'RD':
+                        strokeColor = '#ffaa7f';
+                        fillColor = '#ffaa7f';
+                        strokeWeight = 1.0;
+                        break;
+                    case 'INTER':
+                        strokeColor = '#FA0017';
+                        fillColor = '#FA0017';
+                        strokeWeight = 1.0;
+                        break;
+
+
+                    default:
+                        strokeColor = "green";
+                        fillColor = "green";
+                        strokeWeight = 2.0;
+
+                }
+
+                return {
+                    strokeColor: strokeColor,
+                    fillColor: fillColor,
+                    strokeWeight: strokeWeight,
+                    strokeOpacity: 1.0,
+                    fillOpacity: 0.3
+                };
+            });
+        }
+
+        $('.mapCorrectBtn').on('click', function () {
+            var rdid = $('#hdnRoadId').val();
+
+            $('#btnApprove_' + rdid).prop("disabled", false);
+            $('#btnReject_' + rdid).prop("disabled", false);
+            $('#mapModal').modal('toggle');
+        });
+
+        $('.mapNotCorrectBtn').on('click', function () {
+            var rdid = $('#hdnRoadId').val();
+            $('#btnApprove_' + rdid).prop("disabled", true);
+            $('#btnReject_' + rdid).prop("disabled", false);
+            $('#mapModal').modal('toggle');
+        });
+
+        $('#btnClose').on('click', function () {
+            var rdid = $('#hdnRoadId').val();
+
+            if (!hasRequestedRoad) {
+                $('#btnApprove_{{ $modificationRequest->request_id }}').prop('disabled', false);
+                $('#btnReject_{{ $modificationRequest->request_id }}').prop('disabled', false);
+            }else{
+                $('#btnApprove_' + rdid).prop("disabled", true);
+                $('#btnReject_' + rdid).prop("disabled", true);
+            }
+        });
+
+        $("#mapModal").on("fade.bs.modal", function () {
+            alert("fading");
+        });
+
+        $(function () {
+            $(".enableMouseEvent:disabled").wrap(function () {
+                // $(this).css('cursor', 'pointer').attr('title', 'This is a hover textxxxxxxxxxxxxx.');
+                return '<div onmouseover="' + $(this).attr('onmouseover') + '" />';
+
+            });
+        });
+
+        function showToolTip(el) {
+            val = $(el).next(".counter").html(function (i, val) {
+                return val + 1
+
+            });
+            $(this).css('cursor', 'pointer').attr('title', 'This is a hover.');
+        }
+        });
+	</script>
+@endpush

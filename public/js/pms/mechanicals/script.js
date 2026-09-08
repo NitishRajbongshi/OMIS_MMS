@@ -1,0 +1,681 @@
+
+async function fetchJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+    return response.json();
+}
+
+
+
+
+async function showModalNewAssetDetailMecha(projectId,type, table = "draft") {
+    const showModalNewAsset = document.getElementById("showModalNewAsset");
+    const container = $("#modalValContainerNewAsset");
+
+    container.empty();
+
+    try {
+
+        const url = (type === 'maint')
+            ? "/project-management/get-maintenance-detail/" + encodeURIComponent(projectId)
+            : "/project-management/get-upgradation-detail/" + encodeURIComponent(projectId);
+
+        const response = await $.ajax({
+            type: "GET",
+            url: url,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            data: {
+                table: table,
+            },
+        });
+
+        if (response.status === "success") {
+            const data = response.data;
+
+            let html = "";
+
+            // ================= VEHICLES =================
+            if (data.vehicles && data.vehicles.length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <b>Vehicles (${data.vehicles.length})</b>
+                        <button class="btn btn-sm btn-outline-primary ms-2 toggle-vehicles">Show</button>
+
+                        <div class="vehicle-list d-none mt-2 border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                            ${data.vehicles.map(v => `
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>• ${v.vehicle_name} (${v.vehicle_regn_no ?? 'NA'})</span>
+
+                                        <button
+                                            class="btn btn-sm btn-outline-secondary view-vehicle-inline"
+                                            data-id="${v.vehicle_asset_cd}">
+                                            👁️
+                                        </button>
+                                    </div>
+
+                                    <div class="vehicle-detail mt-1 p-2 border rounded d-none" id="vehicle-${v.vehicle_asset_cd}">
+                                        Loading...
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ================= EQUIPMENTS =================
+            if (data.equipments && data.equipments.length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <b>Equipments (${data.equipments.length})</b>
+                        <button class="btn btn-sm btn-outline-primary ms-2 toggle-equipments">Show</button>
+
+                        <div class="equipment-list d-none mt-2 border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                            ${data.equipments.map(e => `
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>• ${e.equipment_name}</span>
+
+                                        <button
+                                            class="btn btn-sm btn-outline-secondary view-equipment-inline"
+                                            data-id="${e.euipment_cd}">
+                                            👁️
+                                        </button>
+                                    </div>
+
+                                    <div class="equipment-detail mt-1 p-2 border rounded d-none" id="equipment-${e.euipment_cd}">
+                                        Loading...
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ================= EMPTY =================
+            if (!html) {
+                html = `<div class="text-muted">No vehicles or equipments selected</div>`;
+            }
+
+            container.html(html);
+
+            showModalNewAsset.style.display = "block";
+        }
+
+    } catch (error) {
+        console.error("Error fetching details:", error);
+    }
+
+    $(".closeShowModalNewAsset").click(() => {
+        showModalNewAsset.style.display = "none";
+    });
+}
+
+$(document).on("click", ".toggle-vehicles", function () {
+    const list = $(this).siblings(".vehicle-list");
+    list.toggleClass("d-none");
+    $(this).text(list.hasClass("d-none") ? "Show" : "Hide");
+});
+
+$(document).on("click", ".toggle-equipments", function () {
+    const list = $(this).siblings(".equipment-list");
+    list.toggleClass("d-none");
+    $(this).text(list.hasClass("d-none") ? "Show" : "Hide");
+});
+
+
+$(document).on("click", ".view-vehicle-inline", async function () {
+    const id = $(this).data("id");
+    const detailDiv = $(`#vehicle-${id}`);
+
+    if (!detailDiv.hasClass("d-none")) {
+        detailDiv.addClass("d-none");
+        return;
+    }
+
+    detailDiv.removeClass("d-none").html("Loading...");
+
+    try {
+        const res = await $.get(`/project-management/get-vehicle-details/${id}`);
+
+        const v = res.vehiclesDetails;
+
+        detailDiv.html(`
+            <div><b>Name:</b> ${v.vehicle_name}</div>
+            <div><b>Reg No:</b> ${v.vehicle_regn_no ?? 'NA'}</div>
+            <div><b>Chassis No:</b> ${v.chassis_no ?? "NA"}</div>
+            <div><b>Engine No:</b> ${v.engine_no ?? "NA"}</div>
+            <div><b>Vehicle Type:</b> ${v.veh_type_descr ?? "NA"}</div>
+            <div><b>Seating Capacity:</b> ${v.seating_capacity ?? "NA"}</div>
+            <div><b>Wheel Count:</b> ${v.no_of_wheels ?? "NA"}</div>
+            <div><b>Maker:</b> ${v.maker_name ?? "NA"}</div>
+            <div><b>Model:</b> ${v.model ?? "NA"}</div>
+            <div><b>Fuel Type:</b> ${v.fuel_type_descr ?? "NA"}</div>
+            <div><b>Purchase Date:</b> ${v.date_of_purchase ?? "NA"}</div>
+            <div><b>Purchase Cost:</b> ${v.purchase_cost ?? "NA"}</div>
+            <div><b>Condition:</b> ${v.condition_descr ?? "NA"}</div>
+            <div><b>Laden Weight:</b> ${v.laden_weight ?? "NA"}</div>
+            <div><b>Unladen Weight:</b> ${v.unladen_weight ?? "NA"}</div>
+            <div><b>Alloted To:</b> ${v.alloted_to ?? "NA"}</div>
+            <div><b>Alloted from:</b> ${v.alloted_from ?? "NA"}</div>
+        `);
+
+
+    } catch (err) {
+        detailDiv.html(`<span class="text-danger">Error loading</span>`);
+    }
+});
+
+
+$(document).on("click", ".view-equipment-inline", async function () {
+    const id = $(this).data("id");
+    const detailDiv = $(`#equipment-${id}`);
+
+    if (!detailDiv.hasClass("d-none")) {
+        detailDiv.addClass("d-none");
+        return;
+    }
+
+    detailDiv.removeClass("d-none").html("Loading...");
+
+    try {
+        const res = await $.get(`/project-management/get-equipment-details/${id}`);
+
+        const e = res.equipmentsDetails;
+        detailDiv.html(`
+            <div><b>Name:</b> ${e.equipment_name}</div>
+            <div><b>Serial No:</b> ${e.serial_number ?? 'NA'}</div>
+            <div><b>Model No:</b> ${e.model_no ?? "NA"}</div>
+            <div><b>Purchase Year:</b> ${e.purchase_year ?? "NA"}</div>
+            <div><b>Purchase Cost:</b> ${e.purchase_cost ?? "NA"}</div>
+            <div><b>Condition:</b> ${e.condition_descr ?? "NA"}</div>
+            <div><b>Is under warranty:</b> ${e.is_under_waranty ?? "NA"}</div>
+        `);
+
+
+    } catch (err) {
+        detailDiv.html(`<span class="text-danger">Error loading</span>`);
+    }
+});
+
+
+
+$("#division_cd").on("change", function () {
+    const division_cd = $(this).val();
+    loadSubDivisions(division_cd);
+});
+
+$(document).ready(function () {
+    const divisionSelect = document.getElementById("division_cd");
+    const preselectedDivision = divisionSelect.value;
+    const preselectedSubDivision = divisionSelect.dataset.userSubdivision;
+
+    if (preselectedDivision) {
+        loadSubDivisions(preselectedDivision, preselectedSubDivision, () => {
+            if (preselectedSubDivision) {
+                document.getElementById("sub_division_cd").value = preselectedSubDivision;
+                document.getElementById("sub_division_cd").dispatchEvent(new Event("change"));
+            }
+        },
+            true
+        );
+    }
+});
+
+
+document.getElementById("sub_division_cd").addEventListener("change", function () {
+    const subDivId = this.value;
+    populateVehicleListMaint(subDivId, "vehicleListMaint");
+    populateVehicleList(subDivId, "vehicleListUpg");
+    populateEquipmentListMaint(subDivId,"equipmentListMaint");
+    populateEquipmentList(subDivId,"equipmentListUpg");
+});
+
+async function populateVehicleList(subDivId,containerName) {
+    const container = document.getElementById(containerName);
+    container.innerHTML = "Loading...";
+
+    try {
+        const data = await fetchJson(`/project-management/get-vehicles/${subDivId}`);
+        const vehicles = data.vehicles;
+
+        if (Array.isArray(vehicles) && vehicles.length > 0) {
+            container.innerHTML = "";
+
+            vehicles.forEach(vehicle => {
+                const div = document.createElement("div");
+                div.className = "d-flex justify-content-between align-items-center mb-1";
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                            <input type="checkbox" name="vehicle_type_cd[]" value="${vehicle.vehicle_asset_cd}" class="vehicle-checkbox">
+                            <span class="item-name">${vehicle.vehicle_name}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary view-vehicle-btn"
+                            data-id="${vehicle.vehicle_asset_cd}"
+                            title="View Vehicle Details"
+                        >
+                             👁️
+                        </button>
+
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+
+        } else {
+            container.innerHTML = "No vehicles found";
+        }
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = "Error loading vehicles";
+    }
+}
+
+async function populateVehicleListMaint(subDivId,containerName) {
+    const container = document.getElementById(containerName);
+    container.innerHTML = "Loading...";
+
+    try {
+        const data = await fetchJson(`/project-management/get-maintenance-vehicles/${subDivId}`);
+        const vehicles = data.vehicles;
+
+        if (Array.isArray(vehicles) && vehicles.length > 0) {
+            container.innerHTML = "";
+
+            vehicles.forEach(vehicle => {
+                const div = document.createElement("div");
+                div.className = "d-flex justify-content-between align-items-center mb-1";
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                            <input type="checkbox" name="vehicle_type_cd[]" value="${vehicle.vehicle_asset_cd}" class="vehicle-checkbox">
+                            <span class="item-name">${vehicle.vehicle_name}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary view-vehicle-btn"
+                            data-id="${vehicle.vehicle_asset_cd}"
+                            title="View Vehicle Details"
+                        >
+                             👁️
+                        </button>
+
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+
+        } else {
+            container.innerHTML = "No vehicles found";
+        }
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = "Error loading vehicles";
+    }
+}
+
+async function populateEquipmentList(subDivId,containerName) {
+    const container = document.getElementById(containerName);
+    container.innerHTML = "Loading...";
+
+    try {
+        const data = await fetchJson(`/project-management/get-equipments/${subDivId}`);
+        const equipments = data.equipments;
+
+        if (Array.isArray(equipments) && equipments.length > 0) {
+            container.innerHTML = "";
+
+            equipments.forEach(equipments => {
+                const div = document.createElement("div");
+                div.className = "d-flex justify-content-between align-items-center mb-1";
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                            <input type="checkbox" name="equipment_type_cd[]" value="${equipments.euipment_cd}" class="equipment-checkbox">
+                            <span class="item-name">${equipments.equipment_name}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary view-equipment-btn"
+                            data-id="${equipments.euipment_cd}"
+                            title="View Equipment Details"
+                        >
+                             👁️
+                        </button>
+
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+
+        } else {
+            container.innerHTML = "No equipments found";
+        }
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = "Error loading equipments";
+    }
+}
+
+async function populateEquipmentListMaint(subDivId,containerName) {
+    const container = document.getElementById(containerName);
+    container.innerHTML = "Loading...";
+
+    try {
+        const data = await fetchJson(`/project-management/get-maintenance-equipments/${subDivId}`);
+        const equipments = data.equipments;
+
+        if (Array.isArray(equipments) && equipments.length > 0) {
+            container.innerHTML = "";
+
+            equipments.forEach(equipments => {
+                const div = document.createElement("div");
+                div.className = "d-flex justify-content-between align-items-center mb-1";
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                            <input type="checkbox" name="equipment_type_cd[]" value="${equipments.euipment_cd}" class="equipment-checkbox">
+                            <span class="item-name">${equipments.equipment_name}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary view-equipment-btn"
+                            data-id="${equipments.euipment_cd}"
+                            title="View Equipment Details"
+                        >
+                             👁️
+                        </button>
+
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+
+        } else {
+            container.innerHTML = "No equipments found";
+        }
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = "Error loading equipments";
+    }
+}
+
+$(document).on("click", ".view-vehicle-btn", function () {
+    const vehicleId = $(this).data("id");
+    viewSingleRoad(vehicleId);
+});
+
+$(document).on("click", ".view-equipment-btn", function () {
+    const equpmentId = $(this).data("id");
+    viewSingleEquipment(equpmentId);
+});
+
+async function viewSingleRoad(vehicleId) {
+
+    const showModalVehicle = document.getElementById("showModalNewAsset");
+    const container = $("#modalValContainerNewAsset");
+
+    container.html("Loading...");
+
+    try {
+        const response = await $.ajax({
+            type: "GET",
+            url: "/project-management/get-vehicle-details/" + encodeURIComponent(vehicleId),
+        });
+
+        let data = response.vehiclesDetails;
+
+        if (!data) {
+            container.html("No vehicle details found");
+            return;
+        }
+
+        container.html(`
+
+            <div class="col-12 mb-2">
+                <b>Vehicle Name:</b> ${data.vehicle_name ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Registration No:</b> ${data.vehicle_regn_no ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Chassis No:</b> ${data.chassis_no ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Engine No:</b> ${data.engine_no ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Vehicle Type:</b> ${data.veh_type_descr ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Seating Capacity:</b> ${data.seating_capacity ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Wheel Count:</b> ${data.no_of_wheels ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Maker:</b> ${data.maker_name ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Model:</b> ${data.model ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Fuel Type:</b> ${data.fuel_type_descr ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Purchase Date:</b> ${data.date_of_purchase ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Purchase Cost:</b> ${data.purchase_cost ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Condition:</b> ${data.condition_descr ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Laden Weight:</b> ${data.laden_weight ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Unladen Weight:</b> ${data.unladen_weight ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Alloted To:</b> ${data.alloted_to ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Alloted from:</b> ${data.alloted_from ?? "NA"}
+            </div>
+
+        `);
+
+        showModalVehicle.style.display = "block";
+
+    } catch (error) {
+        console.error("Error fetching vehicle details:", error);
+        container.html("Error loading data");
+    }
+
+    $(".closeShowModalNewAsset").click(() => {
+        showModalVehicle.style.display = "none";
+    });
+}
+
+async function viewSingleEquipment(equipmentId) {
+
+    const showModalEquipment = document.getElementById("showModalNewAsset");
+    const container = $("#modalValContainerNewAsset");
+
+    container.html("Loading...");
+
+    try {
+        const response = await $.ajax({
+            type: "GET",
+            url: "/project-management/get-equipment-details/" + encodeURIComponent(equipmentId),
+        });
+
+        let data = response.equipmentsDetails;
+
+        if (!data) {
+            container.html("No equipment details found");
+            return;
+        }
+
+        container.html(`
+
+            <div class="col-12 mb-2">
+                <b>Equipment Name:</b> ${data.equipment_name ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Serial No:</b> ${data.serial_number ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Model No:</b> ${data.model_no ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Purchase Year:</b> ${data.purchase_year ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Purchase Cost:</b> ${data.purchase_cost ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Condition:</b> ${data.condition_descr ?? "NA"}
+            </div>
+
+            <div class="col-12 mb-2">
+                <b>Is under warranty:</b> ${data.is_under_waranty ?? "NA"}
+            </div>
+
+        `);
+
+        showModalEquipment.style.display = "block";
+
+    } catch (error) {
+        console.error("Error fetching equipment details:", error);
+        container.html("Error loading data");
+    }
+
+    $(".closeShowModalNewAsset").click(() => {
+        showModalEquipment.style.display = "none";
+    });
+}
+
+function loadSubDivisions(selectedDivision, preselectedSubDivision = null, callback = null, lockDropdown = false) {
+    if (!selectedDivision) return;
+
+    $.ajax({
+        url: "/asset-management/getSubDivisionList",
+        type: "GET",
+        data: { division: selectedDivision },
+        success: function (data) {
+            var dropdown = $("#sub_division_cd");
+            dropdown.empty();
+            dropdown.append('<option value="">Choose One</option>');
+
+            $.each(data, function (index, value) {
+                dropdown.append(
+                    '<option value="' +
+                        value.sub_div_cd +
+                        '">' +
+                        value.sub_div_name +
+                        "</option>"
+                );
+            });
+
+            if (preselectedSubDivision) {
+                dropdown.val(preselectedSubDivision);
+				if (lockDropdown) {				   
+                $("#sub_division_cd").val(preselectedSubDivision).prop("disabled", true);
+                if ($("#hidden_sub_division_cd").length === 0) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'hidden_sub_division_cd',
+                        name: 'sub_division_cd',
+                        value: preselectedSubDivision
+                    }).appendTo('form');
+                }
+            }
+			 }
+
+            // Fire the callback after preselecting
+            if (typeof callback === "function") callback();
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+        },
+    });
+}
+
+function setupSearch(inputId, listId) {
+    const input = document.getElementById(inputId);
+
+    input.addEventListener("keyup", function () {
+
+        const search = this.value.toLowerCase().trim();
+        const items = document.querySelectorAll(`#${listId} .d-flex`);
+
+        items.forEach(item => {
+            const nameEl = item.querySelector(".item-name");
+            if (!nameEl) return;
+
+            const name = nameEl.innerText.toLowerCase();
+
+            if (search === "" || name.includes(search)) {
+                item.classList.remove("hidden-item");
+            } else {
+                item.classList.add("hidden-item");
+            }
+        });
+
+    });
+}
+
+// apply
+// Maintenance
+setupSearch("vehicleSearchMaint", "vehicleListMaint");
+setupSearch("equipmentSearchMaint", "equipmentListMaint");
+
+// Upgradation
+setupSearch("vehicleSearchUpg", "vehicleListUpg");
+setupSearch("equipmentSearchUpg", "equipmentListUpg");

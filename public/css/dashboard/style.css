@@ -1,0 +1,74 @@
+#map { height: 68vh; min-height: 520px; }
+.gis-dashboard { max-width: 1800px; margin: 0 auto; }
+.gis-heading { align-items: center; display: flex; justify-content: space-between; margin: 4px 0 18px; }
+.gis-eyebrow { color: #0b6b4a; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.gis-heading h1 { color: #0f172a; font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin: 3px 0; }
+.gis-heading p { color: #64748b; font-size: 10px; margin: 0; }
+.gis-status { background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 99px; color: #15803d; font-size: 9px; font-weight: 700; padding: 7px 10px; }
+.gis-status i { background: #22c55e; border-radius: 50%; display: inline-block; height: 6px; margin-right: 5px; width: 6px; }
+.gis-workspace { background: transparent; border: 0 !important; box-shadow: none !important; }
+.gis-filterbar { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 24px rgba(15,23,42,.04); gap: 0; padding: 12px; }
+.gis-filterbar > div { padding: 0 8px; }
+.gis-filterbar h6, .gis-detail-card h6, .gis-summary-title { border: 0 !important; color: #475569; font-size: 9px; font-weight: 700; letter-spacing: .06em; margin-bottom: 7px; text-transform: uppercase; }
+.gis-map-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 8px 28px rgba(15,23,42,.05); overflow: hidden; padding: 5px; }
+.gis-map-card #map { border-radius: 12px; }
+.gis-detail-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px !important; }
+.gis-workspace > .col-md-3 { padding-left: 8px; }
+.gis-workspace > .col-md-3 > div { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 24px rgba(15,23,42,.04); padding: 14px !important; }
+.gis-workspace table { border: 0 !important; }
+
+.dashboardModal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Modal Content */
+.dashboardModalContent {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(15,23,42,.2);
+    width: 25rem;
+}
+
+.headContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    border-bottom: 1px solid rgb(212, 203, 203);
+    margin-bottom: 0.6rem;
+}
+
+/* The Close Button */
+.closeWingWall {
+    color: #aaaaaa;
+    /* float: right; */
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.closeWingWall:hover,
+.closeWingWall:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@media (max-width: 767px) {
+    .gis-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+    #map { height: 60vh; min-height: 420px; }
+    .gis-filterbar > div { margin-bottom: 10px; }
+}
+
+.gis-eyebrow{color:var(--oamis-primary);font-size:12px}.gis-heading h1{color:var(--oamis-ink);font-size:30px}.gis-heading p{color:var(--oamis-muted);font-size:15px}.gis-status{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.28);color:var(--oamis-green);font-size:12px}.gis-filterbar,.gis-map-card,.gis-detail-card,.gis-workspace>.col-md-3>div,.dashboardModalContent{background:var(--oamis-card);border-color:var(--oamis-border);box-shadow:var(--oamis-shadow);color:var(--oamis-ink)}.gis-filterbar h6,.gis-detail-card h6,.gis-summary-title{color:var(--oamis-muted);font-size:12px}.dashboardModalContent{border-radius:30px!important;animation:oamis-pop-in .34s cubic-bezier(.2,.8,.2,1) both;overflow:hidden;position:relative}.dashboardModalContent:before{background:linear-gradient(90deg,#0b6b4a,#15803d,#f59e0b);content:"";display:block;height:4px;left:0;position:absolute;right:0;top:0}.dashboardModal{background:rgba(15,23,42,.42);backdrop-filter:blur(8px)}.headContent{border-color:var(--oamis-border);padding-top:6px}.closeWingWall{color:var(--oamis-muted);font-size:22px}.closeWingWall:hover{color:var(--oamis-ink)}

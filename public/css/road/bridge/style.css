@@ -1,0 +1,143 @@
+label {
+    font-size: 12px;
+}
+
+legend {
+    text-transform: uppercase;
+    color: black;
+    padding: 2px 2px 2px 2px;
+    border: 2px solid #5677e7;
+}
+
+.star {
+    color: red;
+}
+
+#PileFoundation,
+.PileFoundationEdit,
+#WellFoundation,
+.WellFoundationEdit,
+#OpenFoundation,
+.OpenFoundationEdit {
+    display: none;
+}
+
+.myTooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.myTooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+/* Style for the tooltip text */
+.tooltiptext {
+    visibility: hidden;
+    background-color: #f9efef;
+    color: #ff0000;
+    border: 1px solid red;
+    font-size: 0.8rem;
+    text-align: center;
+    border-radius: 2px;
+    padding: 0 2px;
+    position: absolute;
+    z-index: 1;
+    top: -1rem;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.wingWallModal,
+.wingWallModalFinalized,
+.headWallModal,
+.headWallModalFinalized,
+.abutmentWallModal,
+.abutmentWallModalFinalized,
+.retainWallModal,
+.retainWallModalFinalized,
+.spanDetailsModal,
+.spanDetailsModalFinalized,
+.pierDetailsModal,
+.pierDetailsModalFinalized {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Modal Content */
+.wingWallModalContent,
+.wingWallModalFinalizedContent,
+.abutmentWallModalContent,
+.abutmentWallModalFinalizedContent,
+.retainWallModalContent,
+.retainWallModalFinalizedContent,
+.headWallModalContent,
+.headWallModalFinalizedContent,
+.spanDetailsModalContent,
+.spanDetailsModalFinalizedContent,
+.pierDetailsModalContent,
+.pierDetailsModalFinalizedContent {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 60%;
+}
+
+/* The Close Button */
+.closeHeadWall,
+.closeFinalizedHeadWall,
+.closeAbutmentWall,
+.closeFinalizedAbutmentWall,
+.closeRetainWall,
+.closeFinalizedRetainWall,
+.closeWingWall,
+.closeFinalizedWingWall,
+.closeSpanModal,
+.closeSpanModalFinalized,
+.closePierModal,
+.closePierModalFinalized {
+    color: #aaaaaa;
+    /* float: right; */
+    /* font-size: 20px; */
+    /* font-weight: bold; */
+}
+
+.closeWingWall:hover,
+.closeWingWall:focus,
+.closeFinalizedWingWall:hover,
+.closeFinalizedWingWall:focus,
+.closeHeadWall:hover,
+.closeHeadWall:focus,
+.closeFinalizedHeadWall:hover,
+.closeFinalizedHeadWall:focus,
+.closeAbutmentWall:hover,
+.closeAbutmentWall:focus,
+.closeFinalizedAbutmentWall:hover,
+.closeFinalizedAbutmentWall:focus,
+.closeRetainWall:hover,
+.closeRetainWall:focus,
+.closeFinalizedRetainWall:hover,
+.closeFinalizedRetainWall:focus,
+.closeSpanModal:hover,
+.closeSpanModal:focus,
+.closeSpanModalFinalized:hover,
+.closeSpanModalFinalized:focus,
+.closePierModal:hover,
+.closePierModal:focus,
+.closePierModalFinalized:hover,
+.closePierModalFinalized:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
