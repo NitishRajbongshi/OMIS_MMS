@@ -25,9 +25,10 @@ class StoreInspectionRequest extends FormRequest
     {
         return [
             'insp_cd' => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
+                'unique:maintenance.mtn_inspection_details,insp_cd',
             ],
 
             'insp_date' => [

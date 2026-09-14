@@ -25,8 +25,11 @@ class InspectionController extends Controller
     {
         try {
             $inspection = DB::transaction(function () use ($request) {
-
                 $data = $request->validated();
+                // generate a unique inspection code if not provided
+                if (empty($request['insp_cd'])) {
+                    $data['insp_cd'] = 'INSP-' . strtoupper(uniqid());
+                }
 
                 $data['created_by'] = auth()->id();
                 $data['updated_by'] = auth()->id();
