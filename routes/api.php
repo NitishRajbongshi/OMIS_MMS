@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Maintenance\InspectionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -16,4 +17,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+
+// Maintenance Inspection Detail Routes
+Route::prefix('maintenance/v1')->group(function () {
+    Route::get('/inspection-details-all', [InspectionController::class, 'index']);
+    Route::post('/inspection-details', [InspectionController::class, 'store']);
 });
