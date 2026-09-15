@@ -40,6 +40,17 @@ class MasterDataController extends Controller
             'code_col'     => 'severity_type_cd',
             'descr_col'    => 'severity_type_descr',
         ],
+        'grading_details' => [
+            'table'        => 'maintenance.master_mtn_grading_details',
+            'code_col'     => 'grading_cd',
+            'descr_col'    => 'grading_descr',
+        ],
+        'item_activities' => [
+            'table'        => 'maintenance.master_mtn_item_activities',
+            'code_col'     => 'activity_cd',
+            'title_col'    => 'activity_title',
+            'descr_col'    => 'activity_descr',
+        ],
     ];
 
     public function index(Request $request)
@@ -77,18 +88,32 @@ class MasterDataController extends Controller
 
         // Master data changes rarely — cache per type for a day.
         // Bump the cache key version (or flush manually) after edits.
-        return Cache::remember("master_data:{$key}", now()->addDay(), function () use ($config) {
+        return Cache::remember("master_data:v2:{$key}", now()->addDay(), function () use ($config) {
+            $columns = [
+                "{$config['code_col']} as code",
+                "{$config['descr_col']} as description",
+            ];
+
+            if (isset($config['title_col'])) {
+                $columns[] = "{$config['title_col']} as title";
+            }
+
             return DB::table($config['table'])
-                ->select([
-                    "{$config['code_col']} as code",
-                    "{$config['descr_col']} as description",
-                ])
+                ->select($columns)
                 ->orderBy($config['descr_col'])
                 ->get()
-                ->map(fn ($row) => [
-                    'code' => $row->code,
-                    'description' => $row->description,
-                ])
+                ->map(function ($row) use ($config) {
+                    $item = [
+                        'code' => $row->code,
+                        'description' => $row->description,
+                    ];
+
+                    if (isset($config['title_col'])) {
+                        $item['title'] = $row->title;
+                    }
+
+                    return $item;
+                })
                 ->toArray();
         });
     }
