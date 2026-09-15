@@ -43,7 +43,7 @@ class StoreInspectionRequest extends FormRequest
             ],
 
             'inspector_name' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
             ],
@@ -186,6 +186,10 @@ class StoreInspectionRequest extends FormRequest
             'updated_by' => [
                 'nullable',
                 'integer',
+            ],
+            'observations' => [
+                'nullable',
+                'array',
             ],
         ];
     }
