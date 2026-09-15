@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Maintenance;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\StoreInspectionRequest;
 use App\Models\Maintenance\Inspection\MtnInspectionDetail;
+use App\Models\Maintenance\Inspection\MtnInspObservationDetail;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,22 +140,44 @@ class InspectionController extends Controller
 
     public function store(StoreInspectionRequest $request)
     {
-        Log::info('Creating new inspection detail', [
-            'user_id' => auth()->id(),
-            'request_data' => $request->all(),
-        ]);
+        Log::info('StoreInspectionRequest validated data:', $request->validated());
+
         try {
             $inspection = DB::transaction(function () use ($request) {
                 $data = $request->validated();
-                // generate a unique inspection code if not provided
-                if (empty($request['insp_cd'])) {
-                    $data['insp_cd'] = 'INSP-' . strtoupper(uniqid());
+                $observations = $data['observations'] ?? [];
+                unset($data['observations']); // don't pass this through to MtnInspectionDetail::create
+
+                $unique_key = 'INSP-' . strtoupper(uniqid());
+                if (empty($data['insp_cd'])) {
+                    $data['insp_cd'] = $unique_key;
                 }
 
                 $data['created_by'] = auth()->id();
                 $data['updated_by'] = auth()->id();
 
-                return MtnInspectionDetail::create($data);
+                $inspection = MtnInspectionDetail::create($data);
+
+                if (!empty($observations)) {
+                    $now = now();
+                    $rows = array_map(function ($obs) use ($inspection, $now) {
+                        return [
+                            'insp_id'         => $inspection->id,
+                            'activity_cd'     => $obs['activity_cd'],
+                            'obsrv_desc'      => $obs['obsrv_desc'] ?? null,
+                            'grading_cd'      => $obs['grading_cd'] ?? null,
+                            'obsrv_weightage' => $obs['obsrv_weightage'] ?? null,
+                            'created_by'      => auth()->id(),
+                            'updated_by'      => auth()->id(),
+                            'created_at'      => $now,
+                            'updated_at'      => $now,
+                        ];
+                    }, $observations);
+
+                    MtnInspObservationDetail::insert($rows);
+                }
+
+                return $inspection;
             });
 
             return response()->json([
@@ -166,7 +189,6 @@ class InspectionController extends Controller
                 ],
             ], 201);
         } catch (QueryException $e) {
-            // Postgres unique_violation SQLSTATE = 23505
             if ($e->getCode() === '23505') {
                 Log::warning('Duplicate insp_cd on inspection create', [
                     'insp_cd' => $request->input('insp_cd'),
@@ -177,10 +199,22 @@ class InspectionController extends Controller
                     'success' => false,
                     'message' => 'An inspection with this insp_cd already exists.',
                     'error_code' => 'DUPLICATE_INSP_CD',
-                ], 409); // Conflict
+                ], 409);
             }
 
-            // Postgres foreign_key_violation = 23503, not_null_violation = 23502, etc.
+            if ($e->getCode() === '23503') {
+                Log::warning('FK violation creating inspection/observations', [
+                    'message' => $e->getMessage(),
+                    'user_id' => auth()->id(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'One of the referenced codes (activity, grading) does not exist.',
+                    'error_code' => 'INVALID_REFERENCE',
+                ], 422);
+            }
+
             Log::error('Database error creating inspection', [
                 'sql_state' => $e->getCode(),
                 'message'   => $e->getMessage(),
@@ -191,10 +225,8 @@ class InspectionController extends Controller
                 'success' => false,
                 'message' => 'A database error occurred while saving the inspection.',
                 'error_code' => 'DB_ERROR',
-            ], 422); // Unprocessable — likely a constraint tied to bad input data
-
+            ], 422);
         } catch (Throwable $e) {
-
             Log::error('Unexpected error creating inspection', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
