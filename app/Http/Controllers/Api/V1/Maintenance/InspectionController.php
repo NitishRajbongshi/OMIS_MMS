@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Maintenance;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\StoreInspectionRequest;
-use App\Http\Resources\Maintenance\InspectionDetailResource;
 use App\Models\Maintenance\Inspection\MtnInspectionDetail;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -14,66 +13,126 @@ use Throwable;
 
 class InspectionController extends Controller
 {
+    private function inspectionQuery()
+    {
+        return DB::table('maintenance.mtn_inspection_details as insp')
+            ->leftJoin(
+                'maintenance.master_mtn_inspection_types as insp_type',
+                'insp_type.inspection_type_cd',
+                '=',
+                'insp.insp_type_cd'
+            )
+            ->leftJoin(
+                'public.asset_master_road_sub_assets as sub_asset',
+                'sub_asset.sub_asset_cd',
+                '=',
+                'insp.insp_asset_type'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as overall_condt',
+                'overall_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_overall'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as pavement_condt',
+                'pavement_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_pavement'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as drainage_condt',
+                'drainage_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_drainage'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as shoulder_condt',
+                'shoulder_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_shoulder'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as structural_condt',
+                'structural_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_structural'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as safety_condt',
+                'safety_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_safety_features'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as signage_condt',
+                'signage_condt.condition_type_cd',
+                '=',
+                'insp.cndtn_signage'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_risk_types as risk_type',
+                'risk_type.risk_type_cd',
+                '=',
+                'insp.risk_type_cd'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_recm_actions as recm_action',
+                'recm_action.action_type_cd',
+                '=',
+                'insp.recmnd_action_type_cd'
+            )
+            ->leftJoin(
+                'maintenance.master_mtn_conditions as recm_priority',
+                'recm_priority.condition_type_cd',
+                '=',
+                'insp.recmnd_priority'
+            )
+            ->select(
+                'insp.*',
+                'insp_type.inspection_type_descr as insp_type',
+                'sub_asset.sub_assets_descr as asset_type',
+                'overall_condt.condition_type_descr as overall_condition',
+                'pavement_condt.condition_type_descr as pavement_condition',
+                'drainage_condt.condition_type_descr as drainage_condition',
+                'shoulder_condt.condition_type_descr as shoulder_condition',
+                'structural_condt.condition_type_descr as structural_condition',
+                'safety_condt.condition_type_descr as safety_condition',
+                'signage_condt.condition_type_descr as signage_condition',
+                'risk_type.risk_type_descr as risk_type',
+                'recm_action.action_type_descr as recm_action_type',
+                'recm_priority.condition_type_descr as recm_priority'
+            );
+    }
+
     public function index(Request $request)
     {
         try {
-            $query = MtnInspectionDetail::query();
-
-            // Optional filters — all safe no-ops if not passed
-            if ($request->filled('insp_asset_type')) {
-                $query->where('insp_asset_type', $request->input('insp_asset_type'));
-            }
-
-            if ($request->filled('insp_asset_id')) {
-                $query->where('insp_asset_id', $request->input('insp_asset_id'));
-            }
-
-            if ($request->filled('insp_type_cd')) {
-                $query->where('insp_type_cd', $request->input('insp_type_cd'));
-            }
-
-            if ($request->filled('cndtn_overall')) {
-                $query->where('cndtn_overall', $request->input('cndtn_overall'));
-            }
-
-            if ($request->filled('is_defects_observed')) {
-                $query->where('is_defects_observed', $request->input('is_defects_observed'));
-            }
-
-            if ($request->filled('date_from')) {
-                $query->whereDate('insp_date', '>=', $request->input('date_from'));
-            }
-
-            if ($request->filled('date_to')) {
-                $query->whereDate('insp_date', '<=', $request->input('date_to'));
-            }
-
-            $query->latest('insp_date');
-
-            $perPage = (int) $request->input('per_page', 15);
-            $perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 15;
-
-            $inspections = $query->paginate($perPage);
+            $inspections = $this->inspectionQuery()
+                ->orderBy('insp.updated_at')
+                ->get();
 
             return response()->json([
                 'success' => true,
-                'data' => InspectionDetailResource::collection($inspections->items()),
-                'meta' => [
-                    'current_page' => $inspections->currentPage(),
-                    'per_page' => $inspections->perPage(),
-                    'total' => $inspections->total(),
-                    'last_page' => $inspections->lastPage(),
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Failed to fetch inspection details list', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'status_code' => 200,
+                'message' => 'Inspection details retrieved successfully.',
+                'data' => $inspections,
+                'count' => $inspections->count(),
+            ], 200);
+        } catch (Throwable $e) {
+
+            Log::error('Failed to retrieve all inspection details.', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to fetch inspection details.',
+                'status_code' => 500,
+                'message' => 'Unable to retrieve inspection details at this time.',
+                'data' => null,
             ], 500);
         }
     }
@@ -153,29 +212,53 @@ class InspectionController extends Controller
     public function show(int $id)
     {
         try {
-            $inspection = MtnInspectionDetail::find($id);
-
-            if (! $inspection) {
+            // Validate ID before querying the database
+            if (!is_numeric($id) || (int) $id <= 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Inspection detail with id [{$id}] not found.",
+                    'status_code' => 422,
+                    'message' => 'Invalid inspection ID.',
+                    'data' => null,
+                ], 422);
+            }
+
+            $id = (int) $id;
+
+            $inspection = $this->inspectionQuery()
+                ->where('insp.id', $id)
+                ->first();
+
+            // Record not found
+            if (!$inspection) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 404,
+                    'message' => 'Inspection details not found.',
+                    'data' => null,
                 ], 404);
             }
 
             return response()->json([
                 'success' => true,
-                'data' => new InspectionDetailResource($inspection),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Failed to fetch inspection detail', [
-                'id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'status_code' => 200,
+                'message' => 'Inspection details retrieved successfully.',
+                'data' => $inspection,
+            ], 200);
+        } catch (Throwable $e) {
+
+            Log::error('Failed to retrieve inspection details.', [
+                'inspection_id' => $id ?? null,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to fetch inspection detail.',
+                'status_code' => 500,
+                'message' => 'Unable to retrieve inspection details at this time.',
+                'data' => null,
             ], 500);
         }
     }
