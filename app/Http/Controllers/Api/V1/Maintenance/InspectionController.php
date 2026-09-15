@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Maintenance;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\StoreInspectionRequest;
+use App\Http\Resources\Maintenance\InspectionDetailResource;
 use App\Models\Maintenance\Inspection\MtnInspectionDetail;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -13,16 +14,76 @@ use Throwable;
 
 class InspectionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => 'Successfully fetched inspection details.',
-        ]);
+        try {
+            $query = MtnInspectionDetail::query();
+
+            // Optional filters — all safe no-ops if not passed
+            if ($request->filled('insp_asset_type')) {
+                $query->where('insp_asset_type', $request->input('insp_asset_type'));
+            }
+
+            if ($request->filled('insp_asset_id')) {
+                $query->where('insp_asset_id', $request->input('insp_asset_id'));
+            }
+
+            if ($request->filled('insp_type_cd')) {
+                $query->where('insp_type_cd', $request->input('insp_type_cd'));
+            }
+
+            if ($request->filled('cndtn_overall')) {
+                $query->where('cndtn_overall', $request->input('cndtn_overall'));
+            }
+
+            if ($request->filled('is_defects_observed')) {
+                $query->where('is_defects_observed', $request->input('is_defects_observed'));
+            }
+
+            if ($request->filled('date_from')) {
+                $query->whereDate('insp_date', '>=', $request->input('date_from'));
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('insp_date', '<=', $request->input('date_to'));
+            }
+
+            $query->latest('insp_date');
+
+            $perPage = (int) $request->input('per_page', 15);
+            $perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 15;
+
+            $inspections = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => InspectionDetailResource::collection($inspections->items()),
+                'meta' => [
+                    'current_page' => $inspections->currentPage(),
+                    'per_page' => $inspections->perPage(),
+                    'total' => $inspections->total(),
+                    'last_page' => $inspections->lastPage(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch inspection details list', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch inspection details.',
+            ], 500);
+        }
     }
 
     public function store(StoreInspectionRequest $request)
     {
+        Log::info('Creating new inspection detail', [
+            'user_id' => auth()->id(),
+            'request_data' => $request->all(),
+        ]);
         try {
             $inspection = DB::transaction(function () use ($request) {
                 $data = $request->validated();
@@ -85,6 +146,36 @@ class InspectionController extends Controller
                 'success' => false,
                 'message' => 'An unexpected error occurred. Please try again.',
                 'error_code' => 'SERVER_ERROR',
+            ], 500);
+        }
+    }
+
+    public function show(int $id)
+    {
+        try {
+            $inspection = MtnInspectionDetail::find($id);
+
+            if (! $inspection) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Inspection detail with id [{$id}] not found.",
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new InspectionDetailResource($inspection),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch inspection detail', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch inspection detail.',
             ], 500);
         }
     }

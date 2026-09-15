@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Maintenance\InspectionController;
+use App\Http\Controllers\Api\V1\Maintenance\MasterDataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +25,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::prefix('maintenance/v1')->group(function () {
     Route::get('/inspection-details-all', [InspectionController::class, 'index']);
     Route::post('/inspection-details', [InspectionController::class, 'store']);
+    Route::get('/inspection-details-all/{id}', [InspectionController::class, 'show']);
+
+    Route::get('/master-data', [MasterDataController::class, 'index']);
 });
