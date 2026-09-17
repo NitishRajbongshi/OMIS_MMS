@@ -138,105 +138,339 @@ class InspectionController extends Controller
         }
     }
 
+    private function storePciRecord(array $pciData, int $userId): string
+    {
+        $now = now();
+
+        $randomNumber = random_int(100, 999);
+        $currentTime = time();
+
+        $pciCode = 'PCI_' . $userId . '_' . $currentTime . '_' . $randomNumber;
+
+        $insertData = [
+            'pci_section_cd'                => $pciCode,
+            'pci_section_length_in_meter'   => $pciData['pci_section_length_in_meter'] ?? null,
+            'rd_system_id'                  => $pciData['rd_system_id'] ?? null,
+            'chainage'                      => $pciData['chainage'] ?? null,
+            'cracking_percent'              => $pciData['cracking_percent'] ?? null,
+            'ravelling_percent'             => $pciData['ravelling_percent'] ?? null,
+            'pot_holes_percent'             => $pciData['pot_holes_percent'] ?? null,
+            'shoving_percent'               => $pciData['shoving_percent'] ?? null,
+            'patching_percent'              => $pciData['patching_percent'] ?? null,
+            'settlement_depression_percent' => $pciData['settlement_depression_percent'] ?? null,
+            'rut_depth'                     => $pciData['rut_depth'] ?? null,
+            'tot_motorized_traffic_per_day' => $pciData['tot_motorized_traffic_per_day'] ?? null,
+            'tot_comm_veh_traffic_per_day'  => $pciData['tot_comm_veh_traffic_per_day'] ?? null,
+            'pv_traffic_light'              => $pciData['pv_traffic_light'] ?? null,
+            'pci_value'                     => $pciData['pci_value'],
+            'pci_remarks'                   => $pciData['pci_remarks'] ?? null,
+            'created_by'                    => $userId,
+            'updated_by'                    => $userId,
+            'created_at'                    => $now,
+            'updated_at'                    => $now,
+            'created_at_office_cd'          => $pciData['created_at_office_cd'] ?? null,
+            'sent_for_finalize'             => 'N',
+            'pci_year'                      => $pciData['pci_year'] ?? null,
+            'is_rejected'                   => 'N',
+        ];
+
+        Log::info('Attempting to insert PCI record', [
+            'pci_section_cd' => $pciCode,
+            'pci_value' => $pciData['pci_value'] ?? null,
+            'user_id' => $userId,
+        ]);
+
+        $inserted = DB::table(
+            'public.asset_road_pavement_condition_indexes_draft'
+        )->insert($insertData);
+
+        if (!$inserted) {
+            Log::error('PCI insert returned false', [
+                'pci_section_cd' => $pciCode,
+                'user_id' => $userId,
+            ]);
+
+            throw new \RuntimeException(
+                'Failed to store PCI record.'
+            );
+        }
+
+        Log::info('PCI record stored successfully', [
+            'pci_section_cd' => $pciCode,
+        ]);
+
+        return $pciCode;
+    }
+
     public function store(StoreInspectionRequest $request)
     {
-        Log::info('StoreInspectionRequest validated data:', $request->validated());
-
         try {
-            $inspection = DB::transaction(function () use ($request) {
-                $data = $request->validated();
-                $observations = $data['observations'] ?? [];
-                unset($data['observations']); // don't pass this through to MtnInspectionDetail::create
 
-                $unique_key = 'INSP-' . strtoupper(uniqid());
-                if (empty($data['insp_cd'])) {
-                    $data['insp_cd'] = $unique_key;
+            $inspection = DB::transaction(function () use ($request) {
+
+                $data = $request->validated();
+
+                // Get authenticated user once
+                $userId = $data['created_by'];
+
+                Log::info('Inspection API request received', [
+                    'user_id' => $userId,
+                    'pci_value' => $data['pci_value'] ?? null,
+                ]);
+                Log::info('Validated inspection data', [
+                    'data' => $data,
+                ]);
+
+                $observations = $data['observations'] ?? [];
+
+                unset($data['observations']);
+
+                /*
+            |--------------------------------------------------------------------------
+            | PCI DATA
+            |--------------------------------------------------------------------------
+            */
+
+                $pciReference = null;
+
+                $hasPciValue =
+                    array_key_exists('pci_value', $data)
+                    && $data['pci_value'] !== null
+                    && $data['pci_value'] !== '';
+
+                if ($hasPciValue) {
+
+                    Log::info('PCI value exists. Creating PCI record.');
+
+                    $pciData = [
+                        'pci_section_length_in_meter'   => $data['pci_section_length_in_meter'] ?? null,
+                        'rd_system_id'                  => $data['rd_system_id'] ?? null,
+                        'chainage'                      => $data['chainage'] ?? null,
+                        'cracking_percent'              => $data['cracking_percent'] ?? null,
+                        'ravelling_percent'             => $data['ravelling_percent'] ?? null,
+                        'pot_holes_percent'             => $data['pot_holes_percent'] ?? null,
+                        'shoving_percent'               => $data['shoving_percent'] ?? null,
+                        'patching_percent'              => $data['patching_percent'] ?? null,
+                        'settlement_depression_percent' => $data['settlement_depression_percent'] ?? null,
+                        'rut_depth'                     => $data['rut_depth'] ?? null,
+                        'tot_motorized_traffic_per_day' => $data['tot_motorized_traffic_per_day'] ?? null,
+                        'tot_comm_veh_traffic_per_day'  => $data['tot_comm_veh_traffic_per_day'] ?? null,
+                        'pv_traffic_light'              => $data['pv_traffic_light'] ?? null,
+                        'pci_value'                     => $data['pci_value'],
+                        'pci_remarks'                   => $data['pci_remarks'] ?? null,
+                        'created_at_office_cd'          => $data['created_at_office_cd'] ?? null,
+                        'pci_year'                      => $data['pci_year'] ?? null,
+                    ];
+
+                    /*
+                 * Store PCI first
+                 */
+                    $pciReference = $this->storePciRecord(
+                        $pciData,
+                        $userId
+                    );
+
+                    Log::info('PCI record created', [
+                        'pci_section_cd' => $pciReference,
+                    ]);
+
+                    /*
+                 * Remove PCI-specific fields from inspection data.
+                 */
+                    unset(
+                        $data['pci_section_length_in_meter'],
+                        $data['rd_system_id'],
+                        $data['chainage'],
+                        $data['cracking_percent'],
+                        $data['ravelling_percent'],
+                        $data['pot_holes_percent'],
+                        $data['shoving_percent'],
+                        $data['patching_percent'],
+                        $data['settlement_depression_percent'],
+                        $data['rut_depth'],
+                        $data['tot_motorized_traffic_per_day'],
+                        $data['tot_comm_veh_traffic_per_day'],
+                        $data['pv_traffic_light'],
+                        $data['pci_value'],
+                        $data['pci_remarks'],
+                        $data['created_at_office_cd'],
+                        $data['pci_year']
+                    );
+
+                    /*
+                 * Store returned PCI reference in inspection.
+                 */
+                    $data['pci_section_cd'] = $pciReference;
+                } else {
+
+                    Log::info('PCI value is NULL. No PCI record will be created.');
+
+                    /*
+                 * Remove PCI fields because they don't belong
+                 * to mtn_inspection_details.
+                 */
+                    unset(
+                        $data['pci_section_length_in_meter'],
+                        $data['rd_system_id'],
+                        $data['chainage'],
+                        $data['cracking_percent'],
+                        $data['ravelling_percent'],
+                        $data['pot_holes_percent'],
+                        $data['shoving_percent'],
+                        $data['patching_percent'],
+                        $data['settlement_depression_percent'],
+                        $data['rut_depth'],
+                        $data['tot_motorized_traffic_per_day'],
+                        $data['tot_comm_veh_traffic_per_day'],
+                        $data['pv_traffic_light'],
+                        $data['pci_value'],
+                        $data['pci_remarks'],
+                        $data['created_at_office_cd'],
+                        $data['pci_year']
+                    );
+
+                    /*
+                 * Make sure inspection has no PCI reference.
+                 */
+                    $data['pci_section_cd'] = null;
                 }
 
-                $data['created_by'] = auth()->id();
-                $data['updated_by'] = auth()->id();
+                /*
+            |--------------------------------------------------------------------------
+            | INSPECTION
+            |--------------------------------------------------------------------------
+            */
+
+                if (empty($data['insp_cd'])) {
+                    $data['insp_cd'] =
+                        'INSP-' . strtoupper(uniqid());
+                }
+
+                $data['created_by'] = $userId;
+                $data['updated_by'] = $userId;
+
+                Log::info('Creating inspection record', [
+                    'insp_cd' => $data['insp_cd'],
+                    'pci_section_cd' => $data['pci_section_cd'] ?? null,
+                    'user_id' => $userId,
+                ]);
 
                 $inspection = MtnInspectionDetail::create($data);
 
+                Log::info('Inspection record created', [
+                    'inspection_id' => $inspection->id,
+                    'insp_cd' => $inspection->insp_cd,
+                ]);
+
+                /*
+            |--------------------------------------------------------------------------
+            | OBSERVATIONS
+            |--------------------------------------------------------------------------
+            */
+
                 if (!empty($observations)) {
+
                     $now = now();
-                    $rows = array_map(function ($obs) use ($inspection, $now) {
+
+                    $rows = array_map(function ($obs) use (
+                        $inspection,
+                        $now,
+                        $userId
+                    ) {
+
                         return [
                             'insp_id'         => $inspection->id,
                             'activity_cd'     => $obs['activity_cd'],
                             'obsrv_desc'      => $obs['obsrv_desc'] ?? null,
                             'grading_cd'      => $obs['grading_cd'] ?? null,
                             'obsrv_weightage' => $obs['obsrv_weightage'] ?? null,
-                            'created_by'      => auth()->id(),
-                            'updated_by'      => auth()->id(),
+                            'created_by'      => $userId,
+                            'updated_by'      => $userId,
                             'created_at'      => $now,
                             'updated_at'      => $now,
                         ];
                     }, $observations);
 
                     MtnInspObservationDetail::insert($rows);
+
+                    Log::info('Inspection observations created', [
+                        'inspection_id' => $inspection->id,
+                        'count' => count($rows),
+                    ]);
                 }
 
                 return $inspection;
             });
 
+            /*
+        |--------------------------------------------------------------------------
+        | SUCCESS
+        |--------------------------------------------------------------------------
+        */
+
             return response()->json([
                 'success' => true,
+                'status_code' => 201,
                 'message' => 'Inspection created successfully.',
                 'data' => [
                     'id' => $inspection->id,
                     'insp_cd' => $inspection->insp_cd,
+                    'pci_section_cd' => $inspection->pci_section_cd,
                 ],
             ], 201);
         } catch (QueryException $e) {
+
+            Log::error('Database error creating inspection', [
+                'sql_state' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'user_id' => auth()->id(),
+            ]);
+
             if ($e->getCode() === '23505') {
-                Log::warning('Duplicate insp_cd on inspection create', [
-                    'insp_cd' => $request->input('insp_cd'),
-                    'user_id' => auth()->id(),
-                ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'An inspection with this insp_cd already exists.',
-                    'error_code' => 'DUPLICATE_INSP_CD',
+                    'status_code' => 409,
+                    'message' => 'A duplicate record already exists.',
+                    'error_code' => 'DUPLICATE_RECORD',
+                    'data' => null,
                 ], 409);
             }
 
             if ($e->getCode() === '23503') {
-                Log::warning('FK violation creating inspection/observations', [
-                    'message' => $e->getMessage(),
-                    'user_id' => auth()->id(),
-                ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'One of the referenced codes (activity, grading) does not exist.',
+                    'status_code' => 422,
+                    'message' => 'One of the referenced records does not exist.',
                     'error_code' => 'INVALID_REFERENCE',
+                    'data' => null,
                 ], 422);
             }
 
-            Log::error('Database error creating inspection', [
-                'sql_state' => $e->getCode(),
-                'message'   => $e->getMessage(),
-                'user_id'   => auth()->id(),
-            ]);
-
             return response()->json([
                 'success' => false,
+                'status_code' => 500,
                 'message' => 'A database error occurred while saving the inspection.',
                 'error_code' => 'DB_ERROR',
-            ], 422);
+                'data' => null,
+            ], 500);
         } catch (Throwable $e) {
+
             Log::error('Unexpected error creating inspection', [
+                'exception' => get_class($e),
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'user_id' => auth()->id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred. Please try again.',
+                'status_code' => 500,
+                'message' => 'An unexpected error occurred while saving the inspection.',
                 'error_code' => 'SERVER_ERROR',
+                'data' => null,
             ], 500);
         }
     }
