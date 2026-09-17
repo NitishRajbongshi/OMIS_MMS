@@ -187,9 +187,98 @@ class StoreInspectionRequest extends FormRequest
                 'nullable',
                 'integer',
             ],
+
             'observations' => [
                 'nullable',
                 'array',
+            ],
+
+            'pci_value' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'pci_section_length_in_meter' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'rd_system_id' => [
+                'nullable',
+                'string',
+                'max:30',
+            ],
+
+            'chainage' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'cracking_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'ravelling_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'pot_holes_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'shoving_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'patching_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'settlement_depression_percent' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'rut_depth' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'tot_motorized_traffic_per_day' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'tot_comm_veh_traffic_per_day' => [
+                'nullable',
+                'numeric',
+            ],
+
+            'pv_traffic_light' => [
+                'nullable',
+                'string',
+                'max:1',
+            ],
+
+            'pci_remarks' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'created_at_office_cd' => [
+                'nullable',
+                'integer',
+            ],
+
+            'pci_year' => [
+                'nullable',
+                'integer',
             ],
         ];
     }
