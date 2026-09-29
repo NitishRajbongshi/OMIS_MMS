@@ -50,6 +50,7 @@ class MasterDataController extends Controller
             'code_col'     => 'activity_cd',
             'title_col'    => 'activity_title',
             'descr_col'    => 'activity_descr',
+            'sub_asset_col' => 'sub_asset_cd',
         ],
     ];
 
@@ -98,6 +99,10 @@ class MasterDataController extends Controller
                 $columns[] = "{$config['title_col']} as title";
             }
 
+            if (isset($config['sub_asset_col'])) {
+                $columns[] = "{$config['sub_asset_col']} as sub_asset";
+            }
+
             return DB::table($config['table'])
                 ->select($columns)
                 ->orderBy($config['descr_col'])
@@ -110,6 +115,10 @@ class MasterDataController extends Controller
 
                     if (isset($config['title_col'])) {
                         $item['title'] = $row->title;
+                    }
+
+                    if (isset($config['sub_asset_col'])) {
+                        $item['sub_asset'] = $row->sub_asset;
                     }
 
                     return $item;
