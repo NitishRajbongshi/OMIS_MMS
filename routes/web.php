@@ -50,6 +50,7 @@ use App\Http\Controllers\DataFinalization\FinalizationController;
 use App\Http\Controllers\HQRoadChainage\HqRoadChainageController;
 use App\Http\Controllers\Dashboard\AssetRoadDistressDetailsController;
 use App\Http\Controllers\Admin\UnlockDataFieldController;
+use App\Http\Controllers\AssetCriticality\CriticalityIndexController;
 use App\Http\Controllers\AssetImage\AssetImageController;
 use App\Http\Controllers\Building\BuildingLocationController;
 use App\Http\Controllers\Building\BuildingOccupancyController;
@@ -177,6 +178,12 @@ Route::post('/forgot-password', [PasswordController::class, 'storeNewPassword'])
 
 Route::group(['middleware' => ['auth', 'prevent.cache']], function () {
     Route::get('/portal', [HomeController::class, 'portalLanding'])->name('portal.landing');
+
+    // criticality index
+    Route::get('/criticality-index', [CriticalityIndexController::class, 'index'])->name('criticality.index');
+    Route::post('/criticality-index', [CriticalityIndexController::class, 'store'])->name('criticality.store');
+    Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class,'assets'])->name('criticality.assets');
+    Route::get('/criticality-index/parameter', [CriticalityIndexController::class, 'parameter'])->name('criticality.parameter');
 });
 // =============================================================================
 // PROJECT MANAGEMENT SYSTEM (PMS) ROUTES
