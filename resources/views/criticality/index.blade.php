@@ -717,7 +717,7 @@
                 button.prop('disabled', true).text('Updating...');
 
                 $.ajax({
-                    url: `/criticality-index/${id}`,
+                    url: `/asset-management/criticality-index/${id}`,
                     type: 'PUT',
                     data: {
                         _token: $('meta[name="csrf-token"]').attr('content'),

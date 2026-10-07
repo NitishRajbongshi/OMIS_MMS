@@ -178,14 +178,6 @@ Route::post('/forgot-password', [PasswordController::class, 'storeNewPassword'])
 
 Route::group(['middleware' => ['auth', 'prevent.cache']], function () {
     Route::get('/portal', [HomeController::class, 'portalLanding'])->name('portal.landing');
-
-    // criticality index
-    Route::get('/criticality-index', [CriticalityIndexController::class, 'index'])->name('criticality.index');
-    Route::post('/criticality-index', [CriticalityIndexController::class, 'store'])->name('criticality.store');
-    Route::put('/criticality-index/{id}', [CriticalityIndexController::class, 'update'])->name('criticality.update');
-    Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class, 'assets'])->name('criticality.assets');
-    Route::get('/criticality-index/parameter', [CriticalityIndexController::class, 'parameter'])->name('criticality.parameter');
-    Route::get('/criticality-index/list', [CriticalityIndexController::class, 'list'])->name('criticality.list');
 });
 // =============================================================================
 // PROJECT MANAGEMENT SYSTEM (PMS) ROUTES
@@ -483,6 +475,14 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::resource('buildingWallType', BuildingWallTypeController::class)->only(['index', 'store', 'update']);
     Route::resource('buildingTypes', BuildingTypeController::class)->only(['index', 'store', 'update']);
     Route::resource('buildingCondition', BuildingConditionController::class)->only(['index', 'store', 'update']);
+
+    // criticality index
+    Route::get('/criticality-index', [CriticalityIndexController::class, 'index'])->name('criticality.index');
+    Route::post('/criticality-index', [CriticalityIndexController::class, 'store'])->name('criticality.store');
+    Route::put('/criticality-index/{id}', [CriticalityIndexController::class, 'update'])->name('criticality.update');
+    Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class, 'assets'])->name('criticality.assets');
+    Route::get('/criticality-index/parameter', [CriticalityIndexController::class, 'parameter'])->name('criticality.parameter');
+    Route::get('/criticality-index/list', [CriticalityIndexController::class, 'list'])->name('criticality.list');
 
     // Bridge Masters
     Route::resource('abutmentType', AbutmentTypeController::class)->only(['index', 'store', 'update']);
