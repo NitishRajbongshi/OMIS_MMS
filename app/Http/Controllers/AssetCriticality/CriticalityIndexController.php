@@ -249,4 +249,306 @@ class CriticalityIndexController extends Controller
             ],
         ]);
     }
+
+    public function list(Request $request)
+    {
+        $assetType = $request->input('asset_type');
+        $search = trim($request->input('search', ''));
+
+        $perPage = min(
+            max((int) $request->input('per_page', 10), 1),
+            100
+        );
+
+        if ($assetType !== null && $assetType !== '') {
+
+            $config = config("asset_schema_lists.$assetType");
+
+            if (!$config) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid asset type.',
+                ], 422);
+            }
+
+            $query = DB::table(
+                'maintenance.master_asset_criticality_indexes as ci'
+            )
+                ->join(
+                    $config['table'] . ' as a',
+                    'a.' . $config['id_field'],
+                    '=',
+                    'ci.asset_id'
+                )
+                ->where(
+                    'ci.asset_type',
+                    (string) $assetType
+                );
+
+            if ($search !== '') {
+
+                $idField = 'a.' . $config['id_field'];
+                $nameField = 'a.' . $config['name_field'];
+
+                $query->where(function ($q) use (
+                    $idField,
+                    $nameField,
+                    $search
+                ) {
+
+                    $searchValue = "%{$search}%";
+
+                    $q->whereRaw(
+                        "CAST($idField AS TEXT) ILIKE ?",
+                        [$searchValue]
+                    );
+
+                    $q->orWhereRaw(
+                        "CAST($nameField AS TEXT) ILIKE ?",
+                        [$searchValue]
+                    );
+                });
+            }
+
+            $records = $query
+                ->select([
+                    'ci.id',
+                    'ci.asset_type',
+                    'ci.asset_id',
+                    'ci.criticality_index',
+                    'ci.created_at',
+                    'ci.created_by',
+
+                    DB::raw(
+                        'a.' .
+                            $config['name_field'] .
+                            ' as asset_name'
+                    ),
+                ])
+                ->orderByDesc('ci.id')
+                ->paginate($perPage);
+
+            $data = collect($records->items())->map(function ($record) use ($config) {
+                $assetName = $record->asset_name ?? '-';
+                $assetLabel =
+                    $config['display_format']
+                    ?? '{id} — {name}';
+
+                $assetLabel = str_replace(
+                    ['{id}', '{name}'],
+                    [
+                        $record->asset_id,
+                        $assetName,
+                    ],
+                    $assetLabel
+                );
+
+                return [
+                    'id' => $record->id,
+
+                    'asset_type' =>
+                    $record->asset_type,
+
+                    'asset_type_name' =>
+                    $config['name'],
+
+                    'asset_id' =>
+                    $record->asset_id,
+
+                    'asset_name' =>
+                    $assetName,
+
+                    'asset_label' =>
+                    $assetLabel,
+
+                    'criticality_index' =>
+                    $record->criticality_index,
+
+                    'created_at' =>
+                    $record->created_at,
+
+                    'created_by' =>
+                    $record->created_by,
+                ];
+            })
+                ->values();
+
+
+            return response()->json([
+                'success' => true,
+
+                'data' => $data,
+
+                'pagination' => [
+                    'current_page' =>
+                    $records->currentPage(),
+
+                    'last_page' =>
+                    $records->lastPage(),
+
+                    'per_page' =>
+                    $records->perPage(),
+
+                    'total' =>
+                    $records->total(),
+                ],
+            ]);
+        }
+
+        $allRecords = DB::table(
+            'maintenance.master_asset_criticality_indexes'
+        )
+            ->orderByDesc('id')
+            ->get();
+
+        $filteredRecords = $allRecords
+            ->map(function ($record) {
+
+                $config = config(
+                    "asset_schema_lists.{$record->asset_type}"
+                );
+
+                if (!$config) {
+
+                    return null;
+                }
+
+
+                $asset = DB::table($config['table'])
+                    ->where(
+                        $config['id_field'],
+                        $record->asset_id
+                    )
+                    ->select([
+                        $config['id_field'] . ' as asset_id',
+                        $config['name_field'] . ' as asset_name',
+                    ])
+                    ->first();
+
+
+                if (!$asset) {
+
+                    return null;
+                }
+
+
+                $assetName =
+                    $asset->asset_name ?? '-';
+
+
+                $assetLabel =
+                    $config['display_format']
+                    ?? '{id} — {name}';
+
+
+                $assetLabel = str_replace(
+                    ['{id}', '{name}'],
+                    [
+                        $record->asset_id,
+                        $assetName,
+                    ],
+                    $assetLabel
+                );
+
+
+                return [
+                    'id' =>
+                    $record->id,
+
+                    'asset_type' =>
+                    $record->asset_type,
+
+                    'asset_type_name' =>
+                    $config['name'],
+
+                    'asset_id' =>
+                    $record->asset_id,
+
+                    'asset_name' =>
+                    $assetName,
+
+                    'asset_label' =>
+                    $assetLabel,
+
+                    'criticality_index' =>
+                    $record->criticality_index,
+
+                    'created_at' =>
+                    $record->created_at,
+
+                    'created_by' =>
+                    $record->created_by,
+                ];
+            })
+            ->filter();
+
+        if ($search !== '') {
+
+            $searchLower = strtolower($search);
+
+            $filteredRecords = $filteredRecords
+                ->filter(function ($record) use ($searchLower) {
+
+                    return str_contains(
+                        strtolower($record['asset_id']),
+                        $searchLower
+                    )
+                        ||
+                        str_contains(
+                            strtolower($record['asset_name']),
+                            $searchLower
+                        )
+                        ||
+                        str_contains(
+                            strtolower($record['asset_label']),
+                            $searchLower
+                        )
+                        ||
+                        str_contains(
+                            strtolower($record['asset_type_name']),
+                            $searchLower
+                        );
+                });
+        }
+
+        $currentPage = max(
+            (int) $request->input('page', 1),
+            1
+        );
+
+        $total = $filteredRecords->count();
+
+        $pagedRecords = $filteredRecords
+            ->slice(
+                ($currentPage - 1) * $perPage,
+                $perPage
+            )
+            ->values();
+
+
+        $lastPage = max(
+            (int) ceil($total / $perPage),
+            1
+        );
+
+        return response()->json([
+            'success' => true,
+
+            'data' => $pagedRecords,
+
+            'pagination' => [
+                'current_page' =>
+                $currentPage,
+
+                'last_page' =>
+                $lastPage,
+
+                'per_page' =>
+                $perPage,
+
+                'total' =>
+                $total,
+            ],
+        ]);
+    }
 }

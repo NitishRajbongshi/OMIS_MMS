@@ -3,12 +3,9 @@
 @section('title', 'Criticality Index')
 
 @section('content')
-
     <div class="container-fluid">
-
         <div class="row">
             <div class="col-12">
-
                 <div class="card">
 
                     <div class="card-header">
@@ -16,7 +13,7 @@
                     </div>
 
                     <div class="card-body">
-
+                        <div id="criticalityAlert" class="alert" style="display: none;" role="alert"></div>
                         <form id="criticalityIndexForm" method="POST" action="{{ route('criticality.store') }}">
                             @csrf
 
@@ -37,7 +34,6 @@
                                             {{ $assetType['name'] }}
                                         </option>
                                     @endforeach
-
                                 </select>
                             </div>
 
@@ -86,21 +82,551 @@
                     </div>
 
                 </div>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            Existing Criticality Indexes
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="criticalityListAlert" class="alert" style="display: none;"></div>
+                        <div class="table-responsive">
+                            <div class="row mb-3">
 
+                                {{-- Asset Type Filter --}}
+                                <div class="col-md-4">
+
+                                    <label for="filter_asset_type" class="form-label">
+                                        Asset Type
+                                    </label>
+
+                                    <select id="filter_asset_type" class="form-select">
+
+                                        <option value="">
+                                            All Asset Types
+                                        </option>
+
+                                        @foreach ($assetTypes as $assetType)
+                                            <option value="{{ $assetType['code'] }}">
+                                                {{ $assetType['name'] }}
+                                            </option>
+                                        @endforeach
+
+                                    </select>
+
+                                </div>
+
+
+                                {{-- Search --}}
+                                <div class="col-md-5">
+
+                                    <label for="criticality_search" class="form-label">
+                                        Search Asset
+                                    </label>
+
+                                    <input type="text" id="criticality_search" class="form-control"
+                                        placeholder="Search Asset ID or Name...">
+
+                                </div>
+
+
+                                {{-- Search Button --}}
+                                <div class="col-md-3 d-flex align-items-end">
+
+                                    <button type="button" id="searchCriticality" class="btn btn-primary me-2">
+                                        Search
+                                    </button>
+
+                                    <button type="button" id="resetCriticality" class="btn btn-secondary">
+                                        Reset
+                                    </button>
+
+                                </div>
+
+                            </div>
+                            <table class="table table-bordered table-striped" id="criticalityTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Asset Type</th>
+                                        <th>Asset</th>
+                                        <th>Criticality Index</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="criticalityTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+
+                                <div id="criticalityPaginationInfo" class="text-muted"></div>
+
+                                <div id="criticalityPagination"></div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
     </div>
 
 @endsection
 @push('scripts')
     <script>
         $(document).ready(function() {
-
             let criticalityRange = {
                 lower: null,
                 upper: null
             };
+            loadCriticalityList();
+
+            function showAlert(type, message) {
+                const $alert = $('#criticalityAlert');
+                $alert
+                    .removeClass('alert-success alert-danger alert-warning alert-info')
+                    .addClass('alert-' + type)
+                    .html(message)
+                    .stop(true, true)
+                    .fadeIn();
+            }
+
+            function hideAlert() {
+                $('#criticalityAlert')
+                    .stop(true, true)
+                    .fadeOut();
+            }
+
+            function loadAssets(assetType) {
+
+                const $asset = $('#asset_id');
+                const $criticality = $('#criticality_index');
+                const $submit = $('#submitBtn');
+
+
+                /*
+                 * Reset asset dropdown
+                 */
+                $asset
+                    .prop('disabled', true)
+                    .empty()
+                    .append(
+                        '<option value="">-- Loading Assets --</option>'
+                    );
+
+
+                /*
+                 * Reset criticality
+                 */
+                $criticality
+                    .val('')
+                    .prop('disabled', true);
+
+
+                /*
+                 * Disable submit
+                 */
+                $submit
+                    .prop('disabled', true);
+
+
+                if (!assetType) {
+
+                    $asset
+                        .empty()
+                        .append(
+                            '<option value="">-- Select Asset Type First --</option>'
+                        );
+
+                    return;
+                }
+
+
+                $.ajax({
+
+                    url: "{{ route('criticality.assets', ':assetType') }}"
+                        .replace(':assetType', assetType),
+
+                    type: 'GET',
+
+                    success: function(response) {
+
+                        $asset.empty();
+
+
+                        if (
+                            !response.success ||
+                            !response.data ||
+                            response.data.length === 0
+                        ) {
+
+                            $asset
+                                .append(
+                                    '<option value="">-- No Assets Available --</option>'
+                                );
+
+                            return;
+                        }
+
+
+                        /*
+                         * Default option
+                         */
+                        $asset.append(
+                            '<option value="">-- Select Asset --</option>'
+                        );
+
+
+                        /*
+                         * Add assets
+                         */
+                        $.each(response.data, function(index, asset) {
+
+                            $asset.append(
+                                $('<option>', {
+                                    value: asset.asset_id,
+                                    text: asset.asset_label
+                                })
+                            );
+
+                        });
+
+
+                        $asset.prop('disabled', false);
+
+                    },
+
+                    error: function(xhr) {
+
+                        $asset
+                            .empty()
+                            .append(
+                                '<option value="">-- Failed to Load Assets --</option>'
+                            );
+
+                        showAlert(
+                            'danger',
+                            xhr.responseJSON?.message ||
+                            'Unable to load assets.'
+                        );
+
+                        console.error(xhr.responseJSON);
+                    }
+
+                });
+            }
+
+            function loadCriticalityList(page = 1) {
+
+                const assetType =
+                    $('#filter_asset_type').val();
+
+                const search =
+                    $('#criticality_search').val().trim();
+
+                const $tbody =
+                    $('#criticalityTableBody');
+
+
+                $tbody.html(`
+        <tr>
+            <td colspan="5" class="text-center">
+                Loading...
+            </td>
+        </tr>
+    `);
+
+
+                $.ajax({
+
+                    url: "{{ route('criticality.list') }}",
+
+                    type: 'GET',
+
+                    data: {
+                        asset_type: assetType,
+                        search: search,
+                        page: page,
+                        per_page: 10
+                    },
+
+
+                    success: function(response) {
+
+                        $tbody.empty();
+
+
+                        if (
+                            !response.success ||
+                            !response.data ||
+                            response.data.length === 0
+                        ) {
+
+                            $tbody.html(`
+                    <tr>
+                        <td
+                            colspan="5"
+                            class="text-center text-muted"
+                        >
+                            No Criticality Index records found.
+                        </td>
+                    </tr>
+                `);
+
+                            $('#criticalityPaginationInfo')
+                                .text('');
+
+                            $('#criticalityPagination')
+                                .empty();
+
+                            return;
+                        }
+
+
+                        /*
+                         * Populate table
+                         */
+
+                        $.each(
+                            response.data,
+                            function(index, record) {
+
+                                const createdAt =
+                                    record.created_at ?
+                                    new Date(
+                                        record.created_at
+                                    ).toLocaleString() :
+                                    '-';
+
+
+                                $tbody.append(`
+                        <tr>
+
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                ${record.asset_type_name}
+                            </td>
+
+                            <td>
+                                ${record.asset_label}
+                            </td>
+
+                            <td>
+                                ${record.criticality_index}
+                            </td>
+
+                            <td>
+                                ${createdAt}
+                            </td>
+
+                        </tr>
+                    `);
+
+                            }
+                        );
+
+
+                        /*
+                         * Pagination information
+                         */
+
+                        const pagination =
+                            response.pagination;
+
+
+                        const from =
+                            ((pagination.current_page - 1) *
+                                pagination.per_page) + 1;
+
+
+                        const to =
+                            Math.min(
+                                from + response.data.length - 1,
+                                pagination.total
+                            );
+
+
+                        $('#criticalityPaginationInfo')
+                            .text(
+                                `Showing ${from} to ${to} ` +
+                                `of ${pagination.total} records`
+                            );
+
+
+                        /*
+                         * Pagination buttons
+                         */
+
+                        renderCriticalityPagination(
+                            pagination
+                        );
+
+                    },
+
+
+                    error: function(xhr) {
+
+                        $tbody.html(`
+                <tr>
+                    <td
+                        colspan="5"
+                        class="text-center text-danger"
+                    >
+                        Unable to load records.
+                    </td>
+                </tr>
+            `);
+
+                        console.error(xhr.responseJSON);
+
+                    }
+
+                });
+            }
+
+            function renderCriticalityPagination(pagination) {
+
+                const $pagination =
+                    $('#criticalityPagination');
+
+                $pagination.empty();
+
+
+                if (pagination.last_page <= 1) {
+                    return;
+                }
+
+
+                const $nav = $('<ul>', {
+                    class: 'pagination mb-0'
+                });
+
+
+                /*
+                 * Previous
+                 */
+
+                const previousDisabled =
+                    pagination.current_page === 1 ?
+                    'disabled' :
+                    '';
+
+
+                $nav.append(`
+        <li class="page-item ${previousDisabled}">
+            <a
+                href="#"
+                class="page-link criticality-page"
+                data-page="${pagination.current_page - 1}"
+            >
+                Previous
+            </a>
+        </li>
+    `);
+
+
+                /*
+                 * Page numbers
+                 */
+
+                for (
+                    let page = 1; page <= pagination.last_page; page++
+                ) {
+
+                    const active =
+                        page === pagination.current_page ?
+                        'active' :
+                        '';
+
+
+                    $nav.append(`
+            <li class="page-item ${active}">
+                <a
+                    href="#"
+                    class="page-link criticality-page"
+                    data-page="${page}"
+                >
+                    ${page}
+                </a>
+            </li>
+        `);
+
+                }
+
+
+                /*
+                 * Next
+                 */
+
+                const nextDisabled =
+                    pagination.current_page === pagination.last_page ?
+                    'disabled' :
+                    '';
+
+
+                $nav.append(`
+        <li class="page-item ${nextDisabled}">
+            <a
+                href="#"
+                class="page-link criticality-page"
+                data-page="${pagination.current_page + 1}"
+            >
+                Next
+            </a>
+        </li>
+    `);
+
+
+                $pagination.append($nav);
+            }
+
+            $(document).on(
+                'click',
+                '.criticality-page',
+                function(e) {
+
+                    e.preventDefault();
+
+                    const page =
+                        parseInt($(this).data('page'));
+
+                    if (page < 1) {
+                        return;
+                    }
+
+                    loadCriticalityList(page);
+                }
+            );
+
+            $('#searchCriticality').on('click', function() {
+
+                loadCriticalityList(1);
+
+            });
+
+            $('#filter_asset_type').on('change', function() {
+
+                loadCriticalityList(1);
+
+            });
+
+            $('#resetCriticality').on('click', function() {
+
+                $('#filter_asset_type').val('');
+
+                $('#criticality_search').val('');
+
+                loadCriticalityList(1);
+
+            });
 
             $.ajax({
                 url: "{{ route('criticality.parameter') }}",
@@ -142,84 +668,10 @@
             });
 
             $('#asset_type').on('change', function() {
-
+                hideAlert();
                 const assetType = $(this).val();
-
-                const $asset = $('#asset_id');
-                const $criticality = $('#criticality_index');
-                const $submit = $('#submitBtn');
-
-                // Reset
-                $asset
-                    .prop('disabled', true)
-                    .empty()
-                    .append('<option value="">-- Loading Assets --</option>');
-
-                $criticality
-                    .val('')
-                    .prop('disabled', true);
-
-                $submit.prop('disabled', true);
-
-                if (!assetType) {
-                    $asset
-                        .empty()
-                        .append('<option value="">-- Select Asset Type First --</option>');
-
-                    return;
-                }
-
-                $.ajax({
-                    url: "{{ route('criticality.assets', ':assetType') }}"
-                        .replace(':assetType', assetType),
-
-                    type: 'GET',
-
-                    success: function(response) {
-
-                        $asset.empty();
-
-                        if (!response.success || response.data.length === 0) {
-
-                            $asset
-                                .append(
-                                    '<option value="">-- No Assets Available --</option>'
-                                );
-
-                            return;
-                        }
-
-                        $asset.append(
-                            '<option value="">-- Select Asset --</option>'
-                        );
-
-                        $.each(response.data, function(index, asset) {
-
-                            $asset.append(
-                                $('<option>', {
-                                    value: asset.asset_id,
-                                    text: asset.asset_label
-                                })
-                            );
-
-                        });
-
-                        $asset.prop('disabled', false);
-                    },
-
-                    error: function(xhr) {
-
-                        $asset
-                            .empty()
-                            .append(
-                                '<option value="">-- Failed to Load Assets --</option>'
-                            );
-
-                        console.error(xhr.responseJSON);
-                    }
-                });
+                loadAssets(assetType);
             });
-
 
             $('#asset_id').on('change', function() {
 
@@ -248,11 +700,8 @@
                 }
             });
 
-
             $('#criticality_index').on('input', function() {
-
                 const value = parseFloat($(this).val());
-
                 const $error = $('#criticality_error');
                 const $submit = $('#submitBtn');
 
@@ -270,7 +719,6 @@
                     $error
                         .text('Please enter a valid number.')
                         .show();
-
                     return;
                 }
 
@@ -287,25 +735,27 @@
                             '.'
                         )
                         .show();
-
                     return;
                 }
-
                 $submit.prop('disabled', false);
             });
 
             $('#criticalityIndexForm').on('submit', function(e) {
-
                 e.preventDefault();
+                hideAlert();
 
                 const $form = $(this);
                 const $submit = $('#submitBtn');
-
                 const assetType = $('#asset_type').val();
                 const assetId = $('#asset_id').val();
                 const criticalityIndex = $('#criticality_index').val();
 
                 if (!assetType || !assetId || !criticalityIndex) {
+                    showAlert(
+                        'warning',
+                        'Please complete all required fields.'
+                    );
+
                     return;
                 }
 
@@ -322,94 +772,91 @@
 
                     data: {
                         _token: $form.find('input[name="_token"]').val(),
-
                         asset_type: assetType,
-
                         asset_id: assetId,
-
                         criticality_index: criticalityIndex
                     },
 
                     success: function(response) {
-
-                        if (response.success) {
-
-                            alert(response.message);
-
-                            /*
-                             * Reset form
-                             */
-
-                            $form[0].reset();
-
-                            $('#asset_id')
-                                .empty()
-                                .append(
-                                    '<option value="">-- Select Asset Type First --</option>'
-                                )
-                                .prop('disabled', true);
-
-                            $('#criticality_index')
-                                .val('')
-                                .prop('disabled', true);
-
-                            $('#criticality_range')
-                                .hide();
-
-                            $('#criticality_error')
-                                .text('')
-                                .hide();
+                        if (!response.success) {
+                            showAlert(
+                                'danger',
+                                response.message ||
+                                'Unable to save Criticality Index.'
+                            );
 
                             $submit
-                                .prop('disabled', true)
+                                .prop('disabled', false)
                                 .text('Submit');
-                        }
-                    },
-
-                    error: function(xhr) {
-
-                        $submit
-                            .prop('disabled', false)
-                            .text('Submit');
-
-                        console.error(xhr.responseJSON);
-
-                        /*
-                         * Laravel validation errors
-                         */
-
-                        if (xhr.status === 422 && xhr.responseJSON?.errors) {
-
-                            const errors = xhr.responseJSON.errors;
-
-                            if (errors.criticality_index) {
-
-                                $('#criticality_error')
-                                    .text(errors.criticality_index[0])
-                                    .show();
-                            }
-
-                            if (errors.asset_id) {
-
-                                alert(errors.asset_id[0]);
-                            }
 
                             return;
                         }
 
+                        showAlert(
+                            'success',
+                            response.message
+                        );
 
-                        /*
-                         * General error
-                         */
+                        const selectedAssetType = $('#asset_type').val();
 
-                        alert(
+                        $('#criticality_index')
+                            .val('')
+                            .prop('disabled', true);
+
+
+                        $('#criticality_range')
+                            .hide();
+
+
+                        $('#criticality_error')
+                            .text('')
+                            .hide();
+                        loadAssets(selectedAssetType);
+                        loadCriticalityList();
+                        $submit
+                            .prop('disabled', true)
+                            .text('Submit');
+                    },
+
+                    error: function(xhr) {
+                        $submit
+                            .prop('disabled', false)
+                            .text('Submit');
+                        if (
+                            xhr.status === 422 &&
+                            xhr.responseJSON &&
+                            xhr.responseJSON.errors
+                        ) {
+                            const errors = xhr.responseJSON.errors;
+                            if (errors.criticality_index) {
+                                $('#criticality_error')
+                                    .text(errors.criticality_index[0])
+                                    .show();
+                            }
+                            if (errors.asset_id) {
+                                showAlert(
+                                    'danger',
+                                    errors.asset_id[0]
+                                );
+                                return;
+                            }
+
+                            if (errors.asset_type) {
+                                showAlert(
+                                    'danger',
+                                    errors.asset_type[0]
+                                );
+                                return;
+                            }
+                            return;
+                        }
+                        showAlert(
+                            'danger',
                             xhr.responseJSON?.message ||
                             'Unable to save Criticality Index.'
                         );
                     }
-
                 });
-
             });
         });
     </script>
