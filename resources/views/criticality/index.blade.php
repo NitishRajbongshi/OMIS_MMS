@@ -183,7 +183,8 @@
                             <h5 class="modal-title fw-bold" id="editCriticalityModalLabel">
                                 <i class="fa fa-edit text-warning me-2"></i>Edit Criticality Index
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </div>
 
                         <div class="modal-body">
@@ -195,14 +196,16 @@
                                 <label class="form-label" for="edit_asset_type">
                                     Asset Type
                                 </label>
-                                <input type="text" id="edit_asset_type" class="form-control form-control-sm bg-light" readonly>
+                                <input type="text" id="edit_asset_type" class="form-control form-control-sm bg-light"
+                                    readonly>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label" for="edit_asset">
                                     Asset
                                 </label>
-                                <input type="text" id="edit_asset" class="form-control form-control-sm bg-light" readonly>
+                                <input type="text" id="edit_asset" class="form-control form-control-sm bg-light"
+                                    readonly>
                             </div>
 
                             <div class="mb-3">
@@ -255,10 +258,10 @@
         }
     </style>
 @endpush
-
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $("#asset_id").select2();
             let criticalityRange = {
                 lower: null,
                 upper: null
@@ -322,7 +325,8 @@
                 }
 
                 $.ajax({
-                    url: "{{ route('criticality.assets', ':assetType') }}".replace(':assetType', assetType),
+                    url: "{{ route('criticality.assets', ':assetType') }}".replace(':assetType',
+                        assetType),
                     type: 'GET',
                     success: function(response) {
                         $asset.empty();
@@ -415,9 +419,9 @@
                         const pageOffset = (pagination.current_page - 1) * pagination.per_page;
 
                         $.each(response.data, function(index, record) {
-                            const createdAt = record.created_at
-                                ? new Date(record.created_at).toLocaleString()
-                                : '-';
+                            const createdAt = record.created_at ?
+                                new Date(record.created_at).toLocaleString() :
+                                '-';
 
                             $tbody.append(`
                                 <tr>
@@ -740,7 +744,8 @@
                             $('#editCriticalityAlert')
                                 .removeClass('d-none alert-success')
                                 .addClass('alert-danger')
-                                .text(xhr.responseJSON?.message || 'Failed to update Criticality Index.');
+                                .text(xhr.responseJSON?.message ||
+                                    'Failed to update Criticality Index.');
                         }
                     },
                     complete: function() {
@@ -777,7 +782,8 @@
                     },
                     success: function(response) {
                         if (!response.success) {
-                            showAlert('danger', response.message || 'Unable to save Criticality Index.');
+                            showAlert('danger', response.message ||
+                                'Unable to save Criticality Index.');
                             $submit.prop('disabled', false).text('Submit');
                             return;
                         }
@@ -800,7 +806,8 @@
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                             const errors = xhr.responseJSON.errors;
                             if (errors.criticality_index) {
-                                $('#criticality_error').text(errors.criticality_index[0]).show();
+                                $('#criticality_error').text(errors.criticality_index[0])
+                                    .show();
                             }
                             if (errors.asset_id) {
                                 showAlert('danger', errors.asset_id[0]);
@@ -813,7 +820,8 @@
                             return;
                         }
 
-                        showAlert('danger', xhr.responseJSON?.message || 'Unable to save Criticality Index.');
+                        showAlert('danger', xhr.responseJSON?.message ||
+                            'Unable to save Criticality Index.');
                     }
                 });
             });
