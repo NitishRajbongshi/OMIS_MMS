@@ -182,8 +182,9 @@ Route::group(['middleware' => ['auth', 'prevent.cache']], function () {
     // criticality index
     Route::get('/criticality-index', [CriticalityIndexController::class, 'index'])->name('criticality.index');
     Route::post('/criticality-index', [CriticalityIndexController::class, 'store'])->name('criticality.store');
-    Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class,'assets'])->name('criticality.assets');
+    Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class, 'assets'])->name('criticality.assets');
     Route::get('/criticality-index/parameter', [CriticalityIndexController::class, 'parameter'])->name('criticality.parameter');
+    Route::get('/criticality-index/list', [CriticalityIndexController::class, 'list'])->name('criticality.list');
 });
 // =============================================================================
 // PROJECT MANAGEMENT SYSTEM (PMS) ROUTES
