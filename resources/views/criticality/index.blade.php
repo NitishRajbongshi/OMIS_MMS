@@ -152,6 +152,7 @@
                                         <th>Asset</th>
                                         <th>Criticality Index</th>
                                         <th>Created At</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="criticalityTableBody">
@@ -170,6 +171,71 @@
 
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editCriticalityModal" tabindex="-1" aria-labelledby="editCriticalityModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editCriticalityModalLabel">
+                                Edit Criticality Index
+                            </h5>
+
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+
+                            <div id="editCriticalityAlert" class="alert d-none"></div>
+
+                            <input type="hidden" id="edit_criticality_id">
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Asset Type
+                                </label>
+
+                                <input type="text" id="edit_asset_type" class="form-control" readonly>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Asset
+                                </label>
+
+                                <input type="text" id="edit_asset" class="form-control" readonly>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_criticality_index" class="form-label">
+                                    Criticality Index
+                                </label>
+
+                                <input type="number" id="edit_criticality_index" class="form-control" step="0.01">
+
+                                <small id="edit_criticality_range" class="text-muted"></small>
+
+                                <div id="edit_criticality_error" class="text-danger mt-1"></div>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+
+                            <button type="button" id="updateCriticality" class="btn btn-primary">
+                                Update
+                            </button>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -334,20 +400,16 @@
 
 
                 $tbody.html(`
-        <tr>
-            <td colspan="5" class="text-center">
-                Loading...
-            </td>
-        </tr>
-    `);
-
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            Loading...
+                        </td>
+                    </tr>
+                `);
 
                 $.ajax({
-
                     url: "{{ route('criticality.list') }}",
-
                     type: 'GET',
-
                     data: {
                         asset_type: assetType,
                         search: search,
@@ -355,28 +417,23 @@
                         per_page: 10
                     },
 
-
                     success: function(response) {
-
                         $tbody.empty();
-
-
                         if (
                             !response.success ||
                             !response.data ||
                             response.data.length === 0
                         ) {
-
                             $tbody.html(`
-                    <tr>
-                        <td
-                            colspan="5"
-                            class="text-center text-muted"
-                        >
-                            No Criticality Index records found.
-                        </td>
-                    </tr>
-                `);
+                                <tr>
+                                    <td
+                                        colspan="5"
+                                        class="text-center text-muted"
+                                    >
+                                        No Criticality Index records found.
+                                    </td>
+                                </tr>
+                            `);
 
                             $('#criticalityPaginationInfo')
                                 .text('');
@@ -386,11 +443,6 @@
 
                             return;
                         }
-
-
-                        /*
-                         * Populate table
-                         */
 
                         $.each(
                             response.data,
@@ -402,33 +454,42 @@
                                         record.created_at
                                     ).toLocaleString() :
                                     '-';
-
-
                                 $tbody.append(`
-                        <tr>
+                                <tr>
+                                    <td>
+                                        ${index + 1}
+                                    </td>
 
-                            <td>
-                                ${index + 1}
-                            </td>
+                                    <td>
+                                        ${record.asset_type_name}
+                                    </td>
 
-                            <td>
-                                ${record.asset_type_name}
-                            </td>
+                                    <td>
+                                        ${record.asset_label}
+                                    </td>
 
-                            <td>
-                                ${record.asset_label}
-                            </td>
+                                    <td>
+                                        ${record.criticality_index}
+                                    </td>
 
-                            <td>
-                                ${record.criticality_index}
-                            </td>
-
-                            <td>
-                                ${createdAt}
-                            </td>
-
-                        </tr>
-                    `);
+                                    <td>
+                                        ${createdAt}
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-primary edit-criticality"
+                                            data-id="${record.id}"
+                                            data-asset-type="${record.asset_type}"
+                                            data-asset-type-name="${record.asset_type_name}"
+                                            data-asset-label="${record.asset_label}"
+                                            data-criticality-index="${record.criticality_index}"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
 
                             }
                         );
@@ -667,10 +728,158 @@
                 }
             });
 
+            $(document).on('click', '.edit-criticality', function() {
+
+                const id = $(this).data('id');
+                const assetTypeName = $(this).data('asset-type-name');
+                const assetLabel = $(this).data('asset-label');
+                const criticalityIndex = $(this).data('criticality-index');
+
+                $('#edit_criticality_id').val(id);
+                $('#edit_asset_type').val(assetTypeName);
+                $('#edit_asset').val(assetLabel);
+                $('#edit_criticality_index').val(criticalityIndex);
+
+                $('#edit_criticality_error').text('');
+
+                $('#editCriticalityAlert')
+                    .removeClass('alert-success alert-danger')
+                    .addClass('d-none')
+                    .text('');
+
+                if (
+                    criticalityRange.lower !== null &&
+                    criticalityRange.upper !== null
+                ) {
+                    $('#edit_criticality_range').text(
+                        `Allowed range: ${criticalityRange.lower} - ${criticalityRange.upper}`
+                    );
+
+                    $('#edit_criticality_index')
+                        .attr('min', criticalityRange.lower)
+                        .attr('max', criticalityRange.upper);
+                }
+
+                $('#editCriticalityModal').modal('show');
+            });
+
             $('#asset_type').on('change', function() {
                 hideAlert();
                 const assetType = $(this).val();
                 loadAssets(assetType);
+            });
+
+            $('#updateCriticality').on('click', function() {
+
+                const id = $('#edit_criticality_id').val();
+
+                const criticalityIndex =
+                    $('#edit_criticality_index').val();
+
+                $('#edit_criticality_error').text('');
+
+                if (!criticalityIndex) {
+
+                    $('#edit_criticality_error').text(
+                        'Please enter the criticality index.'
+                    );
+
+                    return;
+                }
+
+                const value = parseFloat(criticalityIndex);
+
+                if (isNaN(value)) {
+
+                    $('#edit_criticality_error').text(
+                        'Criticality index must be a valid number.'
+                    );
+
+                    return;
+                }
+
+                if (
+                    value < criticalityRange.lower ||
+                    value > criticalityRange.upper
+                ) {
+
+                    $('#edit_criticality_error').text(
+                        `Criticality Index must be between ` +
+                        `${criticalityRange.lower} and ` +
+                        `${criticalityRange.upper}.`
+                    );
+
+                    return;
+                }
+
+                const button = $(this);
+
+                button
+                    .prop('disabled', true)
+                    .text('Updating...');
+
+                $.ajax({
+                    url: `/criticality-index/${id}`,
+                    type: 'PUT',
+
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        criticality_index: value
+                    },
+
+                    success: function(response) {
+
+                        $('#editCriticalityAlert')
+                            .removeClass('d-none alert-danger')
+                            .addClass('alert-success')
+                            .text(response.message);
+
+                        setTimeout(function() {
+
+                            $('#editCriticalityModal').modal('hide');
+
+                            loadCriticalityList();
+
+                        }, 800);
+                    },
+
+                    error: function(xhr) {
+
+                        if (
+                            xhr.status === 422 &&
+                            xhr.responseJSON &&
+                            xhr.responseJSON.errors
+                        ) {
+
+                            const errors =
+                                xhr.responseJSON.errors;
+
+                            if (errors.criticality_index) {
+
+                                $('#edit_criticality_error').text(
+                                    errors.criticality_index[0]
+                                );
+                            }
+
+                        } else {
+
+                            $('#editCriticalityAlert')
+                                .removeClass('d-none alert-success')
+                                .addClass('alert-danger')
+                                .text(
+                                    xhr.responseJSON?.message ||
+                                    'Failed to update Criticality Index.'
+                                );
+                        }
+                    },
+
+                    complete: function() {
+
+                        button
+                            .prop('disabled', false)
+                            .text('Update');
+                    }
+                });
             });
 
             $('#asset_id').on('change', function() {

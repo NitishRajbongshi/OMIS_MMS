@@ -4,6 +4,7 @@ namespace App\Http\Controllers\AssetCriticality;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CriticalityIndex\StoreCriticalityIndexRequest;
+use App\Http\Requests\CriticalityIndex\UpdateCriticalityIndexRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,11 +31,6 @@ class CriticalityIndexController extends Controller
         $assetType = $request->input('asset_type');
         $assetId = $request->input('asset_id');
         $criticalityIndex = $request->input('criticality_index');
-        /*
-    |--------------------------------------------------------------------------
-    | 1. Resolve asset type configuration
-    |--------------------------------------------------------------------------
-    */
 
         $config = config("asset_schema_lists.$assetType");
 
@@ -144,6 +140,91 @@ class CriticalityIndexController extends Controller
             'success' => true,
             'message' =>
             'Criticality Index assigned successfully.',
+        ]);
+    }
+
+    public function update(UpdateCriticalityIndexRequest $request, int $id)
+    {
+        $criticalityIndex = $request->input('criticality_index');
+        $record = DB::table(
+            'maintenance.master_asset_criticality_indexes'
+        )
+            ->where('id', $id)
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Criticality Index record not found.',
+            ], 404);
+        }
+        $parameter = DB::table(
+            'maintenance.master_mtn_parameter_master as p'
+        )
+            ->join(
+                'maintenance.master_mtn_parameter_range as r',
+                'r.parameter_id',
+                '=',
+                'p.id'
+            )
+            ->where(
+                'p.parameter_code',
+                'CRITICALITY_INDEX'
+            )
+            ->where(
+                'p.parameter_type',
+                'RANGE'
+            )
+            ->where(
+                'p.status',
+                'ACTIVE'
+            )
+            ->where(
+                'r.status',
+                'ACTIVE'
+            )
+            ->select([
+                'p.id',
+                'p.parameter_code',
+                'p.parameter_name',
+                'r.lower_range',
+                'r.upper_range',
+            ])
+            ->first();
+
+        if (!$parameter) {
+            return response()->json([
+                'success' => false,
+                'message' =>
+                'Criticality Index parameter configuration not found.',
+            ], 422);
+        }
+        if (
+            $criticalityIndex < $parameter->lower_range ||
+            $criticalityIndex > $parameter->upper_range
+        ) {
+            throw ValidationException::withMessages([
+                'criticality_index' =>
+                "Criticality Index must be between " .
+                    "{$parameter->lower_range} and " .
+                    "{$parameter->upper_range}.",
+            ]);
+        }
+
+        DB::table(
+            'maintenance.master_asset_criticality_indexes'
+        )
+            ->where('id', $id)
+            ->update([
+                'criticality_index' => $criticalityIndex,
+                'updated_at' => now(),
+                'updated_by' => auth()->id(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Criticality Index updated successfully.',
         ]);
     }
 
