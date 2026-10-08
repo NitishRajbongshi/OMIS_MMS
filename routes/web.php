@@ -51,6 +51,7 @@ use App\Http\Controllers\HQRoadChainage\HqRoadChainageController;
 use App\Http\Controllers\Dashboard\AssetRoadDistressDetailsController;
 use App\Http\Controllers\Admin\UnlockDataFieldController;
 use App\Http\Controllers\AssetCriticality\CriticalityIndexController;
+use App\Http\Controllers\AssetCriticality\CriticalityReportController;
 use App\Http\Controllers\AssetImage\AssetImageController;
 use App\Http\Controllers\Building\BuildingLocationController;
 use App\Http\Controllers\Building\BuildingOccupancyController;
@@ -136,6 +137,7 @@ use App\Http\Controllers\Master\Road\RoadSubAssetController;
 use App\Http\Controllers\Mechanical\FinalizEquipmentController;
 use App\Http\Controllers\Mechanical\FinalizVehicleController;
 use App\Http\Controllers\Mechanical\MechanicalCitizenDashboard;
+use App\Http\Controllers\MIS\CriticalityIndex\CriticalityIndexMisController;
 use App\Http\Controllers\MIS\Housing\HousingMISController;
 use App\Http\Controllers\MIS\Mechanical\MechanicalMISController;
 use App\Http\Controllers\MIS\NationalHighway\NationalHighwayMISController;
@@ -956,6 +958,9 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::get('/view-surface-types', [ViewRoadAndBridgeController::class, 'showSurfaceTypeDetails'])->name('viewSurfaceType');
     Route::get('/view-habitation', [ViewRoadAndBridgeController::class, 'showHabitationDetails'])->name('viewHabitation');
 
+    // Critical index Reports
+    Route::get('/critical-index/roads', [CriticalityReportController::class, 'roadCriticalityReport'])->name('criticality.report.roads');
+
     // National Highway
     Route::get('/view-national-highway', [ViewNationalHighwayController::class, 'showNationalHighway'])->name('viewNHWings');
     Route::get('/view-national-highway-cdworks', [ViewNationalHighwayController::class, 'showNHCdWork'])->name('viewNHCDWorks');
@@ -988,6 +993,9 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::get('/mis-road-protection-wall', [RoadMISController::class, 'searchProtectionWall'])->name('searchProtectionWall');
     Route::get('/mis-road-surfaceType', [RoadMISController::class, 'searchSurfaceType'])->name('searchSurfaceType');
     Route::get('/mis-road-habitation', [RoadMISController::class, 'searchHabitation'])->name('searchHabitation');
+
+    // MIS - Criticality Index
+    Route::get('/mis/criticality-index/roads', [CriticalityIndexMisController::class, 'searchCriticalityIndexRoads'])->name('mis.ci.roads');
 
     // MIS Filters
     Route::get('/get-road-by-district/{id}', [MisController::class, 'filterRoadByDistrict'])->name('filterRoadByDistrict');
