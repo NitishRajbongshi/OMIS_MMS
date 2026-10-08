@@ -229,7 +229,6 @@ $(document).on("submit", "#wing_road", function (e) {
                     <td>${roadNameButton}</td>
                     <td>${data.road_length}</td>
                     <td>${data.rd_catg_descr}</td>
-                    <td>${data.rd_type_descr}</td>
                     <td>${showInMapButton}</td>
                 </tr>`;
     };

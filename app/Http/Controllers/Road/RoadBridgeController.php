@@ -115,35 +115,23 @@ class RoadBridgeController extends Controller
                 'asset_road_bridge_details_draft.*',
                 'asset_master_bridge_type.bridge_type_descr',
                 'asset_master_construction_types.construction_type_descr',
-                // 'asset_master_foundation_types.foundation_descr',
                 'asset_master_abutment_types.abutment_type_descr',
                 'asset_master_super_structure_types.st_type_descr',
                 'asset_master_handrail_types.hand_rail_type_descr',
                 'asset_master_deck_types.deck_type_descr',
-                // 'asset_master_bearing_types.bearing_type_descr',
                 'asset_master_expansion_joints.expn_joint_descr',
                 'asset_master_road_condition.rd_condition_descr',
-                // 'asset_master_pile_types.pile_type_descr',
-                // 'asset_master_well_types.well_type_descr'
-                //saiful # 29-04-2026 # Start
                 'pp.project_cd as project_cd'
-                //saiful # 29-04-2026 # End
             )
             ->leftJoin('asset_master_bridge_type', 'asset_road_bridge_details_draft.bridge_type_cd', '=', 'asset_master_bridge_type.bridge_type_cd')
             ->leftJoin('asset_master_construction_types', 'asset_road_bridge_details_draft.construction_type_cd', '=', 'asset_master_construction_types.construction_type_cd')
-            // ->leftJoin('asset_master_foundation_types', 'asset_road_bridge_details_draft.foundation_type_cd', '=', 'asset_master_foundation_types.foundation_cd')
             ->leftJoin('asset_master_abutment_types', 'asset_road_bridge_details_draft.abutment_type_cd', '=', 'asset_master_abutment_types.abutment_type_cd')
             ->leftJoin('asset_master_super_structure_types', 'asset_road_bridge_details_draft.super_structure_type_cd', '=', 'asset_master_super_structure_types.st_type_cd')
             ->leftJoin('asset_master_handrail_types', 'asset_road_bridge_details_draft.handrail_type_cd', '=', 'asset_master_handrail_types.hand_rail_type_cd')
             ->leftJoin('asset_master_deck_types', 'asset_road_bridge_details_draft.deck_type_cd', '=', 'asset_master_deck_types.deck_type_cd')
-            // ->leftJoin('asset_master_bearing_types', 'asset_road_bridge_details_draft.bearings', '=', 'asset_master_bearing_types.bearing_type_cd')
             ->leftJoin('asset_master_expansion_joints', 'asset_road_bridge_details_draft.expansion_join_cd', '=', 'asset_master_expansion_joints.expn_joint_cd')
             ->leftJoin('asset_master_road_condition', 'asset_road_bridge_details_draft.bridge_condition', '=', 'asset_master_road_condition.rd_condition_cd')
-            // ->leftJoin('asset_master_pile_types', 'asset_road_bridge_details_draft.pile_type', '=', 'asset_master_pile_types.pile_type_cd')
-            // ->leftJoin('asset_master_well_types', 'asset_road_bridge_details_draft.well_type', '=', 'asset_master_well_types.well_type_cd')
-            //saiful # 29-04-2026 # Start
             ->leftJoin('prt_project_asset_plan as pp', 'asset_road_bridge_details_draft.asset_plan_id', '=', 'pp.id')
-            //saiful # 29-04-2026 # Start
             ->where('asset_road_bridge_details_draft.rd_system_id', '=', $road_system_id)
             ->where('sent_for_finalize', '=', 'N')
             ->where('created_at_office_cd', '=', auth()->user()->office)
@@ -1103,13 +1091,11 @@ class RoadBridgeController extends Controller
             }
 
             return redirect()->back()->with('failed', 'Failed to update bridge.');
-
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('failed', 'An error occurred: ' . $e->getMessage())
                 ->withInput();
-
         }
     }
     //modification end by Pulak-- 27-04-2026
