@@ -1,11 +1,9 @@
 /**
  * Fetches the draft and redirects to the edit page.
  */
-async function editWithLocal(projectCd, department) {
+async function editWithLocal(projectCd,department) {
     try {
-        const res = await fetch(
-            `/project-management/project/load-db-draft/${projectCd}/${department}`,
-        );
+        const res = await fetch(`/project-management/project/load-db-draft/${projectCd}/${department}`);
 
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
@@ -23,16 +21,18 @@ async function editWithLocal(projectCd, department) {
         document.getElementById("project_cd").value = projectCd;
 
         // ✅ Hide all tables
-        ["draftSection", "draftSectionUpg", "draftSectionUpMaint"].forEach(
-            (id) => {
-                const table = document.getElementById(id);
-                if (table) {
-                    const wrapper = table.closest(".dataTables_wrapper");
-                    if (wrapper) wrapper.style.display = "none";
-                    else table.style.display = "none";
-                }
-            },
-        );
+        [
+            "draftSection",
+            "draftSectionUpg",
+            "draftSectionUpMaint"
+        ].forEach(id => {
+            const table = document.getElementById(id);
+            if (table) {
+                const wrapper = table.closest('.dataTables_wrapper');
+                if (wrapper) wrapper.style.display = "none";
+                else table.style.display = "none";
+            }
+        });
 
         document.getElementById("PmsUpdateBtn").style.display = "inline-block";
         document.getElementById("PmsSaveBtn").style.display = "none";
@@ -44,27 +44,18 @@ async function editWithLocal(projectCd, department) {
             form.scrollIntoView({ behavior: "smooth" });
         }
 
-        await loadDraftIntoForm(
-            data.draft,
-            data.images,
-            data.documents,
-            department,
-        );
+        await loadDraftIntoForm(data.draft, data.images, data.documents,department);
+
     } catch (err) {
         console.error("editWithLocal Error:", err);
-        if (err.stack) {
+		if (err.stack) {
             console.error(err.stack);
         }
         alert("Error fetching draft.");
     }
 }
 
-async function loadDraftIntoForm(
-    draft,
-    images = [],
-    documents = [],
-    department,
-) {
+async function loadDraftIntoForm(draft, images = [], documents = [],department){
     const dom = {
         project_Type: document.getElementById("projectTypeSelect"),
         project_name: document.getElementById("project_name"),
@@ -74,14 +65,12 @@ async function loadDraftIntoForm(
         project_end_date: document.getElementById("project_end_date"),
         project_awarded_to: document.getElementById("project_awarded_to"),
         est_proj_cost: document.getElementById("est_proj_cost"),
-        defect_liability_period: document.getElementById(
-            "defect_liability_period",
-        ),
+        defect_liability_period: document.getElementById("defect_liability_period"),
         work_order_amount: document.getElementById("work_order_amount"),
         is_published: document.getElementById("is_published"),
         tech_type_cd: document.getElementById("tech_type_cd"),
 
-        //done by dipshikha-start
+		//done by dipshikha-start
         work_order_no: document.getElementById("work_order_no"),
         work_order_issue_date: document.getElementById("work_order_issue_date"),
         scheme_cd: document.getElementById("scheme_cd"),
@@ -100,11 +89,10 @@ async function loadDraftIntoForm(
         road_owner: document.getElementById("road_owner"),
         road_type: document.getElementById("road_type"),
 
+
         buildingCategory: document.getElementById("buildingCategory"),
         maintBuildings: document.getElementById("maintBuildings"),
-        buildingCategoryUpgradation: document.getElementById(
-            "buildingCategoryUpgradation",
-        ),
+        buildingCategoryUpgradation: document.getElementById("buildingCategoryUpgradation"),
         upgBuildings: document.getElementById("upgBuildings"),
         building_type_upg: document.getElementById("building_type_upg"),
         owning_dept_upg: document.getElementById("owning_dept_upg"),
@@ -113,12 +101,8 @@ async function loadDraftIntoForm(
         rdo_yes: document.getElementById("rdo_yes"),
         rdo_no: document.getElementById("rdo_no"),
         asset_geo_location: document.getElementById("asset_geo_location"),
-        asset_geo_location_lat: document.getElementById(
-            "asset_geo_location_lat",
-        ),
-        asset_geo_location_lng: document.getElementById(
-            "asset_geo_location_lng",
-        ),
+        asset_geo_location_lat: document.getElementById("asset_geo_location_lat"),
+        asset_geo_location_lng: document.getElementById("asset_geo_location_lng"),
         residential: document.getElementById("residential"),
         nonResidential: document.getElementById("nonResidential"),
         rental: document.getElementById("rental"),
@@ -147,7 +131,7 @@ async function loadDraftIntoForm(
                 dom.sub_division.value = draft.sub_division_cd;
                 dom.sub_division.dispatchEvent(new Event("change"));
             },
-            false,
+                false
         );
     }
 
@@ -175,15 +159,13 @@ async function loadDraftIntoForm(
         dom.work_order_amount.value = draft.work_order_amount;
     }
 
-    //done by dipshikha-start
+	//done by dipshikha-start
     if (draft.work_order_no && dom.work_order_no) {
         dom.work_order_no.value = draft.work_order_no;
     }
 
     if (draft.work_order_issue_date && dom.work_order_issue_date) {
-        dom.work_order_issue_date.value = formatDate(
-            draft.work_order_issue_date,
-        );
+        dom.work_order_issue_date.value = formatDate(draft.work_order_issue_date);
     }
 
     if (draft.scheme_cd && dom.scheme_cd) {
@@ -198,32 +180,30 @@ async function loadDraftIntoForm(
 
     if (dom.tech_type_cd) {
         dom.tech_type_cd.value = draft.tech_type_cd;
-        dom.tech_type_cd.dispatchEvent(new Event("change"));
     }
 
     if (department === "15") {
-        if (draft.projectTypeSelect === "UPG") {
+
+        if(draft.projectTypeSelect === 'UPG'){
             const upg = draft.upgradation || {};
 
-            const vehicleIds = (upg.vehicles || []).map((v) =>
-                String(v.vehicle_asset_cd ?? v),
+            const vehicleIds = (upg.vehicles || []).map(v =>
+                String(v.vehicle_asset_cd ?? v)
             );
 
-            const equipmentIds = (upg.equipments || []).map((e) =>
-                String(e.euipment_cd ?? e),
+            const equipmentIds = (upg.equipments || []).map(e =>
+                String(e.euipment_cd ?? e)
             );
 
             const vehicleContainer = document.getElementById("vehicleListUpg");
 
             if (vehicleContainer) {
                 const observer = new MutationObserver(() => {
-                    const checkboxes = vehicleContainer.querySelectorAll(
-                        'input[type="checkbox"]',
-                    );
+                    const checkboxes = vehicleContainer.querySelectorAll('input[type="checkbox"]');
 
                     if (!checkboxes.length) return;
 
-                    checkboxes.forEach((cb) => {
+                    checkboxes.forEach(cb => {
                         if (vehicleIds.includes(String(cb.value))) {
                             cb.checked = true;
                         }
@@ -234,22 +214,20 @@ async function loadDraftIntoForm(
 
                 observer.observe(vehicleContainer, {
                     childList: true,
-                    subtree: true,
+                    subtree: true
                 });
             }
 
-            const equipmentContainer =
-                document.getElementById("equipmentListUpg");
+
+            const equipmentContainer = document.getElementById("equipmentListUpg");
 
             if (equipmentContainer) {
                 const observer2 = new MutationObserver(() => {
-                    const checkboxes = equipmentContainer.querySelectorAll(
-                        'input[type="checkbox"]',
-                    );
+                    const checkboxes = equipmentContainer.querySelectorAll('input[type="checkbox"]');
 
                     if (!checkboxes.length) return;
 
-                    checkboxes.forEach((cb) => {
+                    checkboxes.forEach(cb => {
                         if (equipmentIds.includes(String(cb.value))) {
                             cb.checked = true;
                         }
@@ -260,34 +238,31 @@ async function loadDraftIntoForm(
 
                 observer2.observe(equipmentContainer, {
                     childList: true,
-                    subtree: true,
+                    subtree: true
                 });
             }
         }
 
-        if (draft.projectTypeSelect === "MTN") {
+        if(draft.projectTypeSelect === 'MTN'){
             const mtn = draft.maintenance || {};
 
-            const vehicleIds = (mtn.vehicles || []).map((v) =>
-                String(v.vehicle_asset_cd ?? v),
+            const vehicleIds = (mtn.vehicles || []).map(v =>
+                String(v.vehicle_asset_cd ?? v)
             );
 
-            const equipmentIds = (mtn.equipments || []).map((e) =>
-                String(e.euipment_cd ?? e),
+            const equipmentIds = (mtn.equipments || []).map(e =>
+                String(e.euipment_cd ?? e)
             );
 
-            const vehicleContainer =
-                document.getElementById("vehicleListMaint");
+            const vehicleContainer = document.getElementById("vehicleListMaint");
 
             if (vehicleContainer) {
                 const observer = new MutationObserver(() => {
-                    const checkboxes = vehicleContainer.querySelectorAll(
-                        'input[type="checkbox"]',
-                    );
+                    const checkboxes = vehicleContainer.querySelectorAll('input[type="checkbox"]');
 
                     if (!checkboxes.length) return;
 
-                    checkboxes.forEach((cb) => {
+                    checkboxes.forEach(cb => {
                         if (vehicleIds.includes(String(cb.value))) {
                             cb.checked = true;
                         }
@@ -298,22 +273,20 @@ async function loadDraftIntoForm(
 
                 observer.observe(vehicleContainer, {
                     childList: true,
-                    subtree: true,
+                    subtree: true
                 });
             }
 
-            const equipmentContainer =
-                document.getElementById("equipmentListMaint");
+
+            const equipmentContainer = document.getElementById("equipmentListMaint");
 
             if (equipmentContainer) {
                 const observer2 = new MutationObserver(() => {
-                    const checkboxes = equipmentContainer.querySelectorAll(
-                        'input[type="checkbox"]',
-                    );
+                    const checkboxes = equipmentContainer.querySelectorAll('input[type="checkbox"]');
 
                     if (!checkboxes.length) return;
 
-                    checkboxes.forEach((cb) => {
+                    checkboxes.forEach(cb => {
                         if (equipmentIds.includes(String(cb.value))) {
                             cb.checked = true;
                         }
@@ -324,17 +297,19 @@ async function loadDraftIntoForm(
 
                 observer2.observe(equipmentContainer, {
                     childList: true,
-                    subtree: true,
+                    subtree: true
                 });
             }
         }
     }
 
     if (department === "6") {
-        if (draft.projectTypeSelect === "NEW") {
+
+        if(draft.projectTypeSelect === 'NEW'){
+
             const val = String(draft.new_building_maintain_by_npwd);
 
-            if (val === "Y") {
+            if (val === 'Y') {
                 dom.rdo_yes.checked = true;
                 dom.rdo_no.checked = false;
             } else {
@@ -345,65 +320,57 @@ async function loadDraftIntoForm(
             if (draft.new_building_lat && draft.new_building_lng) {
                 dom.asset_geo_location_lat.value = draft.new_building_lat;
                 dom.asset_geo_location_lng.value = draft.new_building_lng;
-                dom.asset_geo_location.value =
-                    "[" +
-                    draft.new_building_lat +
-                    "," +
-                    draft.new_building_lng +
-                    "]";
+                dom.asset_geo_location.value = '['+draft.new_building_lat+','+draft.new_building_lng+']';
             }
 
             const valCat = String(draft.new_building_class_cd);
 
-            if (valCat === "0") {
+            if (valCat === '0') {
                 dom.residential.checked = true;
                 dom.nonResidential.checked = false;
                 dom.rental.checked = false;
-            } else if (valCat === "1") {
+            } else if (valCat === '1') {
                 dom.nonResidential.checked = true;
                 dom.residential.checked = false;
                 dom.rental.checked = false;
-            } else if (valCat === "2") {
+            } else if (valCat === '2') {
                 dom.rental.checked = true;
                 dom.residential.checked = false;
                 dom.nonResidential.checked = false;
             }
 
-            $('input[name="building_class_cd"]:checked').trigger("change");
+            $('input[name="building_class_cd"]:checked').trigger('change');
 
             if (draft.new_building_location_cd && dom.building_location_cd) {
                 let val = String(draft.new_building_location_cd ?? "");
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.building_location_cd.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.building_location_cd.value = val;
-                        dom.building_location_cd.dispatchEvent(
-                            new Event("change"),
-                        );
+                        dom.building_location_cd.dispatchEvent(new Event("change"));
                         observer.disconnect();
                     }
                 });
 
                 observer.observe(dom.building_location_cd, {
-                    childList: true,
+                    childList: true
                 });
             }
+
         }
 
-        if (draft.projectTypeSelect === "MTN") {
+        if(draft.projectTypeSelect === 'MTN'){
             const maint = draft.maintenance || {};
 
             if (maint.building_details && dom.buildingCategory) {
-                let val = String(
-                    maint.building_details.building_class_cd ?? "",
-                );
+                let val = String(maint.building_details.building_class_cd ?? "");
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.buildingCategory.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.buildingCategory.value = val;
@@ -413,18 +380,16 @@ async function loadDraftIntoForm(
                 });
 
                 observer.observe(dom.buildingCategory, {
-                    childList: true,
+                    childList: true
                 });
             }
 
             if (maint.building_details && dom.maintBuildings) {
-                let val = String(
-                    maint.building_details.building_system_cd ?? "",
-                );
+                let val = String(maint.building_details.building_system_cd ?? "");
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.maintBuildings.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.maintBuildings.value = val;
@@ -434,33 +399,29 @@ async function loadDraftIntoForm(
                 });
 
                 observer.observe(dom.maintBuildings, {
-                    childList: true,
+                    childList: true
                 });
             }
         }
 
-        if (draft.projectTypeSelect === "UPG") {
+        if(draft.projectTypeSelect === 'UPG'){
             const upg = draft.upgradation || {};
 
             if (upg.building_details && dom.buildingCategoryUpgradation) {
-                let val = String(
-                    upg.building_details.actual_building_class_cd ?? "",
-                );
+                let val = String(upg.building_details.actual_building_class_cd ?? "");
                 const observer = new MutationObserver(() => {
                     let options = [...dom.buildingCategoryUpgradation.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.buildingCategoryUpgradation.value = val;
-                        dom.buildingCategoryUpgradation.dispatchEvent(
-                            new Event("change"),
-                        );
+                        dom.buildingCategoryUpgradation.dispatchEvent(new Event("change"));
                         observer.disconnect();
                     }
                 });
 
                 observer.observe(dom.buildingCategoryUpgradation, {
-                    childList: true,
+                    childList: true
                 });
             }
 
@@ -469,7 +430,7 @@ async function loadDraftIntoForm(
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.upgBuildings.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.upgBuildings.value = val;
@@ -479,19 +440,17 @@ async function loadDraftIntoForm(
                 });
 
                 observer.observe(dom.upgBuildings, {
-                    childList: true,
+                    childList: true
                 });
             }
 
-            if (
-                upg.building_details.building_type_cd &&
-                dom.building_type_upg
-            ) {
+
+            if (upg.building_details.building_type_cd && dom.building_type_upg) {
                 let val = String(upg.building_details.building_type_cd ?? "");
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.building_type_upg.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.building_type_upg.value = val;
@@ -500,7 +459,7 @@ async function loadDraftIntoForm(
                 });
 
                 observer.observe(dom.building_type_upg, {
-                    childList: true,
+                    childList: true
                 });
             }
 
@@ -509,7 +468,7 @@ async function loadDraftIntoForm(
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.owning_dept_upg.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.owning_dept_upg.value = val;
@@ -518,53 +477,49 @@ async function loadDraftIntoForm(
                 });
 
                 observer.observe(dom.owning_dept_upg, {
-                    childList: true,
+                    childList: true
                 });
             }
 
-            if (
-                upg.building_details.building_class_cd &&
-                dom.buildingCategoryUpg
-            ) {
+            if (upg.building_details.building_class_cd && dom.buildingCategoryUpg) {
                 let val = String(upg.building_details.building_class_cd ?? "");
 
                 const observer = new MutationObserver(() => {
                     let options = [...dom.buildingCategoryUpg.options];
-                    let match = options.find((o) => o.value === val);
+                    let match = options.find(o => o.value === val);
 
                     if (match) {
                         dom.buildingCategoryUpg.value = val;
-                        dom.buildingCategoryUpg.dispatchEvent(
-                            new Event("change"),
-                        );
+                        dom.buildingCategoryUpg.dispatchEvent(new Event("change"));
                         observer.disconnect();
                     }
                 });
 
                 observer.observe(dom.buildingCategoryUpg, {
-                    childList: true,
+                    childList: true
                 });
             }
 
-            if (upg.building_details.building_class_cd === "0") {
+            if(upg.building_details.building_class_cd === '0'){
                 if (upg.building_details.quarter_no && dom.quarter_no) {
                     dom.quarter_no.value = upg.building_details.quarter_no;
                 }
-            } else {
+            }else{
                 if (upg.building_details.building_name && dom.quarter_no) {
                     dom.quarter_no.value = upg.building_details.building_name;
                 }
             }
 
             if (upg.building_details.is_maintained_by_npwd) {
+
                 const val = String(upg.building_details.is_maintained_by_npwd);
 
-                const yes = document.getElementById("rdo_yes_upg");
-                const no = document.getElementById("rdo_no_upg");
+                const yes = document.getElementById('rdo_yes_upg');
+                const no = document.getElementById('rdo_no_upg');
 
                 if (!yes || !no) return;
 
-                if (val === "Y") {
+                if (val === 'Y') {
                     yes.checked = true;
                     no.checked = false;
                 } else {
@@ -575,12 +530,14 @@ async function loadDraftIntoForm(
                 const lockRadio = (el, fixedValue) => {
                     Object.defineProperty(el, "checked", {
                         get: () => fixedValue,
-                        set: () => {},
-                        configurable: true,
+                        set: () => {
+
+                        },
+                        configurable: true
                     });
                 };
 
-                if (val === "Y") {
+                if (val === 'Y') {
                     lockRadio(yes, true);
                     lockRadio(no, false);
                 } else {
@@ -591,13 +548,15 @@ async function loadDraftIntoForm(
         }
     }
 
+
     //by dipshikha
     if (department === "14" || department === "3") {
         //end
-        if (draft.projectTypeSelect === "NEW") {
+        if(draft.projectTypeSelect === 'NEW'){
             const newRoadName = (draft.new_road_name ?? "").toString().trim();
 
             if (newRoadName !== "") {
+
                 if (dom.slnewRdNew) dom.slnewRdNew.value = newRoadName;
 
                 if (dom.rdLength_new)
@@ -621,24 +580,24 @@ async function loadDraftIntoForm(
                     dom.road_type_new.value = draft.road_type;
                 }
             }
+
+
         }
 
-        if (draft.projectTypeSelect === "UPG") {
+        if(draft.projectTypeSelect === 'UPG'){
             const upg = draft.upgradation || {};
 
-            const hasUpgradedRoads =
-                Array.isArray(upg.upgraded_roads) &&
-                upg.upgraded_roads.length > 0;
+            const hasUpgradedRoads = Array.isArray(upg.upgraded_roads) && upg.upgraded_roads.length > 0;
 
             if (hasUpgradedRoads) {
                 if (dom.rdoRoadWithSubAsset) {
                     dom.rdoRoadWithSubAsset.checked = true;
-                    dom.rdoRoadWithSubAsset.click();
+					dom.rdoRoadWithSubAsset.click();
                 }
             } else {
                 if (dom.rdoSubAsset) {
                     dom.rdoSubAsset.checked = true;
-                    dom.rdoSubAsset.click();
+					dom.rdoSubAsset.click();
                 }
             }
 
@@ -656,12 +615,12 @@ async function loadDraftIntoForm(
                 rowIndex++;
 
                 const tr = document.createElement("tr");
-                const chainageColumns =
-                    item.start_chainage != null &&
-                    item.start_chainage !== "" &&
-                    item.end_chainage != null &&
-                    item.end_chainage !== ""
-                        ? `
+				const chainageColumns =
+                item.start_chainage != null &&
+                item.start_chainage !== '' &&
+                item.end_chainage != null &&
+                item.end_chainage !== ''
+                ? `
                     <td>
                         <input type="hidden" name="start_chainage[]" value="${item.start_chainage}">
                         ${item.start_chainage}
@@ -672,7 +631,7 @@ async function loadDraftIntoForm(
                         ${item.end_chainage}
                     </td>
                 `
-                        : "";
+                : '';
 
                 tr.innerHTML = `
                     <td>
@@ -684,36 +643,24 @@ async function loadDraftIntoForm(
 
 
                     <td>
-                        ${(item.culverts || [])
-                            .map(
-                                (c) => `
+                        ${(item.culverts || []).map(c => `
                             <input type="hidden" name="culverts_${rowIndex}[]" value="${c}">
                             <span class="badge bg-info me-1">${c}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
-                        ${(item.bridges || [])
-                            .map(
-                                (b) => `
+                        ${(item.bridges || []).map(b => `
                             <input type="hidden" name="bridges_${rowIndex}[]" value="${b}">
                             <span class="badge bg-warning text-dark me-1">${b}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
-                        ${(item.retaining_walls || [])
-                            .map(
-                                (w) => `
+                        ${(item.retaining_walls || []).map(w => `
                             <input type="hidden" name="walls_${rowIndex}[]" value="${w}">
                             <span class="badge bg-secondary me-1">${w}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
@@ -723,13 +670,10 @@ async function loadDraftIntoForm(
 
                 tbody.appendChild(tr);
 
-                tr.querySelector(".deleteRowBtn").addEventListener(
-                    "click",
-                    () => {
-                        tr.remove();
-                        renumberRows();
-                    },
-                );
+                tr.querySelector(".deleteRowBtn").addEventListener("click", () => {
+                    tr.remove();
+                    renumberRows();
+                });
             });
 
             document.getElementById("rowCount").value = rowIndex;
@@ -737,6 +681,7 @@ async function loadDraftIntoForm(
             const newAsset = upg.new_asset;
 
             const newAssetsForm = document.getElementById("newAssetsForm");
+
 
             if (newAsset) {
                 const roadName = newAsset.road_name || "";
@@ -777,10 +722,11 @@ async function loadDraftIntoForm(
 
             calculateTotalRoadLength();
 
+
             if (upg.road_sequence && upg.road_sequence.length > 0) {
+
                 const priorityCard = document.getElementById("priorityCard");
-                const roadPriorityList =
-                    document.getElementById("roadPriorityList");
+                const roadPriorityList = document.getElementById("roadPriorityList");
 
                 priorityCard.style.display = "block";
                 roadPriorityList.innerHTML = "";
@@ -788,22 +734,19 @@ async function loadDraftIntoForm(
                 upg.road_sequence
                     .sort((a, b) => a.sequence - b.sequence)
                     .forEach((item) => {
+
                         let displayRoadName = item.road_id;
                         let isNewRoad = false;
 
                         // New road
-                        if (
-                            upg.new_asset &&
-                            upg.new_asset.road_id == item.road_id
-                        ) {
+                        if (upg.new_asset && upg.new_asset.road_id == item.road_id) {
                             displayRoadName = upg.new_asset.road_name;
                             isNewRoad = true;
                         }
 
                         const div = document.createElement("div");
 
-                        div.className =
-                            "list-group-item d-flex align-items-center";
+                        div.className = "list-group-item d-flex align-items-center";
 
                         if (isNewRoad) {
                             // important: match your input listener
@@ -831,7 +774,7 @@ async function loadDraftIntoForm(
             }
         }
 
-        if (draft.projectTypeSelect === "MTN") {
+        if (draft.projectTypeSelect === 'MTN') {
             const mtn = draft.maintenance || {};
             const assets = mtn.assets || {};
 
@@ -846,6 +789,7 @@ async function loadDraftIntoForm(
             mnt_rowIndex = 0;
 
             (assets.roads || []).forEach((road, i) => {
+
                 mnt_rowIndex++;
 
                 const tr = document.createElement("tr");
@@ -857,36 +801,24 @@ async function loadDraftIntoForm(
                     </td>
 
                     <td>
-                        ${(assets.culverts || [])
-                            .map(
-                                (c) => `
+                        ${(assets.culverts || []).map(c => `
                             <input type="hidden" name="culverts_mnt_${mnt_rowIndex}[]" value="${c}">
                             <span class="badge bg-info me-1">${c}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
-                        ${(assets.bridges || [])
-                            .map(
-                                (b) => `
+                        ${(assets.bridges || []).map(b => `
                             <input type="hidden" name="bridges_mnt_${mnt_rowIndex}[]" value="${b}">
                             <span class="badge bg-warning text-dark me-1">${b}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
-                        ${(assets.retaining_walls || [])
-                            .map(
-                                (w) => `
+                        ${(assets.retaining_walls || []).map(w => `
                             <input type="hidden" name="walls_mnt_${mnt_rowIndex}[]" value="${w}">
                             <span class="badge bg-secondary me-1">${w}</span>
-                        `,
-                            )
-                            .join("")}
+                        `).join("")}
                     </td>
 
                     <td>
@@ -896,50 +828,48 @@ async function loadDraftIntoForm(
 
                 tbody.appendChild(tr);
 
-                tr.querySelector(".deleteRowBtn").addEventListener(
-                    "click",
-                    () => {
-                        tr.remove();
-                    },
-                );
+                tr.querySelector(".deleteRowBtn").addEventListener("click", () => {
+                    tr.remove();
+                });
             });
 
             document.getElementById("mnt_rowCount").value = mnt_rowIndex;
+
         }
 
         loadKmlFile(draft.kml_file);
     }
 
+
     loadImages(images);
     loadDocuments(documents);
+
+
 }
 
 function renumberRows() {
-    const rows = $("#refAssetTable tbody tr");
 
-    rows.each(function (index) {
+    const rows = $('#refAssetTable tbody tr');
+
+    rows.each(function(index) {
+
         const rowNo = index + 1;
 
-        $(this)
-            .find("input[name^='culverts_']")
-            .each(function () {
-                $(this).attr("name", "culverts_" + rowNo + "[]");
-            });
+        $(this).find("input[name^='culverts_']").each(function () {
+            $(this).attr('name', 'culverts_' + rowNo + '[]');
+        });
 
-        $(this)
-            .find("input[name^='bridges_']")
-            .each(function () {
-                $(this).attr("name", "bridges_" + rowNo + "[]");
-            });
+        $(this).find("input[name^='bridges_']").each(function () {
+            $(this).attr('name', 'bridges_' + rowNo + '[]');
+        });
 
-        $(this)
-            .find("input[name^='walls_']")
-            .each(function () {
-                $(this).attr("name", "walls_" + rowNo + "[]");
-            });
+        $(this).find("input[name^='walls_']").each(function () {
+            $(this).attr('name', 'walls_' + rowNo + '[]');
+        });
+
     });
 
-    $("#rowCount").val(rows.length);
+    $('#rowCount').val(rows.length);
 }
 
 function openDeleteModal(projectCd) {
@@ -957,7 +887,7 @@ function confirmDelete() {
         Swal.fire({
             icon: "warning",
             title: "Remarks Required",
-            text: "Please enter remarks.",
+            text: "Please enter remarks."
         });
         return;
     }
@@ -965,45 +895,45 @@ function confirmDelete() {
     fetch(`/project-management/draft/delete/${projectCd}`, {
         method: "DELETE",
         headers: {
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')
-                .content,
-            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            remarks: remarks,
-        }),
-    })
-        .then((res) => res.json())
-        .then((data) => {
-            if (data.status === 200) {
-                Swal.fire({
-                    title: "Success",
-                    text: data.message,
-                    icon: "success",
-                    confirmButtonText: "Okay",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        location.reload();
-                    }
-                });
-            } else {
-                Swal.fire({
-                    title: "Notice",
-                    text: "Failed to delete",
-                    icon: "info",
-                    confirmButtonText: "Okay",
-                });
-            }
+            remarks: remarks
         })
-        .catch((err) => {
-            console.error(err);
-            alert("Something went wrong");
-        });
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 200) {
+            Swal.fire({
+                title: 'Success',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Okay'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    location.reload();
+                }
+            });
+        } else {
+            Swal.fire({
+                title: 'Notice',
+                text: "Failed to delete",
+                icon: 'info',
+                confirmButtonText: 'Okay'
+            });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Something went wrong");
+    });
 }
 
+
 document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
-    document.getElementById("myForm").action =
-        "/project-management/manage-project/update";
+
+    document.getElementById("myForm").action = "/project-management/manage-project/update";
     const projectType = document.getElementById("projectTypeSelect").value;
     const departmentName = document.getElementById("owner_dept_cd").value;
 
@@ -1026,12 +956,8 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
         //done by dipshikha-end
         road_name: document.getElementById("slnewRdNew"),
         road_length: document.getElementById("rdLength"),
-        asset_geo_location_lat: document.getElementById(
-            "asset_geo_location_lat",
-        ),
-        asset_geo_location_lng: document.getElementById(
-            "asset_geo_location_lng",
-        ),
+        asset_geo_location_lat: document.getElementById("asset_geo_location_lat"),
+        asset_geo_location_lng: document.getElementById("asset_geo_location_lng"),
         building_location_cd: document.getElementById("building_location_cd"),
 
         road_category_new: document.getElementById("road_category_new"),
@@ -1043,23 +969,22 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
         road_type: document.getElementById("road_type"),
     };
 
-    const table = document.getElementById("refAssetTable");
-    const mtnTable = document.getElementById("mtnAssetTable");
+    const table = document.getElementById('refAssetTable');
+    const mtnTable = document.getElementById('mtnAssetTable');
 
-    const kmlFile = document.getElementById("road_kml_file");
-    const kmlCard = document.getElementById("kmlCard");
+	const kmlFile = document.getElementById('road_kml_file');
+    const kmlCard = document.getElementById('kmlCard');
 
-    const rowCount = table ? table.querySelectorAll("tbody tr").length : 0;
-    const mtnRowCount = mtnTable
-        ? mtnTable.querySelectorAll("tbody tr").length
-        : 0;
+    const rowCount = table ? table.querySelectorAll('tbody tr').length : 0;
+    const mtnRowCount = mtnTable ? mtnTable.querySelectorAll('tbody tr').length : 0;
 
-    const newAssetsForm = document.getElementById("newAssetsForm");
+    const newAssetsForm = document.getElementById('newAssetsForm');
+
 
     let hasError = false;
 
     // 🔄 Remove old errors
-    document.querySelectorAll(".dynamic-error").forEach((el) => el.remove());
+    document.querySelectorAll(".dynamic-error").forEach(el => el.remove());
 
     // 🔧 helper to show error
     const showError = (input, message) => {
@@ -1107,6 +1032,7 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
         hasError = true;
     }
 
+
     if (!dom.cost.value) {
         showError(dom.cost, "Cost is required");
         hasError = true;
@@ -1122,16 +1048,13 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
         hasError = true;
     }
 
-    //Done By Dipshikha -- start
+	//Done By Dipshikha -- start
     if (!dom.work_order_no.value) {
         showError(dom.work_order_no, "Work Order Number is required");
         hasError = true;
     }
     if (!dom.work_order_issue_date.value) {
-        showError(
-            dom.work_order_issue_date,
-            "Work Order Issue Date is required",
-        );
+        showError(dom.work_order_issue_date, "Work Order Issue Date is required");
         hasError = true;
     }
     if (!dom.scheme_cd.value) {
@@ -1144,65 +1067,49 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
     }
     //Done By Dipshikha -- end
 
-    if (departmentName === "15") {
-        if (projectType === "UPG") {
+    if(departmentName === "15"){
+        if(projectType === "UPG"){
+
             const section = document.getElementById("upgradationSection");
 
             if (section && !section.classList.contains("d-none")) {
-                document.getElementById("vehicle_type_cd_error_upg").innerText =
-                    "";
-                document.getElementById(
-                    "equipment_type_cd_error_upg",
-                ).innerText = "";
 
-                const vehicles = document.querySelectorAll(
-                    ".vehicle-checkbox:checked",
-                );
-                const equipments = document.querySelectorAll(
-                    ".equipment-checkbox:checked",
-                );
+                document.getElementById("vehicle_type_cd_error_upg").innerText = "";
+                document.getElementById("equipment_type_cd_error_upg").innerText = "";
+
+                const vehicles = document.querySelectorAll(".vehicle-checkbox:checked");
+                const equipments = document.querySelectorAll(".equipment-checkbox:checked");
 
                 if (vehicles.length === 0) {
-                    document.getElementById(
-                        "vehicle_type_cd_error_upg",
-                    ).innerText = "Please select at least one vehicle";
+                    document.getElementById("vehicle_type_cd_error_upg").innerText ="Please select at least one vehicle";
                     hasError = true;
                 }
 
                 if (equipments.length === 0) {
-                    document.getElementById(
-                        "equipment_type_cd_error_upg",
-                    ).innerText = "Please select at least one equipment";
+                    document.getElementById("equipment_type_cd_error_upg").innerText ="Please select at least one equipment";
                     hasError = true;
                 }
             }
         }
 
-        if (projectType === "MTN") {
+        if (projectType === "MTN"){
             const section = document.getElementById("maintenanceSection");
 
             if (section && !section.classList.contains("d-none")) {
-                document.getElementById("vehicle_type_cd_error").innerText = "";
-                document.getElementById("equipment_type_cd_error").innerText =
-                    "";
 
-                const vehicles = document.querySelectorAll(
-                    ".vehicle-checkbox:checked",
-                );
-                const equipments = document.querySelectorAll(
-                    ".equipment-checkbox:checked",
-                );
+                document.getElementById("vehicle_type_cd_error").innerText = "";
+                document.getElementById("equipment_type_cd_error").innerText = "";
+
+                const vehicles = document.querySelectorAll(".vehicle-checkbox:checked");
+                const equipments = document.querySelectorAll(".equipment-checkbox:checked");
 
                 if (vehicles.length === 0) {
-                    document.getElementById("vehicle_type_cd_error").innerText =
-                        "Please select at least one vehicle";
+                    document.getElementById("vehicle_type_cd_error").innerText = "Please select at least one vehicle";
                     hasError = true;
                 }
 
                 if (equipments.length === 0) {
-                    document.getElementById(
-                        "equipment_type_cd_error",
-                    ).innerText = "Please select at least one equipment";
+                    document.getElementById("equipment_type_cd_error").innerText = "Please select at least one equipment";
                     hasError = true;
                 }
             }
@@ -1210,18 +1117,16 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
     }
 
     //by dipshikha
-    if (departmentName === "14" || departmentName === "3") {
+    if(departmentName === "14" || departmentName === "3"){
         //end
         if (projectType === "NEW") {
+
             if (!dom.road_name.value.trim()) {
                 showError(dom.road_name, "Road Name is required");
                 hasError = true;
             }
 
-            if (
-                !dom.road_length.value ||
-                parseFloat(dom.road_length.value) <= 0
-            ) {
+            if (!dom.road_length.value || parseFloat(dom.road_length.value) <= 0) {
                 showError(dom.road_length, "Enter valid length");
                 hasError = true;
             }
@@ -1242,34 +1147,32 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
             }
         }
 
-        if (projectType === "UPG" && rowCount === 0) {
-            Swal.fire({
-                title: "Warning",
-                text: "Please add at least one asset.",
-                icon: "warning",
-                confirmButtonText: "Okay",
+        if (projectType === 'UPG' && rowCount === 0) {
+			Swal.fire({
+                title: 'Warning',
+                text: 'Please add at least one asset.',
+                icon: 'warning',
+                confirmButtonText: 'Okay'
             });
             hasError = true;
         }
 
-        if (projectType === "MTN" && mtnRowCount === 0) {
-            Swal.fire({
-                title: "Warning",
-                text: "Please add at least one asset.",
-                icon: "warning",
-                confirmButtonText: "Okay",
+        if (projectType === 'MTN' && mtnRowCount === 0) {
+			Swal.fire({
+                title: 'Warning',
+                text: 'Please add at least one asset.',
+                icon: 'warning',
+                confirmButtonText: 'Okay'
             });
             hasError = true;
         }
 
-        if (projectType === "UPG") {
-            const newRoadDetailsForm =
-                document.getElementById("newRoadDetailsForm");
+        if (projectType === 'UPG') {
 
-            if (
-                newRoadDetailsForm &&
-                newRoadDetailsForm.style.display !== "none"
-            ) {
+            const newRoadDetailsForm = document.getElementById("newRoadDetailsForm");
+
+            if (newRoadDetailsForm && newRoadDetailsForm.style.display !== 'none') {
+
                 if (!dom.road_category.value.trim()) {
                     showError(road_category, "Please select Road Category");
                     hasError = true;
@@ -1284,14 +1187,14 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                     showError(road_owner_new, "Please select Road Owner");
                     hasError = true;
                 }
+
             }
         }
 
-        if (projectType === "UPG" || projectType === "NEW") {
-            if (kmlFile && kmlCard.style.display !== "none") {
-                const existingKml = document.querySelector(
-                    'input[name="existing_kml_file"]',
-                );
+		if(projectType === 'UPG' || projectType === 'NEW'){
+            if (kmlFile && kmlCard.style.display !== 'none') {
+
+                const existingKml = document.querySelector('input[name="existing_kml_file"]');
 
                 // No new file and no existing database KML
                 if (kmlFile.files.length === 0 && !existingKml) {
@@ -1299,49 +1202,45 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                     Swal.fire({
                         icon: "warning",
                         title: "KML File Required",
-                        text: "Please upload a KML file for this road.",
+                        text: "Please upload a KML file for this road."
                     });
                     return;
                 }
 
                 // Validate only newly selected KML
                 if (kmlFile.files.length > 0) {
-                    const file = kmlFile.files[0];
-                    const extension = file.name.split(".").pop().toLowerCase();
 
-                    if (extension !== "kml") {
+                    const file = kmlFile.files[0];
+                    const extension = file.name.split('.').pop().toLowerCase();
+
+                    if (extension !== 'kml') {
                         e.preventDefault();
                         Swal.fire({
                             icon: "error",
                             title: "Invalid File",
-                            text: "Only KML files are allowed.",
+                            text: "Only KML files are allowed."
                         });
-                        kmlFile.value = "";
+                        kmlFile.value = '';
                         return;
                     }
                 }
             }
         }
 
-        if (projectType === "UPG") {
-            if (newAssetsForm && newAssetsForm.style.display !== "none") {
-                const roadNameInput = newAssetsForm.querySelector(
-                    'input[name="new_road_name"]',
-                );
-                const roadLengthInput = newAssetsForm.querySelector(
-                    'input[name="road_length"]',
-                );
+        if (projectType === 'UPG') {
+
+            if (newAssetsForm && newAssetsForm.style.display !== 'none') {
+
+                const roadNameInput = newAssetsForm.querySelector('input[name="new_road_name"]');
+                const roadLengthInput = newAssetsForm.querySelector('input[name="road_length"]');
 
                 const roadNameEmpty = !roadNameInput?.value.trim();
                 const roadLengthEmpty = !roadLengthInput?.value.trim();
 
-                const roadLengthFilled = roadLengthInput?.value.trim() !== "";
+                const roadLengthFilled = roadLengthInput?.value.trim() !== '';
 
-                if (
-                    roadNameEmpty ||
-                    roadLengthEmpty ||
-                    (roadLengthFilled && roadNameEmpty)
-                ) {
+                if ((roadNameEmpty || roadLengthEmpty) || (roadLengthFilled && roadNameEmpty)) {
+
                     if (roadNameEmpty) {
                         showError(roadNameInput, "Road Name is required");
                     }
@@ -1356,8 +1255,10 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
         }
     }
 
-    if (departmentName === "6") {
-        if (projectType === "NEW") {
+    if(departmentName === "6"){
+
+        if (projectType === 'NEW') {
+
             if (!dom.asset_geo_location_lat.value) {
                 showError(dom.asset_geo_location_lat, "Latitude is required");
                 hasError = true;
@@ -1368,13 +1269,9 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                 hasError = true;
             }
 
-            const buildingCategory = document.querySelector(
-                'input[name="building_class_cd"]:checked',
-            );
+            const buildingCategory = document.querySelector('input[name="building_class_cd"]:checked');
             if (!buildingCategory) {
-                const firstRadio = document.querySelector(
-                    'input[name="building_class_cd"]',
-                );
+                const firstRadio = document.querySelector('input[name="building_class_cd"]');
                 showError(firstRadio, "Building category is required");
                 hasError = true;
             }
@@ -1385,16 +1282,17 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
             }
         }
 
-        if (projectType === "MTN") {
-            const category = document.getElementById("buildingCategory").value;
-            const building = document.getElementById("maintBuildings").value;
+        if (projectType === 'MTN') {
+
+            const category = document.getElementById('buildingCategory').value;
+            const building = document.getElementById('maintBuildings').value;
 
             if (!category) {
                 e.preventDefault();
                 Swal.fire({
                     icon: "warning",
                     title: "Building Category Required",
-                    text: "Please select a Building Category.",
+                    text: "Please select a Building Category."
                 });
                 return;
             }
@@ -1404,17 +1302,16 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                 Swal.fire({
                     icon: "warning",
                     title: "Building Required",
-                    text: "Please select a Building.",
+                    text: "Please select a Building."
                 });
                 return;
             }
         }
 
-        if (projectType === "UPG") {
-            const categoryUpg = document.getElementById(
-                "buildingCategoryUpgradation",
-            ).value;
-            const buildingUpg = document.getElementById("upgBuildings").value;
+        if (projectType === 'UPG') {
+
+            const categoryUpg = document.getElementById('buildingCategoryUpgradation').value;
+            const buildingUpg = document.getElementById('upgBuildings').value;
             const section = document.getElementById("housingContainerOtherUpg");
 
             if (!categoryUpg) {
@@ -1422,7 +1319,7 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                 Swal.fire({
                     icon: "warning",
                     title: "Building Category Required",
-                    text: "Please select a Building Category.",
+                    text: "Please select a Building Category."
                 });
                 return;
             }
@@ -1432,58 +1329,47 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
                 Swal.fire({
                     icon: "warning",
                     title: "Building Required",
-                    text: "Please select a Building.",
+                    text: "Please select a Building."
                 });
                 return;
             }
 
             if (section && !section.classList.contains("d-none")) {
-                const buildingType =
-                    document.getElementById("building_type_upg");
+
+                const buildingType = document.getElementById("building_type_upg");
                 const dept = document.getElementById("owning_dept_upg");
                 const quarter = document.getElementById("quarter_no");
-                const buildingCategoryUpg = document.getElementById(
-                    "buildingCategoryUpg",
-                ).value;
-                const quarterContainer =
-                    document.getElementById("quarterContainer");
+                const buildingCategoryUpg = document.getElementById("buildingCategoryUpg").value;
+                const quarterContainer = document.getElementById("quarterContainer");
 
                 // clear previous errors
-                document.getElementById("building_type_cd_error").innerText =
-                    "";
+                document.getElementById("building_type_cd_error").innerText = "";
                 document.getElementById("owning_dept_error").innerText = "";
-                //by dipshikha
-                document.getElementById("buildingCategoryUpg_error").innerText =
-                    "";
+				//by dipshikha
+                document.getElementById("buildingCategoryUpg_error").innerText = "";
                 //end
                 document.getElementById("quarter_no_error").innerText = "";
 
                 if (!buildingType.value) {
-                    document.getElementById(
-                        "building_type_cd_error",
-                    ).innerText = "Building Type is required";
+                    document.getElementById("building_type_cd_error").innerText = "Building Type is required";
                     hasError = true;
                 }
 
                 if (!dept.value) {
-                    document.getElementById("owning_dept_error").innerText =
-                        "Owning Department is required";
+                    document.getElementById("owning_dept_error").innerText = "Owning Department is required";
                     hasError = true;
                 }
 
                 if (!buildingCategoryUpg) {
-                    document.getElementById(
-                        "buildingCategoryUpg_error",
-                    ).innerText = "Building Category is required";
-                    //by dipshikha
+                    document.getElementById("buildingCategoryUpg_error").innerText = "Building Category is required";
+					//by dipshikha
                     hasError = true;
                     //end
                 }
 
                 if (!quarterContainer.classList.contains("d-none")) {
                     if (!quarter.value) {
-                        document.getElementById("quarter_no_error").innerText =
-                            "Field is required";
+                        document.getElementById("quarter_no_error").innerText = "Field is required";
                         hasError = true;
                     }
                 }
@@ -1492,7 +1378,7 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
     }
 
     if (!hasError) {
-        //by dipshikha
+	//by dipshikha
         if (dom.division.disabled) {
             dom.division.disabled = false;
         }
@@ -1503,13 +1389,15 @@ document.getElementById("PmsUpdateBtn").addEventListener("click", function (e) {
     }
 });
 
-document.querySelectorAll("input, select").forEach((el) => {
+document.querySelectorAll("input, select").forEach(el => {
     el.addEventListener("input", () => {
         el.style.borderColor = "";
         const error = el.parentNode.querySelector(".dynamic-error");
         if (error) error.remove();
     });
 });
+
+
 
 const formatDate = (dateStr) => {
     return dateStr ? dateStr.split(" ")[0] : "";
@@ -1519,17 +1407,13 @@ function ensureDbImageContainer() {
     let container = document.getElementById("dbImagesPreview");
 
     if (!container) {
-        const uploadSection =
-            document.getElementById("imagesPreview").parentElement;
+        const uploadSection = document.getElementById("imagesPreview").parentElement;
 
         container = document.createElement("div");
         container.id = "dbImagesPreview";
         container.className = "row mt-2";
 
-        uploadSection.insertBefore(
-            container,
-            document.getElementById("imagesPreview"),
-        );
+        uploadSection.insertBefore(container, document.getElementById("imagesPreview"));
     }
 
     return container;
@@ -1539,9 +1423,7 @@ function ensureDbDocumentContainer() {
     let container = document.getElementById("dbDocumentsPreview");
 
     if (!container) {
-        const uploadSection = document.getElementById(
-            "asset_document_container",
-        );
+        const uploadSection = document.getElementById("asset_document_container");
 
         container = document.createElement("div");
         container.id = "dbDocumentsPreview";
@@ -1554,10 +1436,11 @@ function ensureDbDocumentContainer() {
 }
 
 function loadImages(images = []) {
+
     const preview = ensureDbImageContainer();
     preview.innerHTML = "";
 
-    images.forEach((img) => {
+    images.forEach(img => {
         const col = document.createElement("div");
         col.className = "col-md-3 position-relative mb-2";
 
@@ -1604,24 +1487,24 @@ function loadDocuments(documents = []) {
         SO: "workOrder",
         WO: "projectPlan",
         WP: "drpDocument",
-        PA: "designDoc",
+        PA: "designDoc"
     };
 
     existingDocTypes = documents
-        .map((doc) => doc.doc_catg)
-        .map((code) => docMapReverse[code])
+        .map(doc => doc.doc_catg)
+        .map(code => docMapReverse[code])
         .filter(Boolean);
 
-    const fileInputs = document.querySelectorAll(
-        "#asset_document_container input[type='file']",
-    );
 
-    fileInputs.forEach((input) => {
+    const fileInputs = document.querySelectorAll("#asset_document_container input[type='file']");
+
+    fileInputs.forEach(input => {
         const docType = input.name;
 
         const msgId = "msg_" + docType;
 
         if (existingDocTypes.includes(docType)) {
+
             input.disabled = true;
             input.classList.add("bg-light");
 
@@ -1633,8 +1516,8 @@ function loadDocuments(documents = []) {
                 input.parentNode.appendChild(msg);
             }
 
-            msg.innerText =
-                "Already uploaded. Remove existing document to upload new one.";
+            msg.innerText = "Already uploaded. Remove existing document to upload new one.";
+
         } else {
             input.disabled = false;
             input.classList.remove("bg-light");
@@ -1651,15 +1534,14 @@ function renderDocumentList(documents) {
     const container = ensureDbDocumentContainer();
     container.innerHTML = "";
 
-    documents.forEach((doc) => {
+    documents.forEach(doc => {
         const div = document.createElement("div");
-        div.className =
-            "d-flex align-items-center border p-2 mb-2 position-relative";
+        div.className = "d-flex align-items-center border p-2 mb-2 position-relative";
 
         div.innerHTML = `
             <a href="${doc.file_url}" target="_blank" class="me-3">
                 <i class="fa fa-file-pdf text-danger"></i>
-                ${doc.label ?? "Document"}
+                ${doc.label ?? 'Document'}
             </a>
 
             <button type="button"
@@ -1678,6 +1560,7 @@ function renderDocumentList(documents) {
 }
 
 function loadKmlFile(kmlFile) {
+
     loadedKmlFile = kmlFile;
 
     const fileInput = document.getElementById("road_kml_file");
@@ -1696,6 +1579,7 @@ function loadKmlFile(kmlFile) {
     container.innerHTML = "";
 
     if (kmlFile) {
+
         const msgId = "msg_road_kml_file";
 
         let msg = document.getElementById(msgId);
@@ -1707,8 +1591,7 @@ function loadKmlFile(kmlFile) {
             fileInput.parentNode.appendChild(msg);
         }
 
-        msg.innerText =
-            "Already uploaded. Remove existing KML file to upload a new one.";
+        msg.innerText = "Already uploaded. Remove existing KML file to upload a new one.";
 
         fileInput.disabled = true;
         fileInput.classList.add("bg-light");
@@ -1743,7 +1626,9 @@ function loadKmlFile(kmlFile) {
 }
 
 document.addEventListener("click", function (e) {
+
     if (e.target.classList.contains("remove-db-image")) {
+
         const imageId = e.target.getAttribute("data-id");
 
         // remove from UI instantly
@@ -1773,7 +1658,9 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("click", function (e) {
+
     if (e.target.classList.contains("remove-db-doc")) {
+
         const docId = e.target.getAttribute("data-id");
         const docType = e.target.getAttribute("data-type");
 
@@ -1801,7 +1688,7 @@ document.addEventListener("click", function (e) {
         input.value = JSON.stringify(deleted);
 
         // ✅ IMPORTANT: remove from state
-        loadedDocuments = loadedDocuments.filter((d) => d.id != docId);
+        loadedDocuments = loadedDocuments.filter(d => d.id != docId);
 
         // 🔥 re-render everything
         loadDocuments(loadedDocuments);
@@ -1809,7 +1696,9 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("click", function (e) {
+
     if (e.target.classList.contains("remove-db-kml")) {
+
         const kmlId = e.target.dataset.id;
 
         let input = document.getElementById("deleted_kml");

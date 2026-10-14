@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Maintenance\bridge\BridgeInspectionController;
 use App\Http\Controllers\Api\V1\Maintenance\InspectionController;
-use App\Http\Controllers\Api\v1\maintenance\InspectionObservationController;
+use App\Http\Controllers\Api\V1\Maintenance\InspectionObservationController;
 use App\Http\Controllers\Api\V1\Maintenance\InspectionPciController;
 use App\Http\Controllers\Api\V1\Maintenance\MasterDataController;
 use App\Http\Controllers\Api\V1\Maintenance\SubAsset\RoadSubAsetsApiController;

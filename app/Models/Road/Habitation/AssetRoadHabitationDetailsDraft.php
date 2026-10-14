@@ -40,7 +40,8 @@ class AssetRoadHabitationDetailsDraft extends Model
         'is_rejected',
         'reason_of_rejection',
         'date_of_rejection',
-        'rejected_by'
+        'rejected_by',
+        'habitation_score',
     ];
 
     public function facilities()

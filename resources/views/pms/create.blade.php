@@ -61,9 +61,9 @@
                     <div class="row g-2">
                         <div class="col-sm-3">
                             <label class="form-label">Project Type <span class="text-danger">*</span></label>
-                            @php
+							@php							
                                 $hasExceptionOrError = $errors->any() || session('error') || session('failed');
-                            @endphp
+                            @endphp	
                             <select name="projectTypeSelect" id="projectTypeSelect" class="form-select form-select-sm"
                                 required>
                                 <option value="">Select</option>
@@ -89,8 +89,8 @@
                         <div class="col-sm-3">
                             <label class="form-label">Owner Department <span class="text-danger">*</span></label>
                             <select name="owner_dept_cd" id="owner_dept_cd" class="form-select form-select-sm" required>
-                                <option value="{{ $department->id }}"
-                                    {{ old('owner_dept_cd', $project->owner_dept_cd ?? '') == $department->id ? 'selected' : '' }}>
+                                <option value="{{ $department->id }}" 
+									{{ old('owner_dept_cd', $project->owner_dept_cd ?? '') == $department->id ? 'selected' : '' }}>
                                     {{ $department->department_name }}
                                 </option>
                             </select>
@@ -113,7 +113,7 @@
                             {{-- Add new tag Name dipshikha 16-05-2026 End --}}
                         </div>
                         {{-- division field not required because for higher-level users, they are not mapped to a
-                        single/main division Dipshika --}}
+                        single/main division Dipshika--}}
                         {{-- <input type="hidden" name="division_cd" value="{{ session('userMapping')->division_cd }}"> --}}
                         <div class="col-sm-3">
                             <label class="form-label">Sub Division Name <span class="text-danger">*</span></label>
@@ -200,62 +200,6 @@
                         </div>
 
                         <div class="col-sm-3">
-                            <label class="form-label">Project Technology Type <span class="text-danger">*</span></label>
-                            <select name="tech_type_cd" id="tech_type_cd" class="form-select form-select-sm" required>
-                                <option value="">Select Technology</option>
-                                @foreach ($technologies as $technology)
-                                    <option value="{{ $technology->tech_type_cd }}">
-                                        {{ $technology->tech_type_descr }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Radio button for new technology --}}
-                        <div style="display: none;" id="new_technology_info_section">
-                            <div class="d-flex border rounded">
-                                <div class="col-sm-3">
-                                    <label class="form-label d-block">Plastic Waste? <span
-                                            class="text-danger"></span></label>
-                                    <div class="form-check form-check-inline mt-2">
-                                        <input class="form-check-input" type="radio" id="plastic_waste_yes"
-                                            name="plastic_waste" value="Y"
-                                            {{ old('plastic_waste', $currentProject?->plastic_waste ?? 'N') == 'Y' ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-normal" for="plastic_waste_yes">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline mt-2">
-                                        <input class="form-check-input" type="radio" id="plastic_waste_no"
-                                            name="plastic_waste" value="N"
-                                            {{ old('plastic_waste', $currentProject?->plastic_waste ?? 'N') == 'N' ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-normal" for="plastic_waste_no">No</label>
-                                    </div>
-                                    @error('plastic_waste')
-                                        <div class="text-danger small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-3">
-                                    <label class="form-label d-block">Mixing Type? <span
-                                            class="text-danger"></span></label>
-                                    <div class="form-check form-check-inline mt-2">
-                                        <input class="form-check-input" type="radio" id="hot_mixing"
-                                            name="mixing_type" value="hot_mixing"
-                                            {{ old('mixing_type', $currentProject?->mixing_type ?? '') == 'hot_mixing' ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-normal" for="hot_mixing">Hot Mixing</label>
-                                    </div>
-                                    <div class="form-check form-check-inline mt-2">
-                                        <input class="form-check-input" type="radio" id="cold_mixing"
-                                            name="mixing_type" value="cold_mixing"
-                                            {{ old('mixing_type', $currentProject?->mixing_type ?? '') == 'cold_mixing' ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-normal" for="cold_mixing">Cold Mixing</label>
-                                    </div>
-                                    @error('mixing_type')
-                                        <div class="text-danger small">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-3">
                             <label class="form-label">Project Scheme <span class="text-danger">*</span></label>
                             <select name="scheme_cd" id="scheme_cd" class="form-select form-select-sm" required>
                                 <option value="">Select Scheme</option>
@@ -267,6 +211,17 @@
                                 @endforeach
                             </select>
                         </div>
+						<div class="col-sm-3">
+                            <label class="form-label">Project Technology Type <span class="text-danger">*</span></label>
+                            <select name="tech_type_cd" id="tech_type_cd" class="form-select form-select-sm" required>
+                                <option value="">Select Technology</option>
+                                @foreach ($technologies as $technology)
+                                    <option value="{{ $technology->tech_type_cd }}">
+                                        {{ $technology->tech_type_descr }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>	
                         {{-- End of new fields: nitish --}}
                     </div>
                     {{-- section to show funding agency details: Nitish --}}
@@ -356,7 +311,7 @@
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
-                    </div>
+					</div>
                     <!-- Add Button -->
 
                     <div class="row g-3 align-items-end">
@@ -378,11 +333,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Road</th>
-                                    <th>From Chainage (KM)</th>
-                                    <th>To Chainage (KM)</th>
+									<th>From Chainage (KM)</th>
+                                    <th>To Chainage (KM)</th>									   
                                     <th>Culverts</th>
                                     <th>Bridges</th>
-                                    <th>Retaining Walls</th>
+									<th>Retaining Walls</th>						
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -394,50 +349,50 @@
 
 
 
-                    <div id="newRoadDetailsForm" class="row g-3">
-                        <div class="col-md-4">
-                            <label for="total_road_length" class="form-label fw-bold">
+                        <div id="newRoadDetailsForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="total_road_length" class="form-label fw-bold">
                                 Total Road Length (Km)
                             </label>
-                            <input type="text" id="total_road_length" name="total_road_length" class="form-control"
+                                <input type="text" id="total_road_length" name="total_road_length" class="form-control"
                                 value="" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="road_category">Road Category</label>
-                            <select id="road_category" class="custom-select form-control form-control-sm"
-                                name="road_category">
-                                <option value="" disable selected hidden>Please Select</option>
-                                @foreach ($roadCategories as $roadCategory)
-                                    <option value="{{ $roadCategory->rd_catg_cd }}">
-                                        {{ $roadCategory->rd_catg_descr }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="road_category">Road Category</label>
+                                <select id="road_category" class="custom-select form-control form-control-sm"
+                                    name="road_category">
+                                    <option value="" disable selected hidden>Please Select</option>
+                                    @foreach ($roadCategories as $roadCategory)
+                                        <option value="{{ $roadCategory->rd_catg_cd }}">
+                                            {{ $roadCategory->rd_catg_descr }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div class="col-md-4">
-                            <label for="road_type">Road Type</label>
-                            <select id="road_type" class="custom-select form-control form-control-sm" name="road_type">
-                                <option value="" disable selected hidden>Please Select</option>
-                                @foreach ($roadTypes as $roadType)
-                                    <option value="{{ $roadType->rd_type_cd }}">
-                                        {{ $roadType->rd_type_descr }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                            <div class="col-md-4">
+                                <label for="road_type">Road Type</label>
+                                <select id="road_type" class="custom-select form-control form-control-sm" name="road_type">
+                                    <option value="" disable selected hidden>Please Select</option>
+                                    @foreach ($roadTypes as $roadType)
+                                        <option value="{{ $roadType->rd_type_cd }}">
+                                            {{ $roadType->rd_type_descr }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div class="col-md-4">
-                            <label for="road_owner">Road Owner</label>
-                            <select id="road_owner" class="custom-select form-control form-control-sm" name="road_owner">
-                                <option value="" disable selected hidden>Please Select</option>
-                                @foreach ($roadOwners as $roadOwner)
-                                    <option value="{{ $roadOwner->owner_cd }}">{{ $roadOwner->owner_name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="col-md-4">
+                                <label for="road_owner">Road Owner</label>
+                                <select id="road_owner" class="custom-select form-control form-control-sm" name="road_owner">
+                                    <option value="" disable selected hidden>Please Select</option>
+                                    @foreach ($roadOwners as $roadOwner)
+                                        <option value="{{ $roadOwner->owner_cd }}">{{ $roadOwner->owner_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
                     <div class="row g-3 align-items-end mt-2">
                         <div class="col-md-2">
@@ -453,9 +408,9 @@
                             <button type="button" id="closeNewAssetsForm" class="btn btn-danger btn-sm">
                                 Remove
                             </button>
-                        </div>
+                    </div>
 
-                        <div class="row g-3">
+					<div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">New Road Name</label>
                                 <input type="text" class="form-control" name="new_road_name" id="new_road_name">
@@ -468,9 +423,9 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="card mt-3" id="priorityCard" style="display:none;">
-                        <div class="card-header">
+						 
+				<div class="card mt-3" id="priorityCard" style="display:none;">
+                       <div class="card-header">
                             Road Alignment Sequence
                         </div>
 
@@ -515,7 +470,7 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label for="road_category_new">Road Category</label>
+								<label for="road_category_new">Road Category</label>
                                 <select id="road_category_new" class="custom-select form-control form-control-sm"
                                     name="road_category_new">
                                     <option value="" disable selected hidden>Please Select</option>
@@ -524,7 +479,7 @@
                                             {{ $roadCategory->rd_catg_descr }}
                                         </option>
                                     @endforeach
-                                </select>
+                                </select>													
                             </div>
 
                             <div class="col-md-4">
@@ -540,14 +495,14 @@
                                 </select>
                             </div>
 
-                            <div class="col-12 col-md-3">
+                             <div class="col-12 col-md-3">
                                 <label class="form-label">Road Length(in KM): </label>
                                 <input class="form-control form-control-sm" type="number" min="0" id="rdLength"
                                     name='rdLength' value="{{ old('rdLength') }}" size="8"
-                                    placeholder="Enter Road Length" />
+                                    placeholder="Enter Road Length"/>
                             </div>
 
-                            <div class="col-md-4">
+							<div class="col-md-4">
                                 <label for="road_owner_new">Road Owner</label>
                                 <select id="road_owner_new" class="custom-select form-control form-control-sm"
                                     name="road_owner_new">
@@ -1062,7 +1017,7 @@
                                                     @enderror
                                                 </div>
                                             </div>
-                                            <div class="row form-1-box my-1">
+								<div class="row form-1-box my-1">
                                                 <div class="col-md-4">
                                                     <label for="passbookDoc">3. Upload Passbook (PDF):</label>
                                                 </div>
@@ -1134,7 +1089,7 @@
                             <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
                             <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
                             {{-- End: Nitish --}}
-                            <th class="text-center" style="min-width: 8rem;">Technology Name</th>
+							<th class="text-center" style="min-width: 8rem;">Technology Name</th>
                             <th class="text-center" style="min-width: 8rem;">Rejection Reason</th>
                             <th class="text-center" style="min-width: 8rem;">Asset Details</th>
                             <th class="text-center" style="min-width: 8rem;">Funding Agency</th>
@@ -1163,14 +1118,14 @@
                                     <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
                                     <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
                                     <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
-                                    <td class="text-center">
+									<td class="text-center">
                                         {{ json_decode($draft->others, true)['tech_type_descr'] ?? 'N/A' }}</td>
-
+									
                                     {{-- End: Nitish --}}
                                     <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
                                     <td class="text-center">
-                                        @if ($draft->project_type_cd == 'NEW')
-                                            <button
+										@if($draft->project_type_cd == 'NEW')
+                                        <button
                                                 class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
                                                 data-toggle="modal"
                                                 data-target="#showAssetForNewWorks{{ $draft->project_cd }}"
@@ -1178,29 +1133,29 @@
                                                 <i class="fas fa-eye text-xs"></i>
                                                 View
                                             </button>
-                                        @elseif($draft->project_type_cd == 'UPG')
-                                            @if ($draft->hasUpgradationAssets)
-                                                <button
+                                    @elseif($draft->project_type_cd == 'UPG')
+                                        @if ($draft->hasUpgradationAssets)
+                                            <button
                                                     class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
                                                     onclick="showModalNewAssetDetail('{{ $draft->project_cd }}','draft')">
                                                     <i class="fas fa-eye text-xs"></i>
                                                     View
                                                 </button>
-                                            @else
-                                                <span class="text-danger text-bold">NA</span>
-                                            @endif
-                                        @elseif($draft->project_type_cd == 'MTN')
-                                            @if ($hasMaintenanceAssets)
-                                                <button
+                                        @else
+                                            <span class="text-danger text-bold">NA</span>
+                                        @endif
+									@elseif($draft->project_type_cd == 'MTN')	
+                                        @if ($hasMaintenanceAssets)
+                                            <button
                                                     class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
                                                     onclick="showModalMaintenanceDetail('{{ $draft->project_cd }}','draft')">
                                                     <i class="fas fa-eye text-xs"></i>
                                                     View
                                                 </button>
-                                            @else
-                                                <span class="text-danger text-bold">NA</span>
-                                            @endif
+                                        @else
+                                            <span class="text-danger text-bold">NA</span>
                                         @endif
+									@endif
                                     </td>
                                     <td class="text-center">
                                         <button
@@ -1370,7 +1325,7 @@
             </div>
         </div>
     </div>
-    {{-- end by Pulak --}}
+    {{-- end by Pulak--}}
 
 
 
@@ -1650,7 +1605,7 @@
             color: var(--primary) !important;
         }
 
-        .badge-rose-primary {
+		.badge-rose-primary {
             background-color: var(--secondary);
             color: var(--primary);
             border: 1px solid color-mix(in srgb, var(--primary) 25%, white);
@@ -1658,7 +1613,7 @@
             padding: 0.45rem 0.8rem;
             border-radius: 999px;
         }
-
+					 
         .card-body {
             border: none;
             overflow: hidden;
@@ -1818,7 +1773,8 @@
             outline: none;
         }
 
-        {{-- CSS-Added By Pulak --}} #contractorModal .modal-body {
+        {{-- CSS-Added By Pulak --}}
+        #contractorModal .modal-body {
             overflow-y: auto !important;
             max-height: 75vh;
         }
@@ -1836,7 +1792,7 @@
 
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script> {{-- -added by Pulak --}}
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>																					  
     <script src="{{ asset('js/pms/road/dynamicSectionByType/script.js') }}"></script>
     <script src="{{ asset('js/pms/showModalDetail/showWorkItems.js') }}"></script>
     <script src="{{ asset('js/pms/showModalDetail/fundingAgencyDetails.js') }}"></script>
@@ -1854,7 +1810,7 @@
     <script>
         const allSubItems = @json($workSubItems);
 
-        $(function() {
+        $(function () {
             $("#project_rejection_table").DataTable();
         });
     </script>
@@ -1865,33 +1821,22 @@
     <script>
         var table1;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             table1 = $("#project_details_table").DataTable();
-
-            function toggleTechnologySection() {
-                if ($('#tech_type_cd').val() == '1') {
-                    $('#new_technology_info_section').show();
-                } else {
-                    $('#new_technology_info_section').hide();
-                }
-            }
-
-            $('#tech_type_cd').on('change', toggleTechnologySection);
-            toggleTechnologySection();
         });
 
         // open contractor modal
-        $('#add-constructor').click(function() {
+        $('#add-constructor').click(function () {
             $('#contractorModal').modal('show');
         });
         //start By Pulak
         // Keep contractor modal scrollable whenever it opens
-        $('#contractorModal').on('shown.bs.modal', function() {
+        $('#contractorModal').on('shown.bs.modal', function () {
             $(this).find('.modal-body').css('overflow-y', 'auto');
         });
 
         // When crop modal is about to show
-        $('#cropModal').on('show.bs.modal', function() {
+        $('#cropModal').on('show.bs.modal', function () {
             // Save scroll position of contractor modal body
             var contractorBody = document.querySelector('#contractorModal .modal-body');
             if (contractorBody) {
@@ -1900,7 +1845,7 @@
         });
 
         // When crop modal finishes showing - restore contractor modal scroll
-        $('#cropModal').on('shown.bs.modal', function() {
+        $('#cropModal').on('shown.bs.modal', function () {
             var contractorModal = document.querySelector('#contractorModal');
             var contractorBody = document.querySelector('#contractorModal .modal-body');
             if (contractorModal) contractorModal.style.overflowY = 'auto';
@@ -1908,13 +1853,13 @@
         });
 
         // When crop modal is fully hidden - restore everything
-        $('#cropModal').on('hidden.bs.modal', function() {
+        $('#cropModal').on('hidden.bs.modal', function () {
             var contractorModal = document.querySelector('#contractorModal');
             var contractorBody = document.querySelector('#contractorModal .modal-body');
 
             if (contractorModal) contractorModal.style.overflowY = 'auto';
 
-            setTimeout(function() {
+            setTimeout(function () {
                 if (contractorBody) {
                     contractorBody.style.overflowY = 'auto';
                     // Restore scroll position
@@ -1929,7 +1874,7 @@
         });
 
         // submit contractor form
-        $('#contractorForm').submit(function(e) {
+        $('#contractorForm').submit(function (e) {
             e.preventDefault();
 
             let accNo = $('#modal_bank_acc_no').val().trim();
@@ -1954,7 +1899,7 @@
                 data: formData,
                 processData: false,
                 contentType: false,
-                success: function(res) {
+                success: function (res) {
 
                     // add new contractor to dropdown
                     $('#project_awarded_to').append(
@@ -1967,47 +1912,47 @@
                     // reset form
                     $('#contractorForm')[0].reset();
 
-                    Swal.fire({
-                        icon: res.status,
-                        title: res.status.toUpperCase(),
-                        text: res.message,
-                        timer: 2000
+				Swal.fire({ 			
+                        icon: res.status, 
+                        title: res.status.toUpperCase(), 
+                        text: res.message, 
+                        timer: 2000 
                     })
                 },
                 error: function(xhr) {
-                    if (xhr.status === 422) {
+                        if (xhr.status === 422) {
 
-                        let errors = xhr.responseJSON.errors;
-                        let errorMsg = '';
+                            let errors = xhr.responseJSON.errors;
+                            let errorMsg = '';
 
-                        $.each(errors, function(key, value) {
-                            errorMsg += value[0] + '<br>';
-                        });
+                            $.each(errors, function(key, value) {
+                                errorMsg += value[0] + '<br>';
+                            });
 
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Validation Error',
-                            html: errorMsg
-                        });
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                html: errorMsg
+                            });
 
-                    } else {
+                        } else {
 
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'ERROR',
-                            text: 'Something went wrong!'
-                        });
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ERROR',
+                                text: 'Something went wrong!'
+                            });
 
-                    }
+                        }
                 }
             });
         });
-        // {{-- End By Pulak --}}
+        // {{--End By Pulak--}}
 
         // save btn validation
-        document.getElementById('PmsSaveBtn').closest('form').addEventListener('submit', function(e) {
+        document.getElementById('PmsSaveBtn').closest('form').addEventListener('submit', function (e) {
 
-            const showError = (input, message) => {
+             const showError = (input, message) => {
                 if (!input) return;
 
                 const error = document.createElement("div");
@@ -2019,18 +1964,18 @@
                 input.parentNode.appendChild(error);
             };
 
-            const projectType = document.getElementById('projectTypeSelect').value;
+			const projectType = document.getElementById('projectTypeSelect').value;
 
-            document.querySelectorAll('.dynamic-error').forEach(el => el.remove());
+            document.querySelectorAll('.dynamic-error').forEach(el => el.remove());																	   
             const table = document.getElementById('refAssetTable');
             const mtnTable = document.getElementById('mtnAssetTable');
             const rowCount = table.querySelectorAll('tbody tr').length;
             const mtnRowCount = mtnTable.querySelectorAll('tbody tr').length;
-            const kmlFile = document.getElementById('road_kml_file');
+			const kmlFile = document.getElementById('road_kml_file');
             const kmlCard = document.getElementById('kmlCard');
             const newAssetsForm = document.getElementById('newAssetsForm');
-            const newRoadDetailsForm = document.getElementById('newRoadDetailsForm');
-
+			const newRoadDetailsForm = document.getElementById('newRoadDetailsForm');
+																		 
             if (projectType === 'UPG' && rowCount === 0) {
                 e.preventDefault();
                 Swal.fire({
@@ -2044,7 +1989,7 @@
 
             if (projectType === 'MTN' && mtnRowCount === 0) {
                 e.preventDefault();
-                Swal.fire({
+				Swal.fire({		   
                     title: 'Warning',
                     text: 'Please add at least one asset.',
                     icon: 'warning',
@@ -2053,7 +1998,7 @@
                 return;
             }
 
-            if (projectType === 'UPG' && newRoadDetailsForm.style.display !== 'none') {
+			if(projectType === 'UPG' && newRoadDetailsForm.style.display !== 'none'){
 
                 const road_category = document.getElementById('road_category');
                 const road_type = document.getElementById('road_type');
@@ -2093,7 +2038,7 @@
                 const roadLengthFilled = roadLengthInput.value && roadLengthInput.value.trim() !== '';
 
                 if ((roadNameEmpty || roadLengthEmpty) || (roadLengthFilled && roadNameEmpty)) {
-                    let hasError = false;
+				let hasError = false;
 
                     if (roadNameEmpty) {
                         showError(roadNameInput, "Road Name is required");
@@ -2186,10 +2131,10 @@
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
         });
 
-        // {{-- Start By Pulak --}}
+        // {{--Start By Pulak--}}
 
         // numeric only inputs
-        $(document).on('input', '.numeric-only', function() {
+        $(document).on('input', '.numeric-only', function () {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
@@ -2211,7 +2156,7 @@
             }
         }
 
-        document.getElementById('passportPhoto').addEventListener('change', function() {
+        document.getElementById('passportPhoto').addEventListener('change', function () {
             const file = this.files[0];
             const allowedTypes = ["image/jpeg", "image/jpg"];
             const maxSize = 1024 * 1024;
@@ -2231,7 +2176,7 @@
             }
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const cropperImg = document.getElementById('cropperImage');
                 cropperImg.src = e.target.result;
 
@@ -2248,7 +2193,7 @@
 
                 $('#cropModal').modal('show');
 
-                $('#cropModal').one('shown.bs.modal', function() {
+                $('#cropModal').one('shown.bs.modal', function () {
                     // Restore contractor modal scroll after crop modal opens
                     if (contractorBody) {
                         contractorBody.style.overflowY = 'auto';
@@ -2275,7 +2220,7 @@
         });
 
         // Confirm crop
-        document.getElementById('cropConfirmBtn').addEventListener('click', function() {
+        document.getElementById('cropConfirmBtn').addEventListener('click', function () {
             if (!cropperInstance) return;
 
             const canvas = cropperInstance.getCroppedCanvas({
@@ -2299,7 +2244,7 @@
         });
 
         // Cancel crop
-        document.getElementById('cropCancelBtn').addEventListener('click', function() {
+        document.getElementById('cropCancelBtn').addEventListener('click', function () {
             if (cropperInstance) {
                 cropperInstance.destroy();
                 cropperInstance = null;

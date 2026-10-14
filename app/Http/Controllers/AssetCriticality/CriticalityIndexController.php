@@ -24,10 +24,8 @@ class CriticalityIndexController extends Controller
             ->values();
         return view('criticality.index', compact('assetTypes'));
     }
-
     public function store(StoreCriticalityIndexRequest $request)
     {
-
         $assetType = $request->input('asset_type');
         $assetId = $request->input('asset_id');
         $criticalityIndex = $request->input('criticality_index');
@@ -40,31 +38,12 @@ class CriticalityIndexController extends Controller
             ]);
         }
 
-        $parameter = DB::table(
-            'maintenance.master_mtn_parameter_master as p'
-        )
-            ->join(
-                'maintenance.master_mtn_parameter_range as r',
-                'r.parameter_id',
-                '=',
-                'p.id'
-            )
-            ->where(
-                'p.parameter_code',
-                'CRITICALITY_INDEX'
-            )
-            ->where(
-                'p.parameter_type',
-                'RANGE'
-            )
-            ->where(
-                'p.status',
-                'ACTIVE'
-            )
-            ->where(
-                'r.status',
-                'ACTIVE'
-            )
+        $parameter = DB::table('maintenance.master_mtn_parameter_master as p')
+            ->join('maintenance.master_mtn_parameter_range as r','r.parameter_id','=','p.id')
+            ->where('p.parameter_code','CRITICALITY_INDEX')
+            ->where('p.parameter_type','RANGE')
+            ->where('p.status','ACTIVE')
+            ->where('r.status','ACTIVE')
             ->select([
                 'p.id',
                 'p.parameter_code',
@@ -76,15 +55,12 @@ class CriticalityIndexController extends Controller
 
         if (!$parameter) {
             throw ValidationException::withMessages([
-                'criticality_index' =>
-                'Criticality Index parameter configuration not found.',
+                'criticality_index' => 'Criticality Index parameter configuration not found.',
             ]);
         }
 
-        if (
-            $criticalityIndex < $parameter->lower_range ||
-            $criticalityIndex > $parameter->upper_range
-        ) {
+        if ($criticalityIndex < $parameter->lower_range || $criticalityIndex > $parameter->upper_range) 
+        {
             throw ValidationException::withMessages([
                 'criticality_index' =>
                 "Criticality Index must be between " .
@@ -94,10 +70,7 @@ class CriticalityIndexController extends Controller
         }
 
         $assetExists = DB::table($config['table'])
-            ->where(
-                $config['id_field'],
-                $assetId
-            )
+            ->where($config['id_field'],$assetId)
             ->exists();
 
         if (!$assetExists) {
@@ -158,9 +131,7 @@ class CriticalityIndexController extends Controller
                 'message' => 'Criticality Index record not found.',
             ], 404);
         }
-        $parameter = DB::table(
-            'maintenance.master_mtn_parameter_master as p'
-        )
+        $parameter = DB::table('maintenance.master_mtn_parameter_master as p')
             ->join(
                 'maintenance.master_mtn_parameter_range as r',
                 'r.parameter_id',

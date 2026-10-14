@@ -159,6 +159,14 @@
                                             </div>
                                         @enderror
                                     </div>
+                                    <div class="col-md-3">
+                                        <label for="population_weightage">Population Weightage:</label>
+                                        <input type="text"
+                                            id="population_weightage"
+                                            name="population_weightage"
+                                            class="form-control form-control-sm"
+                                            readonly>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="row form-1-box">
@@ -198,6 +206,15 @@
                                     </div>
 
                                     <div class="col-md-4">
+                                        <label for="facility_weightage">Facility Weightage:</label>
+                                        <input type="text"
+                                            id="facility_weightage"
+                                            name="facility_weightage"
+                                            class="form-control form-control-sm"
+                                            readonly>
+                                    </div>
+
+                                    <div class="col-md-4">
                                         <label>Sub Facility</label>
                                         <select id="sub_facility_id" class="form-select form-control-sm">
                                             <option value="">Choose Sub Facility</option>
@@ -207,6 +224,15 @@
                                                 </option>
                                             @endforeach
                                         </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="sub_facility_weightage">Sub Facility Weightage:</label>
+                                        <input type="text"
+                                            id="sub_facility_weightage"
+                                            name="sub_facility_weightage"
+                                            class="form-control form-control-sm"
+                                            readonly>
                                     </div>
 
                                     <div class="col-md-2 d-flex align-items-end">
@@ -220,7 +246,9 @@
                                     <thead>
                                         <tr>
                                             <th>Facility</th>
+                                            <th>Facility Weightage</th>
                                             <th>Sub Facility</th>
+                                            <th>Sub Facility Weightage</th>
                                             <th width="80">Action</th>
                                         </tr>
                                     </thead>
@@ -277,6 +305,7 @@
                             <th class="text-center">MP Constituency</th>
                             <th class="text-center">Population Count</th>
                             <th class="text-center">Habitation Remarks</th>
+                            <th class="text-center">Habitation Weightage</th>
                             <th class="text-center">Facilities</th>
                             <th class="text-center">Edit Habitation</th>
                             <th class="text-center">Select Habitation</th>
@@ -311,6 +340,9 @@
                                     </td>
                                     <td>
                                         {{ $habitationDetail->remarks }}
+                                    </td>
+                                    <td>
+                                        {{ $habitationDetail->habitation_score }}
                                     </td>
                                     <td>
                                         @if(isset($habitationFacilities[$habitationDetail->habitation_cd]))
@@ -503,8 +535,10 @@
                                                                 id="mla_constituency_cd" name="mla_constituency_cd">
                                                                 <option value="">Choose One</option>
                                                                 @foreach ($mlaConsts as $mlaConst)
-                                                                    <option class="text-uppercase"
-                                                                        value="{{ $mlaConst->const_cd }}">
+                                                                    <option
+                                                                        class="text-uppercase"
+                                                                        value="{{ $mlaConst->const_cd }}"
+                                                                        {{ $habitationDetail->mla_constituency == $mlaConst->const_cd ? 'selected' : '' }}>
                                                                         {{ $mlaConst->const_descr }}
                                                                     </option>
                                                                 @endforeach
@@ -525,7 +559,10 @@
                                                                 id="mp_constituency_cd" name="mp_constituency_cd">
                                                                 <option value="">Choose One</option>
                                                                 @foreach ($mpConsts as $mpConst)
-                                                                    <option class="text-uppercase" value="{{ $mpConst->const_cd }}">
+                                                                    <option
+                                                                        class="text-uppercase"
+                                                                        value="{{ $mpConst->const_cd }}"
+                                                                        {{ $habitationDetail->mp_constituency == $mpConst->const_cd ? 'selected' : '' }}>
                                                                         {{ $mpConst->const_desc }}
                                                                     </option>
                                                                 @endforeach
@@ -548,6 +585,20 @@
                                                                     {{ $message }}
                                                                 </div>
                                                             @enderror
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label>Population Weightage:</label>
+                                                            <input type="text"
+                                                                name="population_weightage"
+                                                                value="{{ $populationWeightages->first(function ($range) use ($habitationDetail) {
+                                                                    return $habitationDetail->total_population >= $range->lower_population
+                                                                        && (
+                                                                            $range->higher_population === null
+                                                                            || $habitationDetail->total_population <= $range->higher_population
+                                                                        );
+                                                                })->weightage ?? 0 }}"
+                                                                class="form-control form-control-sm edit-population-weightage"
+                                                                readonly>
                                                         </div>
                                                     </div>
                                                     <div class="row">
@@ -575,6 +626,7 @@
                                                     <div class="row mb-2">
 
                                                         <div class="col-md-5">
+                                                            <label for="sub_facility_weightage">Facility</label>
                                                             <select class="form-select form-control-sm facility-select"
                                                                 id="facility_id">
                                                                 <option value="">Select Facility</option>
@@ -589,6 +641,16 @@
                                                         </div>
 
                                                         <div class="col-md-5">
+                                                            <label for="facility_weightage">Facility Weightage</label>
+                                                            <input type="text"
+                                                                id="facility_weightage"
+                                                                name="facility_weightage"
+                                                                class="form-control form-control-sm edit-facility-weightage"
+                                                                readonly>
+                                                        </div>
+
+                                                        <div class="col-md-5">
+                                                            <label for="sub_facility_weightage">Sub Facility</label>
                                                             <select class="form-select form-control-sm subfacility-select"
                                                                 id="sub_facility_id">
                                                                 <option value="">Select Sub Facility</option>
@@ -601,6 +663,15 @@
                                                                 @endforeach
 
                                                             </select>
+                                                        </div>
+
+                                                        <div class="col-md-5">
+                                                            <label for="sub_facility_weightage">Sub Facility Weightage</label>
+                                                            <input type="text"
+                                                                id="sub_facility_weightage"
+                                                                name="sub_facility_weightage"
+                                                                class="form-control form-control-sm edit-sub-facility-weightage"
+                                                                readonly>
                                                         </div>
 
                                                         <div class="col-md-2">
@@ -616,7 +687,9 @@
                                                         <thead>
                                                             <tr>
                                                                 <th>Facility</th>
+                                                                <th>Facility Weightage</th>
                                                                 <th>Sub Facility</th>
+                                                                <th>Sub Facility Weightage</th>
                                                                 <th width="60">Remove</th>
                                                             </tr>
                                                         </thead>
@@ -629,11 +702,13 @@
                                                                             <input type="hidden" name="facility_ids[]"
                                                                                 value="{{ $facility->facility_id }}">
                                                                         </td>
+                                                                        <td>{{ number_format($facility->facility_weightage ?? 0, 2) }}</td>
                                                                         <td>
                                                                             {{ $facility->sub_facility_name }}
                                                                             <input type="hidden" name="sub_facility_ids[]"
                                                                                 value="{{ $facility->sub_facility_id }}">
                                                                         </td>
+                                                                        <td>{{ number_format($facility->sub_facility_weightage ?? 0, 2) }}</td>
                                                                         <td>
                                                                             <button type="button"
                                                                                 class="btn btn-danger btn-sm remove-row">

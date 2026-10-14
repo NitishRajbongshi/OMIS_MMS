@@ -22,11 +22,16 @@
             <form id="add_facility_form" method="POST">
                 @csrf
                 <div class="row align-items-end">
-                    <div class="col-md-6 mb-2">
+                    <div class="col-md-5 mb-2">
                         <label class="text-xs">Facility Name <span class="text-danger">*</span></label>
                         <input type="text" name="facility_name" class="form-control form-control-sm" placeholder="e.g., Primary Health Center" required>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
+                        <label class="text-xs">Weightage <span class="text-danger">*</span></label>
+                        <input type="number" name="weightage" class="form-control form-control-sm"
+                            placeholder="e.g., 10" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
+                    </div>
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">Status</label>
                         <select name="is_published" class="form-select form-select-sm">
                             <option value="Y">Published</option>
@@ -53,6 +58,7 @@
                             <tr>
                                 <th style="width: 10%;">ID</th>
                                 <th>Facility Name</th>
+                                <th class="text-center" style="width: 15%;">Weightage</th>
                                 <th class="text-center" style="width: 15%;">Status</th>
                                 <th class="text-center" style="width: 100px;">Action</th>
                             </tr>
@@ -62,6 +68,7 @@
                                 <tr class="text-xs">
                                     <td>{{ $facility->id }}</td>
                                     <td class="font-weight-bold">{{ $facility->facility_name }}</td>
+                                    <td class="text-center">{{ $facility->weightage }}</td>
                                     <td class="text-center">
                                         <span class="badge {{ $facility->is_published == 'Y' ? 'badge-success' : 'badge-secondary' }}">
                                             {{ $facility->is_published == 'Y' ? 'PUBLISHED' : 'DRAFT' }}
@@ -88,6 +95,10 @@
                                                     <div class="form-group">
                                                         <label class="text-xs">Facility Name</label>
                                                         <input type="text" name="facility_name" class="form-control form-control-sm" value="{{ $facility->facility_name }}" required>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="text-xs">Weightage <span class="text-danger">*</span></label>
+                                                        <input type="number" name="weightage" class="form-control form-control-sm" value="{{ $facility->weightage }}" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
                                                     </div>
                                                     <div class="form-group">
                                                         <label class="text-xs">Status</label>
@@ -135,11 +146,10 @@
                 url: url,
                 data: form.serialize(),
                 success: function(res) {
-                    Swal.fire({ 
-                        icon: res.status, 
-                        title: res.status.toUpperCase(), 
-                        text: res.message, 
-                        timer: 2000 
+                    Swal.fire({
+                        icon: res.status,
+                        title: res.status.toUpperCase(),
+                        text: res.message,
                     }).then(() => { location.reload(); });
                 }
             });

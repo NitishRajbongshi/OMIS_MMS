@@ -1,0 +1,136 @@
+@extends('layouts.app')
+
+@section('content')
+
+<style>
+    /* Keep the column widths set in <th> */
+    #inspectionTable {
+        table-layout: fixed;
+    }
+
+    #inspectionTable td {
+        vertical-align: top;
+    }
+
+    /* Wrap long text inside the column */
+    #inspectionTable td.wrap-text {
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    /* Sub table is hidden until the button is clicked */
+    .sub-content {
+        display: none;
+        margin-top: 8px;
+        max-height: 250px;      /* scroll inside the cell if there are many inspections */
+        overflow-y: auto;
+    }
+
+    .sub-table th,
+    .sub-table td {
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+
+    /* Small arrow on the button that turns when expanded */
+    .toggle-btn .arrow {
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+    .toggle-btn.open .arrow {
+        transform: rotate(90deg);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <h4 class="mb-3">Inspections</h4>
+
+    <table id="inspectionTable" class="table table-bordered bg-white" style="width:100%">
+        <thead class="table-dark">
+            <tr>
+                <th style="width:15%">Asset Type</th>
+                <th style="width:15%">Asset ID</th>
+                <th style="width:25%">Road Name</th>
+                <th style="width:45%">Inspection</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        @foreach ($assets as $key => $rows)
+            @php
+                $asset = $rows->first();
+            @endphp
+
+            <tr>
+                <td class="wrap-text">{{ $asset->sub_assets_descr }}</td>
+                <td class="wrap-text">{{ $asset->insp_asset_id }}</td>
+                <td class="wrap-text">{{ $asset->insp_asset_location }}</td>
+
+                <td>
+                    {{-- Click this button to expand / collapse --}}
+                    <button type="button" class="btn btn-sm btn-primary toggle-btn">
+                        <span class="arrow">&#9654;</span>
+                        Inspections ({{ $rows->count() }})
+                    </button>
+
+                    {{-- Sub table (hidden by default) --}}
+                    <div class="sub-content">
+                        <table class="table table-sm table-bordered mb-0 sub-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Inspection ID</th>
+                                    <th>Inspection Date</th>
+                                    <th style="width:140px">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($rows as $insp)
+                                    <tr>
+                                        <td>{{ $insp->insp_cd }}</td>
+                                        <td>
+                                            {{ $insp->insp_date ? \Carbon\Carbon::parse($insp->insp_date)->format('d-m-Y') : '-' }}
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('mmis.inspection.show', $insp->id) }}"
+                                               class="btn btn-sm btn-outline-success py-0">
+                                                View all details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        @endforeach
+
+        </tbody>
+    </table>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function () {
+
+        // Start DataTable
+        $('#inspectionTable').DataTable({
+            pageLength: 10,
+            autoWidth: false,
+            columnDefs: [
+                { orderable: false, targets: 3 }
+            ]
+        });
+
+        // Expand / collapse the sub table inside the same cell
+        // (attached to the table so it keeps working after paging and searching)
+        $('#inspectionTable tbody').on('click', '.toggle-btn', function () {
+            $(this).toggleClass('open');
+            $(this).siblings('.sub-content').slideToggle(200);
+        });
+
+    });
+</script>
+@endpush

@@ -19,16 +19,28 @@ class HabitationSubFacilityController extends Controller
         $facilities = DB::table('public.asset_master_habitation_facilities')
             ->where('is_published', 'Y')
             ->get();
-        
+
         return view('master.road.habitationSubFacilities', compact('subFacilities', 'facilities'));
     }
 
     public function store(Request $request)
     {
         try {
+            $facilityWeightage = DB::table('public.asset_master_habitation_facilities')
+            ->where('id', $request->facility_id)
+            ->value('weightage');
+
+            if ($request->weightage > $facilityWeightage) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'Sub-facility weightage cannot be greater than parent facility weightage (' . $facilityWeightage . ').'
+                ]);
+            }
+
             DB::table('public.asset_master_habitation_sub_facilities')->insert([
                 'sub_facility_name' => $request->sub_facility_name,
                 'facility_id' => $request->facility_id,
+                'weightage' => $request->weightage,
                 'is_published' => $request->is_published,
                 'created_at' => Carbon::now()
             ]);
@@ -41,11 +53,28 @@ class HabitationSubFacilityController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            $facility = DB::table('public.asset_master_habitation_facilities')
+            ->where('id', $request->facility_id)
+            ->first(['facility_name', 'weightage']);
+
+
+            $facilityWeightage = $facility->weightage;
+
+            if ($request->weightage > $facilityWeightage) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'Sub-facility weightage cannot be greater than parent facility "'
+                    . $facility->facility_name
+                    . '" weightage (' . $facilityWeightage . ').'
+                ]);
+            }
+
             DB::table('public.asset_master_habitation_sub_facilities')
                 ->where('id', $request->id)
                 ->update([
                     'sub_facility_name' => $request->sub_facility_name,
                     'facility_id' => $request->facility_id,
+                    'weightage' => $request->weightage,
                     'is_published' => $request->is_published,
                     'updated_at' => Carbon::now()
                 ]);

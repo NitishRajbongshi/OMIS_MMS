@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\maintenance;
+namespace App\Http\Controllers\Api\V1\Maintenance;
 
 use App\Http\Controllers\Controller;
 use App\Models\Maintenance\Inspection\MtnInspectionDetail;

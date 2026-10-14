@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers\MMIS;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+
+class InspectionController extends Controller
+{
+    public function index()
+    {
+        $inspections = DB::table('maintenance.mtn_inspection_details as i')
+
+            // Sub asset name (Road, Bridge, CD Work, Protection Wall...)
+            ->leftJoin('public.asset_master_road_sub_assets as a', 'a.sub_asset_cd', '=', 'i.insp_asset_type')
+
+            // Step 1: join the sub asset tables (both sides cast to text)
+            ->leftJoin('asset_road_bridge_details as arbd', function ($join) {
+                $join->whereRaw('arbd.rd_bridge_cd::text = i.insp_asset_id::text');
+            })
+            ->leftJoin('asset_road_cdwork_details as arcd', function ($join) {
+                $join->whereRaw('arcd.rd_cdwork_cd::text = i.insp_asset_id::text');
+            })
+            ->leftJoin('asset_protection_wall_details as apwd', function ($join) {
+                $join->whereRaw('apwd.protection_wall_cd::text = i.insp_asset_id::text');
+            })
+
+            // Step 2: join the road table using the road id of whichever asset matched
+            // (for a road inspection, insp_asset_id is already the road id)
+            ->leftJoin('asset_road_details as ard', function ($join) {
+                $join->whereRaw(
+                    'ard.rd_system_id::text = COALESCE(arbd.rd_system_id::text, arcd.rd_system_id::text, apwd.rd_system_id::text, i.insp_asset_id::text)'
+                );
+            })
+
+            ->select(
+                'i.id',
+                'i.insp_cd',
+                'i.insp_date',
+                'i.insp_asset_type',
+                'i.insp_asset_id',
+                'ard.rd_name as insp_asset_location', // road name for every asset type
+                'a.sub_assets_descr'
+            )
+            ->orderBy('i.insp_date', 'desc')
+            ->get();
+
+        // Group inspections by asset (type + id)
+        $assets = $inspections->groupBy(function ($row) {
+            return $row->insp_asset_type . '|' . $row->insp_asset_id;
+        });
+
+        return view('mmis.inspection.index', compact('assets'));
+    }
+
+    public function show($id)
+    {
+        // 1. Inspection details with the master table names
+        //    NOTE: the "..._descr" columns are my guess. Change them to your real column names.
+        $inspection = DB::table('maintenance.mtn_inspection_details as i')
+            ->leftJoin('maintenance.master_mtn_inspection_types as it', 'it.inspection_type_cd', '=', 'i.insp_type_cd')
+            ->leftJoin('public.asset_master_road_sub_assets as a', 'a.sub_asset_cd', '=', 'i.insp_asset_type')
+            ->leftJoin('maintenance.master_mtn_conditions as c_overall', 'c_overall.condition_type_cd', '=', 'i.cndtn_overall')
+            ->leftJoin('maintenance.master_mtn_conditions as c_pavement', 'c_pavement.condition_type_cd', '=', 'i.cndtn_pavement')
+            ->leftJoin('maintenance.master_mtn_conditions as c_drainage', 'c_drainage.condition_type_cd', '=', 'i.cndtn_drainage')
+            ->leftJoin('maintenance.master_mtn_conditions as c_shoulder', 'c_shoulder.condition_type_cd', '=', 'i.cndtn_shoulder')
+            ->leftJoin('maintenance.master_mtn_conditions as c_structural', 'c_structural.condition_type_cd', '=', 'i.cndtn_structural')
+            ->leftJoin('maintenance.master_mtn_conditions as c_safety', 'c_safety.condition_type_cd', '=', 'i.cndtn_safety_features')
+            ->leftJoin('maintenance.master_mtn_conditions as c_signage', 'c_signage.condition_type_cd', '=', 'i.cndtn_signage')
+            ->leftJoin('maintenance.master_mtn_conditions as c_priority', 'c_priority.condition_type_cd', '=', 'i.recmnd_priority')
+            ->leftJoin('maintenance.master_mtn_recm_actions as ra', 'ra.action_type_cd', '=', 'i.recmnd_action_type_cd')
+            ->leftJoin('maintenance.master_mtn_risk_types as rt', 'rt.risk_type_cd', '=', 'i.risk_type_cd')
+ 
+            // Road name (road inspection only, so insp_asset_id is the road id)
+            ->leftJoin('asset_road_details as ard', function ($join) {
+                $join->whereRaw('ard.rd_system_id::text = i.insp_asset_id::text');
+            })
+ 
+            ->where('i.id', $id)
+            ->select(
+                'i.*',
+                'it.inspection_type_descr as insp_type',          // <-- change column name if needed
+                'a.sub_assets_descr as asset_type',
+                'ard.rd_name as road_name',
+                'c_overall.condition_type_descr as overall_condition',      // <-- change column name if needed
+                'c_pavement.condition_type_descr as pavement_condition',
+                'c_drainage.condition_type_descr as drainage_condition',
+                'c_shoulder.condition_type_descr as shoulder_condition',
+                'c_structural.condition_type_descr as structural_condition',
+                'c_safety.condition_type_descr as safety_condition',
+                'c_signage.condition_type_descr as signage_condition',
+                'c_priority.condition_type_descr as priority_name',
+                'ra.action_type_descr as action_name',             // <-- change column name if needed
+                'rt.risk_type_descr as risk_name'                  // <-- change column name if needed
+            )
+            ->first();
+ 
+        // If the inspection id does not exist
+        if (!$inspection) {
+            abort(404);
+        }
+ 
+        // 2. Observations of this inspection
+        $observations = DB::table('maintenance.mtn_insp_observation_details as o')
+            ->leftJoin('maintenance.master_mtn_item_activities as act', 'act.activity_cd', '=', 'o.activity_cd')
+            ->leftJoin('maintenance.master_mtn_grading_details as g', 'g.grading_cd', '=', 'o.grading_cd')
+            ->where('o.insp_id', $id)
+            ->select(
+                'o.id',
+                'o.obsrv_desc',
+                'o.obsrv_weightage',
+                'act.activity_descr as activity_name',   // <-- change column name if needed
+                'g.grading_descr as grading_name'        // <-- change column name if needed
+            )
+            ->orderBy('o.id')
+            ->get();
+ 
+        // 3. PCI details (only if this inspection has a pci section)
+        $pci = null;
+        if ($inspection->pci_section_cd) {
+            $pci = DB::table('public.asset_road_pavement_condition_indexes')
+                ->where('pci_section_cd', $inspection->pci_section_cd)
+                ->first();
+        }
+ 
+        return view('mmis.inspection.show', compact('inspection', 'observations', 'pci'));
+    }
+}
