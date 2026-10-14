@@ -34,9 +34,9 @@ use Illuminate\Support\Str;
 use App\Models\AssetMasterRoadCategory;
 use App\Models\AssetMasterRdType;
 use App\Models\AssetMasterRoadOwner;
-use App\Models\Building\Master\AssetMasterBuildingType;
+use App\Models\Building\Master\AssetMasterBuildingType;													   
 use App\Models\Road\AssetRoadDocumentKmlFileDetails;
-use App\Models\Road\Master\AssetMasterDeptOfState;
+use App\Models\Road\Master\AssetMasterDeptOfState;												  
 
 class ProjectManagementController extends Controller
 {
@@ -219,53 +219,18 @@ class ProjectManagementController extends Controller
     private function handleDocument($request, $randomCode, $project_cd)
     {
         try {
-            $configPath = config('customconfigpath.PMS_DOCS_PATH');
-            $configImagePath = config('customconfigpath.PMS_ASSET_IMAGES_PATH');
-            $rootPath = config('filesystems.disks.external.root');
+        $configPath = config('customconfigpath.PMS_DOCS_PATH');
+        $configImagePath = config('customconfigpath.PMS_ASSET_IMAGES_PATH');
+        $rootPath = config('filesystems.disks.external.root');
 
-            if ($request->hasFile('images')) {
-                $images = $request->file('images');
-                foreach ($images as $image) {
-                    $randomNumber = mt_rand(100, 999);
-                    // get image extension
-                    $extension = $image->getClientOriginalExtension();
-                    $uniqueFileName = 'pms_' . $randomCode . '_' . $randomNumber . '.' . $extension;
-                    $folderPath = $configImagePath . now()->year;
-
-                    // Use the 'external' disk to store the file
-                    if (!Storage::disk('external')->exists($folderPath)) {
-                        Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
-                    }
-
-                    // Store the file using the 'external' disk
-                    $filePath = $image->storeAs($folderPath, $uniqueFileName, 'external');
-                    // Combine the root path and folder path to get the complete file path
-                    $completeFilePath = $rootPath . '/' . $filePath;
-
-                    PrtProjectImageDetail::create([
-                        'project_cd' => $project_cd,
-                        'image_path' => $completeFilePath,
-                        'file_type' => $extension,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                        'created_by' => auth()->id(),
-                        'updated_by' => auth()->id()
-                    ]);
-                }
-            }
-
-            // Code for Sanction Order
-            // Do not change hasFile() value
-            if ($request->hasFile('workOrder')) {
-                $file = $request->file('workOrder'); // for Sanction Order
-
-                // Get document category code for 'Sanction Order' using like operator
-                $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                    ->where('doc_catg_descr', 'like', '%Sanction Order%')->get()->first();
-
-                $extension = $file->getClientOriginalExtension();
-                $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_1.pdf';
-                $folderPath = $configPath . now()->year;
+        if ($request->hasFile('images')) {
+            $images = $request->file('images');
+            foreach ($images as $image) {
+                $randomNumber = mt_rand(100, 999);
+                // get image extension
+                $extension = $image->getClientOriginalExtension();
+                $uniqueFileName = 'pms_' . $randomCode . '_' . $randomNumber . '.' . $extension;
+                $folderPath = $configImagePath . now()->year;
 
                 // Use the 'external' disk to store the file
                 if (!Storage::disk('external')->exists($folderPath)) {
@@ -273,111 +238,146 @@ class ProjectManagementController extends Controller
                 }
 
                 // Store the file using the 'external' disk
-                $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+                $filePath = $image->storeAs($folderPath, $uniqueFileName, 'external');
                 // Combine the root path and folder path to get the complete file path
                 $completeFilePath = $rootPath . '/' . $filePath;
 
-                PrtProjectDocumentDetail::create([
+                PrtProjectImageDetail::create([
                     'project_cd' => $project_cd,
-                    'file_path' => $completeFilePath,
+                    'image_path' => $completeFilePath,
                     'file_type' => $extension,
-                    'doc_catg' => $docCatg['doc_catg_cd'],
                     'created_at' => now(),
                     'updated_at' => now(),
                     'created_by' => auth()->id(),
                     'updated_by' => auth()->id()
                 ]);
             }
+        }
 
-            if ($request->hasFile('projectPlan')) {
-                $file = $request->file('projectPlan');
-                $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                    ->where('doc_catg_descr', 'like', '%Work Order%')->get()->first();
-                $extension = $file->getClientOriginalExtension();
-                $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_2.pdf';
-                $folderPath = $configPath . now()->year;
+        // Code for Sanction Order
+        // Do not change hasFile() value
+        if ($request->hasFile('workOrder')) {
+            $file = $request->file('workOrder'); // for Sanction Order
 
-                // Use the 'external' disk to store the file
-                if (!Storage::disk('external')->exists($folderPath)) {
-                    Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
-                }
+            // Get document category code for 'Sanction Order' using like operator
+            $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
+                ->where('doc_catg_descr', 'like', '%Sanction Order%')->get()->first();
 
-                // Store the file using the 'external' disk
-                $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
-                // Combine the root path and folder path to get the complete file path
-                $completeFilePath = $rootPath . '/' . $filePath;
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_1.pdf';
+            $folderPath = $configPath . now()->year;
 
-                PrtProjectDocumentDetail::create([
-                    'project_cd' => $project_cd,
-                    'file_path' => $completeFilePath,
-                    'file_type' => $extension,
-                    'doc_catg' => $docCatg['doc_catg_cd'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'created_by' => auth()->id(),
-                    'updated_by' => auth()->id()
-                ]);
+            // Use the 'external' disk to store the file
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
             }
 
-            if ($request->hasFile('drpDocument')) {
-                $file = $request->file('drpDocument');
-                $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                    ->where('doc_catg_descr', 'like', '%Work Plan%')->get()->first();
-                $extension = $file->getClientOriginalExtension();
-                $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_4.pdf';
-                $folderPath = $configPath . now()->year;
+            // Store the file using the 'external' disk
+            $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+            // Combine the root path and folder path to get the complete file path
+            $completeFilePath = $rootPath . '/' . $filePath;
 
-                // Use the 'external' disk to store the file
-                if (!Storage::disk('external')->exists($folderPath)) {
-                    Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
-                }
+            PrtProjectDocumentDetail::create([
+                'project_cd' => $project_cd,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'doc_catg' => $docCatg['doc_catg_cd'],
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
 
-                // Store the file using the 'external' disk
-                $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
-                // Combine the root path and folder path to get the complete file path
-                $completeFilePath = $rootPath . '/' . $filePath;
+        if ($request->hasFile('projectPlan')) {
+            $file = $request->file('projectPlan');
+            $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
+                ->where('doc_catg_descr', 'like', '%Work Order%')->get()->first();
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_2.pdf';
+            $folderPath = $configPath . now()->year;
 
-                PrtProjectDocumentDetail::create([
-                    'project_cd' => $project_cd,
-                    'file_path' => $completeFilePath,
-                    'file_type' => $extension,
-                    'doc_catg' => $docCatg['doc_catg_cd'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'created_by' => auth()->id(),
-                    'updated_by' => auth()->id()
-                ]);
+            // Use the 'external' disk to store the file
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
             }
 
-            if ($request->hasFile('designDoc')) {
-                $file = $request->file('designDoc');
-                $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                    ->where('doc_catg_descr', 'like', '%Project Agreement%')->get()->first();
-                $extension = $file->getClientOriginalExtension();
-                $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_3.pdf';
-                $folderPath = $configPath . now()->year;
+            // Store the file using the 'external' disk
+            $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+            // Combine the root path and folder path to get the complete file path
+            $completeFilePath = $rootPath . '/' . $filePath;
 
-                // Use the 'external' disk to store the file
-                if (!Storage::disk('external')->exists($folderPath)) {
-                    Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
-                }
+            PrtProjectDocumentDetail::create([
+                'project_cd' => $project_cd,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'doc_catg' => $docCatg['doc_catg_cd'],
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
 
-                // Store the file using the 'external' disk
-                $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
-                // Combine the root path and folder path to get the complete file path
-                $completeFilePath = $rootPath . '/' . $filePath;
+        if ($request->hasFile('drpDocument')) {
+            $file = $request->file('drpDocument');
+            $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
+                ->where('doc_catg_descr', 'like', '%Work Plan%')->get()->first();
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_4.pdf';
+            $folderPath = $configPath . now()->year;
 
-                PrtProjectDocumentDetail::create([
-                    'project_cd' => $project_cd,
-                    'file_path' => $completeFilePath,
-                    'file_type' => $extension,
-                    'doc_catg' => $docCatg['doc_catg_cd'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'created_by' => auth()->id(),
-                    'updated_by' => auth()->id()
-                ]);
+            // Use the 'external' disk to store the file
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
             }
+
+            // Store the file using the 'external' disk
+            $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+            // Combine the root path and folder path to get the complete file path
+            $completeFilePath = $rootPath . '/' . $filePath;
+
+            PrtProjectDocumentDetail::create([
+                'project_cd' => $project_cd,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'doc_catg' => $docCatg['doc_catg_cd'],
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
+
+        if ($request->hasFile('designDoc')) {
+            $file = $request->file('designDoc');
+            $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
+                ->where('doc_catg_descr', 'like', '%Project Agreement%')->get()->first();
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_3.pdf';
+            $folderPath = $configPath . now()->year;
+
+            // Use the 'external' disk to store the file
+            if (!Storage::disk('external')->exists($folderPath)) {
+                Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
+            }
+
+            // Store the file using the 'external' disk
+            $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
+            // Combine the root path and folder path to get the complete file path
+            $completeFilePath = $rootPath . '/' . $filePath;
+
+            PrtProjectDocumentDetail::create([
+                'project_cd' => $project_cd,
+                'file_path' => $completeFilePath,
+                'file_type' => $extension,
+                'doc_catg' => $docCatg['doc_catg_cd'],
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id()
+            ]);
+        }
         } catch (Throwable $e) {
             Log::error('Error while handling project documents', [
                 'project_cd' => $project_cd,
@@ -473,16 +473,10 @@ class ProjectManagementController extends Controller
         if ($officeType === 'DO' || $officeType === 'SDO') {
             $div = DB::table('asset_master_divisions')->where('division_cd', '=', $division_cd)->get();
         } else if ($officeType === 'ZO') {
-            $zone_cd = DB::table('asset_user_mappings')
-                ->where('user_id', $user->id)
-                ->value('zone_cd');
-
-            $div = DB::table('asset_master_divisions')
-                ->where('zone_cd', $zone_cd)
-                ->get();
+            $zone_cd = DB::table('asset_user_mappings')->where('user_id', $user->id)->value('zone_cd');
+            $div = DB::table('asset_master_divisions')->where('zone_cd', $zone_cd)->get();
         } else if ($officeType === 'HQ' || $officeType === 'ECO' || $officeType === 'ADM') {
-            $div = DB::table('asset_master_divisions')
-                ->get();
+            $div = DB::table('asset_master_divisions')->get();
         } else if ($officeType === 'CO') {
             $div = DB::table('asset_master_divisions')->where('circle_cd', '=', $circle_cd)->get();
         }
@@ -491,7 +485,7 @@ class ProjectManagementController extends Controller
         $projectTypes = PrmProjectType::all();
         $constructors = PrtContractorDetail::all();
         $technologies = DB::table('projects.prm_project_technology_types')->get(); // Nitish
-        $departmentDetails = AssetMasterDeptOfState::all();
+		$departmentDetails = AssetMasterDeptOfState::all();												   
 
         $types = ['NEW', 'UPG', 'MTN'];
         $projects = DB::table('projects.prt_project_details_draft as project_details')
@@ -532,54 +526,14 @@ class ProjectManagementController extends Controller
                 'contractor.contractors_name as contractor_name',
                 'scheme.scheme_name'
             ])
-            ->leftJoin(
-                'projects.prm_project_types as project_type',
-                'project_details.project_type_cd',
-                '=',
-                'project_type.proj_type_cd'
-            )
-            ->leftJoin(
-                'public.department_details as owner_dept',
-                'project_details.owner_dept_cd',
-                '=',
-                'owner_dept.id'
-            )
-            ->leftJoin(
-                'public.asset_master_divisions as division',
-                'project_details.division_cd',
-                '=',
-                'division.division_cd'
-            )
-            ->leftJoin(
-                'public.asset_master_sub_divisions as sub_division',
-                'project_details.sub_division_cd',
-                '=',
-                'sub_division.sub_div_cd'
-            )
-            ->leftJoin(
-                'projects.prm_project_status as project_status',
-                'project_details.project_status_cd',
-                '=',
-                'project_status.project_status_cd'
-            )
-            ->leftJoin(
-                'projects.prm_site_incharge_office_details as site_incharge',
-                'project_details.site_incharge_office_cd',
-                '=',
-                'site_incharge.office_cd'
-            )
-            ->leftJoin(
-                'projects.prt_contractor_details as contractor',
-                'project_details.project_awarded_to',
-                '=',
-                'contractor.regn_no'
-            )
-            ->leftJoin(
-                'projects.prm_scheme_details as scheme',
-                'project_details.scheme_cd',
-                '=',
-                'scheme.scheme_id'
-            )
+            ->leftJoin('projects.prm_project_types as project_type','project_details.project_type_cd','=','project_type.proj_type_cd')
+            ->leftJoin('public.department_details as owner_dept','project_details.owner_dept_cd','=','owner_dept.id')
+            ->leftJoin('public.asset_master_divisions as division','project_details.division_cd','=','division.division_cd')
+            ->leftJoin('public.asset_master_sub_divisions as sub_division','project_details.sub_division_cd','=','sub_division.sub_div_cd')
+            ->leftJoin('projects.prm_project_status as project_status','project_details.project_status_cd','=','project_status.project_status_cd')
+            ->leftJoin('projects.prm_site_incharge_office_details as site_incharge','project_details.site_incharge_office_cd','=','site_incharge.office_cd')
+            ->leftJoin('projects.prt_contractor_details as contractor','project_details.project_awarded_to','=','contractor.regn_no')
+            ->leftJoin('projects.prm_scheme_details as scheme','project_details.scheme_cd','=','scheme.scheme_id')
             ->where('sent_for_finalize', '=', 'N')
             ->where('owner_dept_cd', '=', $user->department)
             ->whereIn('project_type_cd', $types)
@@ -611,14 +565,9 @@ class ProjectManagementController extends Controller
         $workSubItems = DB::table('projects.prm_item_sub_item_of_work')->get();
 
         // check if the work item exist or not
-        $workItems_exist = DB::table('projects.prt_project_work_items_details')
-            ->distinct('project_cd')
-            ->pluck('project_cd')
-            ->toArray();
-
+        $workItems_exist = DB::table('projects.prt_project_work_items_details')->distinct('project_cd')->pluck('project_cd')->toArray();
         $hasMaintenanceAssets = false;
         $hasUpgradationAssets = false;
-
         foreach ($draftProjects as $draft) {
             if (!$draft->others)
                 continue;
@@ -763,7 +712,7 @@ class ProjectManagementController extends Controller
             'workSubItems',
             'workItems_exist',
             'contractorCategories',
-            'departmentDetails'
+			'departmentDetails'				   
         ));
     }
 
@@ -1156,10 +1105,10 @@ class ProjectManagementController extends Controller
             $amount = ($workOrderAmount * $schemeFunding->funding_percentage) / 100;
             DB::connection(self::DB_CONNECTION)
                 ->table("projects.prt_project_scheme_funding_mapping")->insert([
-                    'project_cd' => $projectCd,
-                    'scheme_funding_id' => $schemeFunding->id,
-                    'amount' => $amount,
-                ]);
+                        'project_cd' => $projectCd,
+                        'scheme_funding_id' => $schemeFunding->id,
+                        'amount' => $amount,
+                    ]);
         }
     }
     // new store method after client review
@@ -1184,7 +1133,7 @@ class ProjectManagementController extends Controller
                 'project_type' => $request->projectTypeSelect,
                 'validation_errors' => $validator->errors()->toArray(),
                 'uploaded_images' => collect($request->file('images', []))
-                    ->map(fn($image) => [
+                    ->map(fn ($image) => [
                         'name' => $image->getClientOriginalName(),
                         'mime_type' => $image->getMimeType(),
                         'size_kb' => round($image->getSize() / 1024, 2),
@@ -1254,10 +1203,6 @@ class ProjectManagementController extends Controller
                     'project_type' => $request->projectTypeSelect,
                     'tech_type_cd' => $request->tech_type_cd ?? 'null',
                     'tech_type_descr' => $technologyType,
-
-                    // new technology info
-                    'plastic_waste' => $request->plastic_waste ?? 'N',
-                    'mixing_type' => $request->mixing_type ?? 'null',
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -1625,12 +1570,12 @@ class ProjectManagementController extends Controller
                 $buildingLocation = AssetMasterBuildingLocation::select('location_name')
                     ->where('location_cd', $request->building_location_cd)
                     ->first();
-                $buildingType = AssetMasterBuildingType::select('building_type_descr')
+				$buildingType = AssetMasterBuildingType::select('building_type_descr')
                     ->where('building_type_cd', $request->building_type_cd)
                     ->first();
                 $buildingOwner = AssetMasterDeptOfState::select('dept_name')
                     ->where('id', $request->owning_dept)
-                    ->first();
+                    ->first();			  
 
                 $newBuildingId = 'BLD_' . time() . '_' . rand(1000, 9999);
                 $others = json_decode($data['others'], true);
@@ -1642,12 +1587,12 @@ class ProjectManagementController extends Controller
                 $others['new_building_class_name'] = $buildingClass->building_class_descr;
                 $others['new_building_location_cd'] = $request->building_location_cd;
                 $others['new_building_location_name'] = $buildingLocation->location_name;
-                $others['qtr_no'] = $request->quarter_no;
+				$others['qtr_no'] = $request->quarter_no;
                 $others['bld_qtr_name'] = $request->building_name;
                 $others['building_type_cd'] = $request->building_type_cd;
                 $others['building_type_name'] = $buildingType->building_type_descr;
                 $others['asset_owning_dept_cd'] = $request->owning_dept;
-                $others['owning_dept_name'] = $buildingOwner->dept_name;
+                $others['owning_dept_name'] = $buildingOwner->dept_name;														
                 $data['others'] = json_encode($others);
             }
 
@@ -1762,7 +1707,7 @@ class ProjectManagementController extends Controller
                             ->update([
                                 'lat' => $json_data->center_lat,
                                 'lng' => $json_data->center_lng
-                            ]); // this query never get executed as road id does not exist in draft table
+                            ]);// this query never get executed as road id does not exist in draft table
                     }
                 }
                 //Saiful -- End -- After ulpoad the kml File, convert that file into geojson -- End
@@ -2289,7 +2234,7 @@ class ProjectManagementController extends Controller
                         ->update([
                             'lat' => $json_data->center_lat,
                             'lng' => $json_data->center_lng
-                        ]); // this query never get executed as road id does not exist in draft table
+                        ]);// this query never get executed as road id does not exist in draft table
                 }
                 //Saiful -- End -- After ulpoad the kml File, convert that file into geojson -- End
             }
@@ -2804,7 +2749,7 @@ class ProjectManagementController extends Controller
                             ->value('location_name');
                     }
                 }
-            } else if ($department === 15) {
+            }else if ($department === 15) {
                 if (($others['project_type'] ?? null) === 'UPG' || ($others['project_type'] ?? null) === 'MTN') {
 
                     $assetData = [];
@@ -2910,7 +2855,7 @@ class ProjectManagementController extends Controller
             //end by dipshikha
 
             if ($project)
-                return view('pms.view', compact('project', 'items', 'assetLists', 'fundingAgencies', 'images', 'documents', 'roadCategoryName', 'roadTypeName', 'roadOwnerName', 'building', 'vehicleDetails', 'equipmentDetails'));
+                return view('pms.view', compact('project', 'items', 'assetLists', 'fundingAgencies', 'images', 'documents', 'roadCategoryName', 'roadTypeName', 'roadOwnerName', 'building', 'vehicleDetails','equipmentDetails'));
         }
     }
 

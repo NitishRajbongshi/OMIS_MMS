@@ -1,0 +1,597 @@
+<?php
+
+namespace App\Http\Controllers\MMIS;
+
+use App\Http\Controllers\Controller;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class InspectionController extends Controller
+{
+    /**
+     * Base query for inspection details, joined with every master table
+     * needed to produce the same descriptive labels the external API used
+     * to return (insp_type, asset_type, overall_condition, risk_type, etc.)
+     * Reused by byAsset() and loadInspectionData() - NOT by index(), which
+     * uses a lighter, windowed query (see indexRankedQuery()) since it
+     * only needs a handful of columns per row and must stay fast even
+     * with thousands of inspections.
+     */
+    private function baseInspectionQuery()
+    {
+        return DB::table('maintenance.mtn_inspection_details as mid')
+            ->leftJoin('maintenance.master_mtn_inspection_types as mit', 'mid.insp_type_cd', '=', 'mit.inspection_type_cd')
+            ->leftJoin('public.asset_master_road_sub_assets as sa', 'mid.insp_asset_type', '=', 'sa.sub_asset_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_overall', 'mid.cndtn_overall', '=', 'c_overall.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_pavement', 'mid.cndtn_pavement', '=', 'c_pavement.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_drainage', 'mid.cndtn_drainage', '=', 'c_drainage.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_shoulder', 'mid.cndtn_shoulder', '=', 'c_shoulder.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_structural', 'mid.cndtn_structural', '=', 'c_structural.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_safety', 'mid.cndtn_safety_features', '=', 'c_safety.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_signage', 'mid.cndtn_signage', '=', 'c_signage.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_conditions as c_priority', 'mid.recmnd_priority', '=', 'c_priority.condition_type_cd')
+            ->leftJoin('maintenance.master_mtn_risk_types as rt', 'mid.risk_type_cd', '=', 'rt.risk_type_cd')
+            ->leftJoin('maintenance.master_mtn_recm_actions as ra', 'mid.recmnd_action_type_cd', '=', 'ra.action_type_cd')
+            ->select([
+                'mid.*',
+                'mit.inspection_type_descr as insp_type',
+                'sa.sub_assets_descr as asset_type',
+                'c_overall.condition_type_descr as overall_condition',
+                'c_pavement.condition_type_descr as pavement_condition',
+                'c_drainage.condition_type_descr as drainage_condition',
+                'c_shoulder.condition_type_descr as shoulder_condition',
+                'c_structural.condition_type_descr as structural_condition',
+                'c_safety.condition_type_descr as safety_condition',
+                'c_signage.condition_type_descr as signage_condition',
+                'c_priority.condition_type_descr as recm_priority',
+                'rt.risk_type_descr as risk_type',
+                'ra.action_type_descr as recm_action_type',
+            ]);
+    }
+
+    /**
+     * Optionally restrict inspections to the logged-in user's division,
+     * by joining through the road master table (insp_asset_id = rd_system_id).
+     * Mirrors the same division-scoping pattern used elsewhere (e.g.
+     * AssetCriticalityController::getRoadOptions()). Falls back to no
+     * filtering if the user has no division mapped.
+     *
+     * NOTE: $query must already have 'mid' as the alias for
+     * maintenance.mtn_inspection_details (true for both baseInspectionQuery()
+     * and indexRankedQuery()).
+     */
+    private function scopeToUserDivision($query)
+    {
+        $divisionCd = Auth::user()->assetUserMapping->division_cd ?? null;
+
+        if (!$divisionCd) {
+            return $query;
+        }
+
+        return $query
+            ->join('public.asset_road_details as ard', 'mid.insp_asset_id', '=', 'ard.rd_system_id')
+            ->where('ard.division_cd', $divisionCd);
+    }
+
+    /**
+     * Lightweight, windowed query used only by index(). Instead of pulling
+     * every inspection for every asset (which is what made the index page
+     * slow once there were thousands of records - the extra rows were
+     * being fetched and hidden with CSS/d-none rather than never fetched
+     * at all), this asks the database directly for:
+     *   - the 3 most recent inspections per asset (rn <= 3, filtered by
+     *     the caller), and
+     *   - the true total inspection count per asset (total_count),
+     * using ROW_NUMBER()/COUNT() window functions partitioned by
+     * insp_asset_id. Only the columns the index page actually renders are
+     * selected - none of the heavy master-table joins from
+     * baseInspectionQuery() are needed here.
+     */
+    private function indexRankedQuery()
+    {
+        return DB::table('maintenance.mtn_inspection_details as mid')
+            ->leftJoin('public.asset_master_road_sub_assets as sa', 'mid.insp_asset_type', '=', 'sa.sub_asset_cd')
+            ->select([
+                'mid.id',
+                'mid.insp_asset_id',
+                'mid.insp_asset_location',
+                'mid.insp_date',
+                'mid.insp_cd',
+                'sa.sub_assets_descr as asset_type',
+            ])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY mid.insp_asset_id ORDER BY mid.insp_date DESC, mid.id DESC) as rn')
+            ->selectRaw('COUNT(*) OVER (PARTITION BY mid.insp_asset_id) as total_count');
+    }
+
+    /**
+     * Compute Inspection Criticality (0-100, higher = more urgent) directly
+     * from observation gradings, using S=0 / U=1 as the severity value per
+     * item. This replaces the old "100 - satisfaction score" inversion with
+     * a direct badness calculation - mathematically equivalent, but kept as
+     * its own method so the Maintenance Index formula doesn't depend on
+     * computeMaintenanceDecision()'s Stage-1 override logic (weight 4/5
+     * forcing Urgent/SRI), which is specific to the separate S/SRI/U
+     * grading and has no bearing on the Maintenance Index.
+     */
+    private function computeInspectionCriticality($observations): float
+    {
+        $totalWeight  = 0;
+        $badnessSum   = 0;
+
+        foreach ($observations as $o) {
+            $weight = (int) ($o->obsrv_weightage ?? 0);
+            $gradingValue = strtoupper($o->grading_cd ?? 'S') === 'U' ? 1 : 0;
+
+            $totalWeight += $weight;
+            $badnessSum  += $weight * $gradingValue;
+        }
+
+        return $totalWeight > 0
+            ? round(($badnessSum / $totalWeight) * 100, 2)
+            : 0;
+    }
+
+    /**
+     * Compute weighted overall grading and maintenance decision from
+     * field observations. Weightage (1-5) is assigned by the inspector
+     * per activity, same as the S/U grading.
+     *
+     * Weight 5 = critical/safety item -> a single 'U' forces Urgent.
+     * Weight 4 = high importance -> a single 'U' caps grading at SRI.
+     */
+    private function computeMaintenanceDecision($observations): object
+    {
+        $totalWeight     = 0;
+        $satisfiedWeight = 0;
+        $criticalItems   = []; // weight 5 graded U
+        $highItems       = []; // weight 4 graded U
+        $failedItems     = []; // any weight graded U
+
+        foreach ($observations as $o) {
+            $weight = (int) ($o->obsrv_weightage ?? 0);
+            $totalWeight += $weight;
+
+            if (strtoupper($o->grading_cd) === 'S') {
+                $satisfiedWeight += $weight;
+            } else {
+                $label = $o->activity_title ?? $o->activity_cd;
+                $failedItems[] = $label;
+
+                if ($weight === 5) {
+                    $criticalItems[] = $label;
+                } elseif ($weight === 4) {
+                    $highItems[] = $label;
+                }
+            }
+        }
+
+        $score = $totalWeight > 0
+            ? round(($satisfiedWeight / $totalWeight) * 100, 2)
+            : 0;
+
+        $reasons = [];
+
+        if (!empty($criticalItems)) {
+            $reasons[] = 'Critical (weight 5) item(s) failed: ' . implode(', ', $criticalItems)
+                . '. A single critical failure forces an Urgent decision regardless of overall score.';
+        }
+
+        if (!empty($highItems)) {
+            $reasons[] = 'High-importance (weight 4) item(s) failed: ' . implode(', ', $highItems)
+                . '. This caps the grading at SRI (Scheduled Maintenance) at minimum.';
+        }
+
+        if ($score < 70) {
+            $reasons[] = "Weighted satisfaction score is {$score}%, which is below the 70% threshold for Urgent.";
+        } elseif ($score < 90) {
+            $reasons[] = "Weighted satisfaction score is {$score}%, which falls in the 70-89% range for Scheduled Maintenance.";
+        } else {
+            $reasons[] = "Weighted satisfaction score is {$score}%, meeting the 90%+ threshold for Non-Scheduled Maintenance.";
+        }
+
+        if (empty($failedItems)) {
+            $reasons[] = 'No items were graded Unsatisfactory in this inspection.';
+        } elseif (empty($criticalItems) && empty($highItems)) {
+            $reasons[] = 'Failed item(s) were low weight (1-3), so they did not trigger an override: ' . implode(', ', $failedItems) . '.';
+        }
+
+        if ($criticalItems) {
+            $grading  = 'U';
+            $decision = 'Urgent';
+        } elseif ($score < 70) {
+            $grading  = 'U';
+            $decision = 'Urgent';
+        } elseif ($highItems || $score < 90) {
+            $grading  = 'SRI';
+            $decision = 'Scheduled Maintenance';
+        } else {
+            $grading  = 'S';
+            $decision = 'Non-Scheduled Maintenance';
+        }
+
+        return (object) [
+            'score'    => $score,
+            'grading'  => $grading,
+            'decision' => $decision,
+            'reasons'  => $reasons,
+        ];
+    }
+
+    /**
+     * Map a raw PCI value (e.g. 2.460) to its category (5/4/3/<3).
+     */
+    private function pciValueToCategory(float $value): string
+    {
+        return match (true) {
+            $value >= 5 => '5',
+            $value >= 4 => '4',
+            $value >= 3 => '3',
+            default     => '<3',
+        };
+    }
+
+    /**
+     * Convert a PCI category (5/4/3/<3) into a criticality score (0-100).
+     */
+    private function pciToCriticality(string $pci): int
+    {
+        return match ($pci) {
+            '5'   => 10,
+            '4'   => 35,
+            '3'   => 65,
+            '<3'  => 100,
+            default => 50,
+        };
+    }
+
+    /**
+     * Auto-compute the Maintenance Index for an inspection from just two
+     * parameters, equally weighted, no manual officer input required:
+     *   - PCI Criticality        (5/4/3/<3 category, mapped to 0-100)
+     *   - Inspection Criticality (from computeInspectionCriticality(),
+     *                             using S=0/U=1 x weight directly)
+     *
+     * Maintenance Index = (PCI Criticality x 0.5) + (Inspection Criticality x 0.5)
+     *
+     * Returns null values when PCI data isn't available for this inspection
+     * (pci_section_cd missing / no PCI record found).
+     */
+    private function computeMaintenanceIndex(?float $pciValue, float $inspectionCriticality): object
+    {
+        if ($pciValue === null) {
+            return (object) [
+                'index'                  => null,
+                'pci_criticality'        => null,
+                'inspection_criticality' => $inspectionCriticality,
+                'available'              => false,
+            ];
+        }
+
+        $pciCategory    = $this->pciValueToCategory($pciValue);
+        $pciCriticality = $this->pciToCriticality($pciCategory);
+
+        $index = round(($pciCriticality * 0.5) + ($inspectionCriticality * 0.5), 2);
+
+        return (object) [
+            'index'                  => $index,
+            'pci_criticality'        => $pciCriticality,
+            'inspection_criticality' => $inspectionCriticality,
+            'available'              => true,
+        ];
+    }
+
+    /**
+     * Fetch the Critical Index (1-10) directly from the road master table.
+     * This is a static/admin-defined value at the road level - independent
+     * of any inspection - shown alongside the auto-computed Maintenance
+     * Index, with no auto-combination of the two.
+     */
+    private function getRoadCriticalIndex(string $assetId): ?int
+    {
+        // $value = DB::table('public.asset_road_details')
+        //     ->where('rd_system_id', $assetId)
+        //     ->value('critical_index');
+        $value = null;
+
+        return $value !== null ? (int) $value : 5;
+    }
+
+    /**
+     * Given one inspection, determine whether it is the most recent
+     * inspection for that same asset AND same start/end section - queried
+     * directly rather than filtering an in-memory list, now that this is a
+     * real database. Only the latest one should be allowed to proceed to
+     * the Critical Index / Maintenance Assessment stage.
+     */
+    private function resolveLatestForSection(object $inspection): object
+    {
+        $sameSection = DB::table('maintenance.mtn_inspection_details')
+            ->select('id', 'insp_date')
+            ->where('insp_asset_id', $inspection->insp_asset_id)
+            ->where('start_section', $inspection->start_section)
+            ->where('end_section', $inspection->end_section)
+            ->orderByDesc('insp_date')
+            ->orderByDesc('id') // tiebreaker for same-date entries
+            ->get();
+
+        $latest = $sameSection->first();
+
+        return (object) [
+            'is_latest'         => $latest ? ((int) $latest->id === (int) $inspection->id) : true,
+            'latest_id'         => $latest->id ?? $inspection->id,
+            'latest_date'       => $latest->insp_date ?? $inspection->insp_date,
+            'total_for_section' => $sameSection->count(),
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Fetch and compute everything needed to render one inspection - used
+     * by both the on-screen detail page and the PDF export, so the two
+     * never drift apart or duplicate queries.
+     *
+     * Returns null if the inspection isn't found.
+     */
+    private function loadInspectionData(int $id): ?object
+    {
+        $inspection = $this->baseInspectionQuery()
+            ->where('mid.id', $id)
+            ->first();
+
+        if (!$inspection) {
+            return null;
+        }
+
+        $observations = DB::table('maintenance.mtn_insp_observation_details as od')
+            ->leftJoin('maintenance.master_mtn_item_activities as act', 'od.activity_cd', '=', 'act.activity_cd')
+            ->leftJoin('maintenance.master_mtn_grading_details as gr', 'od.grading_cd', '=', 'gr.grading_cd')
+            ->select([
+                'od.*',
+                'act.activity_title',
+                'act.activity_descr',
+                'gr.grading_descr',
+            ])
+            ->where('od.insp_id', $id)
+            ->get();
+
+        $maintenance = $this->computeMaintenanceDecision($observations);
+
+        // Fetch PCI (Pavement Condition Index) details, if this
+        // inspection has an associated PCI section code.
+        $pciDetails = null;
+        $pciValue   = null;
+
+        if (!empty($inspection->pci_section_cd)) {
+            $pciDetails = DB::table('public.asset_road_pavement_condition_indexes')
+                ->where('pci_section_cd', $inspection->pci_section_cd)
+                ->first();
+
+            if ($pciDetails && isset($pciDetails->pci_value)) {
+                $pciValue = (float) $pciDetails->pci_value;
+            }
+        }
+
+        // Auto-computed Maintenance Index - no officer input required.
+        // Inspection Criticality is computed directly from S=0/U=1 grading
+        // values x weight, independent of the Stage-1 S/SRI/U decision logic.
+        $inspectionCriticality = $this->computeInspectionCriticality($observations);
+        $maintenanceIndex = $this->computeMaintenanceIndex($pciValue, $inspectionCriticality);
+
+        // Critical Index (1-10), pulled directly from the road master
+        // table - static/admin-defined, shown alongside Maintenance Index
+        // with no auto-combination between the two.
+        $criticalIndex = $this->getRoadCriticalIndex($inspection->insp_asset_id);
+
+        $sectionStatus = $this->resolveLatestForSection($inspection);
+
+        return (object) [
+            'inspection'       => $inspection,
+            'observations'     => $observations,
+            'maintenance'      => $maintenance,
+            'pciDetails'       => $pciDetails,
+            'maintenanceIndex' => $maintenanceIndex,
+            'criticalIndex'    => $criticalIndex,
+            'sectionStatus'    => $sectionStatus,
+        ];
+    }
+
+    /**
+     * Display the list of all inspection details.
+     * GET /mmis/inspection
+     *
+     * Only the 3 most recent inspections per asset are loaded (plus each
+     * asset's true total count), via a windowed query - not fetched-then-
+     * hidden as before. With thousands of inspections this keeps the
+     * query, the PHP grouping, and the rendered DOM small regardless of
+     * how much data exists; "Show all N inspections" still routes to
+     * byAsset(), which loads the full list for just that one asset.
+     */
+    public function index(Request $request)
+    {
+        try {
+
+            $rankedQuery = $this->scopeToUserDivision($this->indexRankedQuery());
+
+            $rows = DB::query()
+                ->fromSub($rankedQuery, 'ranked')
+                ->where('rn', '<=', 3)
+                ->orderBy('insp_asset_id')
+                ->orderBy('rn')
+                ->get();
+
+            Log::info('InspectionController: inspection list fetched (latest 3 per asset).', [
+                'row_count' => $rows->count(),
+            ]);
+
+            // Grouping here only ever touches at most 3 rows per asset,
+            // so this stays cheap no matter how many inspections exist.
+            $asset_groups = $rows
+                ->groupBy('insp_asset_id')
+                ->map(function ($inspections, $assetId) {
+                    $first = $inspections->first();
+
+                    return (object) [
+                        'asset_id'       => $assetId,
+                        'asset_type'     => $first->asset_type ?? '',
+                        'asset_location' => $first->insp_asset_location ?? '',
+                        'inspections'    => $inspections->values(),
+                        'count'          => (int) ($first->total_count ?? $inspections->count()),
+                    ];
+                })
+                ->sortBy('asset_id')
+                ->values();
+
+            return view('mmis.inspection.index', compact('asset_groups'));
+
+        } catch (Exception $e) {
+
+            Log::error('InspectionController@index: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return view('error');
+        }
+    }
+
+    /**
+     * Display the full inspection list for a single asset.
+     * GET /mmis/inspection/asset/{assetId}
+     */
+    public function byAsset(Request $request, string $assetId)
+    {
+        try {
+
+            $inspections = $this->baseInspectionQuery()
+                ->where('mid.insp_asset_id', $assetId)
+                ->orderByDesc('mid.insp_date')
+                ->get();
+
+            if ($inspections->isEmpty()) {
+                return redirect()
+                    ->route('mmis.inspection.index')
+                    ->with('error', "No inspections found for asset {$assetId}.");
+            }
+
+            $asset_type     = $inspections->first()->asset_type ?? '';
+            $asset_location = $inspections->first()->insp_asset_location ?? '';
+
+            Log::info('InspectionController: asset inspection list fetched.', [
+                'asset_id' => $assetId,
+                'count'    => $inspections->count(),
+            ]);
+
+            return view('mmis.inspection.inspectionList', compact(
+                'assetId', 'asset_type', 'asset_location', 'inspections'
+            ));
+
+        } catch (Exception $e) {
+
+            Log::error('InspectionController@byAsset: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->route('mmis.inspection.index')
+                ->with('error', 'Unable to fetch inspections for this asset.');
+        }
+    }
+
+    /**
+     * Display a single inspection's details.
+     * GET /mmis/inspection/{id}
+     */
+    public function show(int $id)
+    {
+        try {
+
+            $data = $this->loadInspectionData($id);
+
+            if (!$data) {
+                return redirect()
+                    ->route('mmis.inspection.index')
+                    ->with('error', 'Inspection record not found.');
+            }
+
+            Log::info('InspectionController: inspection detail & observations fetched.', [
+                'id' => $id,
+                'grading' => $data->maintenance->grading,
+                'decision' => $data->maintenance->decision,
+                'is_latest_for_section' => $data->sectionStatus->is_latest,
+                'has_pci_details' => $data->pciDetails !== null,
+                'maintenance_index' => $data->maintenanceIndex->index,
+            ]);
+
+            return view('mmis.inspection.show', [
+                'inspection'       => $data->inspection,
+                'observations'     => $data->observations,
+                'maintenance'      => $data->maintenance,
+                'sectionStatus'    => $data->sectionStatus,
+                'pciDetails'       => $data->pciDetails,
+                'maintenanceIndex' => $data->maintenanceIndex,
+                'criticalIndex'    => $data->criticalIndex,
+            ]);
+
+        } catch (Exception $e) {
+
+            Log::error('InspectionController@show: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->route('mmis.inspection.index')
+                ->with('error', 'Unable to fetch inspection details.');
+        }
+    }
+
+    /**
+     * Generate and download a PDF report for a single inspection.
+     * GET /mmis/inspection/{id}/pdf
+     */
+    public function downloadPdf(int $id)
+    {
+        try {
+
+            $data = $this->loadInspectionData($id);
+
+            if (!$data) {
+                return redirect()
+                    ->route('mmis.inspection.index')
+                    ->with('error', 'Inspection record not found.');
+            }
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('mmis.inspection.inspectionPdf', [
+                'inspection'       => $data->inspection,
+                'observations'     => $data->observations,
+                'maintenance'      => $data->maintenance,
+                'pciDetails'       => $data->pciDetails,
+                'maintenanceIndex' => $data->maintenanceIndex,
+                'criticalIndex'    => $data->criticalIndex,
+            ])->setPaper('a4', 'portrait');
+
+            Log::info('InspectionController: PDF report generated.', [
+                'id' => $id,
+                'insp_cd' => $data->inspection->insp_cd,
+            ]);
+
+            return $pdf->download("Inspection-{$data->inspection->insp_cd}.pdf");
+
+        } catch (Exception $e) {
+
+            Log::error('InspectionController@downloadPdf: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->route('mmis.inspection.show', $id)
+                ->with('error', 'Unable to generate the PDF report.');
+        }
+    }
+}

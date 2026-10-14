@@ -167,10 +167,6 @@ class StoreInspectionRequest extends FormRequest
                 'max:30',
             ],
 
-            'surface_type_id' => [
-                'nullable',
-                'integer',
-            ],
 
             'remarks' => [
                 'nullable',

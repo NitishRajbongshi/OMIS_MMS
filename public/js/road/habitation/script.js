@@ -54,6 +54,53 @@ $(document).on('change', '.block-select', function () {
     });
 });
 
+
+const weightageUrl = '/asset-management/get-population-weightage';
+
+async function updatePopulationWeightage(input) {
+    const population = input.value;
+    const container = input.closest('.modal-body') || document;
+
+    const output = container.querySelector(
+        input.closest('.modal-body')
+            ? '.edit-population-weightage'
+            : '#population_weightage'
+    );
+
+    if (!output) return;
+
+    if (population === '' || Number(population) < 0) {
+        output.value = '';
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            weightageUrl + '?population=' + encodeURIComponent(population)
+        );
+
+        if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
+        }
+
+        const data = await response.json();
+
+        output.value = data.weightage !== null &&
+            data.weightage !== undefined
+            ? Number(data.weightage).toFixed(2)
+            : 'No matching range';
+
+    } catch (error) {
+        output.value = '';
+        console.error('Failed to fetch population weightage:', error);
+    }
+}
+
+// Manual population entry
+$(document).on('input', '.total_population', function () {
+    updatePopulationWeightage(this);
+});
+
 // $("#village").on("change", function () {
 $(document).on('change', '.village-select', function () {
     const selectedVillCode = $(this).val();
@@ -70,9 +117,14 @@ $(document).on('change', '.village-select', function () {
             console.log(response);
             if (response.status == 200) {
                 console.log(response.result.census2011_village_code);
-                $(".total_population").val(
-                    response.result.total_population
-                );
+                const populationInput = form.find('.total_population');
+
+                populationInput.val(response.result.total_population);
+
+                // Calculate weightage for automatically fetched population
+                if (populationInput.length) {
+                    updatePopulationWeightage(populationInput[0]);
+                }
             }
 
             if (response.status == 204) {
@@ -141,19 +193,127 @@ $("#freezeBtn").on("click", function () {
     }
 });
 
+const facilityUrl = '/asset-management/get-facility-weightage';
+
+async function updateFacilityWeightage(selectElement) {
+
+    const facilityId = $(selectElement).val();
+    const container = selectElement.closest('.modal-body') || document;
+
+    const output = container.querySelector(
+        selectElement.closest('.modal-body')
+            ? '.edit-facility-weightage'
+            : '#facility_weightage'
+    );
+
+    if (!output) return;
+
+    if (!facilityId) {
+        output.value = '';
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            facilityUrl + '?facility_id=' + encodeURIComponent(facilityId)
+        );
+
+        if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
+        }
+
+        const data = await response.json();
+
+        output.value = data.weightage != null
+            ? Number(data.weightage).toFixed(2)
+            : '';
+
+    } catch (error) {
+        output.value = '';
+        console.error('Failed to fetch facility weightage:', error);
+    }
+}
+
 //Facilities JQuery -- start
-$('#facility_id').change(function () {
-    let facilityId = $(this).val();
+$(document).on('change', '#facility_id, .facility-select', function () {
 
-    $('#sub_facility_id option').hide();
-    $('#sub_facility_id option:first').show();
+    const facilityId = $(this).val();
+    const container = this.closest('.modal-body') || document;
 
-    $('#sub_facility_id option[data-facility="' + facilityId + '"]').show();
-    $('#sub_facility_id').val('');
+    const isEdit = !!this.closest('.modal-body');
+
+    const subSelect = $(container).find(
+        isEdit ? '.subfacility-select' : '#sub_facility_id'
+    );
+
+    const subWeightage = $(container).find(
+        isEdit ? '.edit-sub-facility-weightage' : '#sub_facility_weightage'
+    );
+
+    // Clear previous sub-facility and its weightage
+    subSelect.val('');
+    subWeightage.val('');
+
+    // Filter sub-facilities
+    subSelect.find('option').hide();
+    subSelect.find('option:first').show();
+
+    if (facilityId) {
+        subSelect.find('option[data-facility="' + facilityId + '"]').show();
+    }
+
+    // Update selected facility weightage
+    updateFacilityWeightage(this);
 });
 
+
+const subFacilityUrl = '/asset-management/get-sub-facility-weightage';
+
+async function updateSubFacilityWeightage(selectElement) {
+    const subFacilityId = $(selectElement).val();
+    const container = selectElement.closest('.modal-body') || document;
+
+    const output = container.querySelector(
+    selectElement.closest('.modal-body')
+        ? '.edit-sub-facility-weightage'
+        : '#sub_facility_weightage'
+);
+
+    if (!output) return;
+
+    if (!subFacilityId) {
+        output.value = '';
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            subFacilityUrl + '?sub_facility_id=' +
+            encodeURIComponent(subFacilityId)
+        );
+
+        if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
+        }
+
+        const data = await response.json();
+
+        output.value = data.weightage != null
+            ? Number(data.weightage).toFixed(2)
+            : '';
+    } catch (error) {
+        output.value = '';
+        console.error('Failed to fetch sub-facility weightage:', error);
+    }
+}
+
+$(document).on('change', '#sub_facility_id, .subfacility-select', function () {
+    updateSubFacilityWeightage(this);
+});
+
+
 // Add to table
-$('#addFacilityBtn').click(function () {
+$('#addFacilityBtn').click(async function () {
 
     let facilityId = $('#facility_id').val();
     let facilityText = $('#facility_id option:selected').text();
@@ -172,6 +332,21 @@ $('#addFacilityBtn').click(function () {
         return;
     }
 
+    const [facilityResponse, subResponse] = await Promise.all([
+            fetch(facilityUrl + '?facility_id=' + encodeURIComponent(facilityId)),
+            fetch(subFacilityUrl + '?sub_facility_id=' + encodeURIComponent(subFacilityId))
+    ]);
+
+    if (!facilityResponse.ok || !subResponse.ok) {
+        throw new Error('Failed to fetch weightages');
+    }
+
+    const facilityData = await facilityResponse.json();
+    const subData = await subResponse.json();
+
+    const facilityWeightage = Number(facilityData.weightage || 0).toFixed(2);
+    const subFacilityWeightage = Number(subData.weightage || 0).toFixed(2);
+
     let row = `
             <tr data-sub="${subFacilityId}">
                 <td>
@@ -179,8 +354,14 @@ $('#addFacilityBtn').click(function () {
                     <input type="hidden" name="facility_ids[]" value="${facilityId}">
                 </td>
                 <td>
+                    ${facilityWeightage}
+                </td>
+                <td>
                     ${subFacilityText}
                     <input type="hidden" name="sub_facility_ids[]" value="${subFacilityId}">
+                </td>
+                <td>
+                    ${subFacilityWeightage}
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm deleteRow">
@@ -208,9 +389,11 @@ $(document).on('click', '.add-facility-btn', function () {
 
     let facilityId = facility.val();
     let facilityName = facility.text();
+    let facilityWeightage = modal.find('.edit-facility-weightage').val();
 
     let subId = subfacility.val();
     let subName = subfacility.text();
+    let subWeightage = modal.find('.edit-sub-facility-weightage').val();
 
     if (!facilityId || !subId) {
         alert("Select facility and sub facility");
@@ -226,8 +409,16 @@ $(document).on('click', '.add-facility-btn', function () {
             </td>
 
             <td>
+                ${facilityWeightage}
+            </td>
+
+            <td>
                 ${subName}
                 <input type="hidden" name="sub_facility_ids[]" value="${subId}">
+            </td>
+
+            <td>
+                ${subWeightage}
             </td>
 
             <td>
@@ -272,3 +463,4 @@ $(function () {
     $("#habitation_details_table").DataTable({}).buttons().container().appendTo(
         '#habitation_details_table_wrapper .col-md-11:eq(1)');
 });
+

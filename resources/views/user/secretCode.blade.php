@@ -17,18 +17,19 @@
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="card-header d-flex align-items-center justify-content-between py-3">
-                <div class="d-flex">
-                    <div class="oamis-login-mark bg-light text-primary mr-3 rounded-circle d-flex align-items-center justify-content-center"
+                <div class="d-flex align-items-center">
+                    <span
+                        class="oamis-login-mark bg-light text-primary mr-3 rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 45px; height: 45px; font-size: 18px;">
                         <i class="fa-solid fa-user-shield"></i>
-                    </div>
+                    </span>
                     <div>
                         <h3 class="card-title font-weight-bold mb-0 text-lg">Create Secret Code</h3>
                         <p class="text-muted text-xs mb-0">Set your personalized secondary security code</p>
                     </div>
                 </div>
                 <div>
-                    <a class="btn btn-sm btn-light" href="{{ route('home') }}">
+                    <a class="btn btn-sm btn-light" href="{{ asset('home') }}">
                         <i class="fa-solid fa-arrow-left"></i>
                         <span>Back</span>
                     </a>
@@ -88,7 +89,7 @@
                 </div>
 
                 <!-- Secret Code Form -->
-                <form id="secretCodeForm" action="{{ route('secretCode') }}" method="POST" autocomplete="off"
+                <form id="secretCodeForm" action="{{ url('/store-secret-code') }}" method="POST" autocomplete="off"
                     class="mt-4">
                     @csrf
                     <div class="form-group mb-4">

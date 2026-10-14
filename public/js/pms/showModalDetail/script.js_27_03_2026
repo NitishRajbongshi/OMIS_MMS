@@ -1,0 +1,608 @@
+function showModalDetail(id, type) {
+    const showModal = document.getElementById("showModal");
+    const modalValContainer = $("#modalValContainer");
+
+    modalValContainer.empty();
+
+    $.ajax({
+        type: "GET",
+        url:
+            "/get-modal-detail/" +
+            encodeURIComponent(id) +
+            "/" +
+            encodeURIComponent(type),
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        cache: false,
+        success: function (response) {
+            console.log(response);
+
+            if (response.status === "success") {
+                $.each(response.value, function (index, item) {
+                    const currentIndex = index + 1;
+
+                    // -------- Heading Text Logic (clean version) --------
+                    let titleMap = {
+                        Culvert: "Culvert",
+                        Bridge: "Bridge",
+                        rtw: "Retain Wall",
+                        pvm: "Pavements",
+                    };
+
+                    let headingText = titleMap[type] || "Item";
+
+                    // Single item → no index
+                    if (response.value.length > 1) {
+                        headingText += " " + currentIndex;
+                    }
+
+                    // -------- Append Heading --------
+                    modalValContainer.append(`
+                        <div class="w-full mt-2">
+                            <p class="text-primary text-bold border-bottom">
+                                <i class="fa fa-caret-right mr-1"></i> ${headingText}
+                            </p>
+                        </div>
+                    `);
+
+                    // -------- Row Wrapper for fields --------
+                    modalValContainer.append(
+                        `<div class="row mt-1" id="row_${currentIndex}"></div>`,
+                    );
+                    let row = $("#row_" + currentIndex);
+
+                    // -------- Fields --------
+                    const fields = [
+                        { label: "Sub asset Type", value: item.name },
+                        { label: "Chainage", value: item.start_chainage },
+                    ];
+
+                    $.each(fields, function (i, field) {
+                        row.append(`
+                            <div class="col-sm-6 mb-2">
+                                <label class="form-label">${field.label}</label>
+                                <input type="text" class="form-control form-control-sm" value="${field.value}" disabled>
+                            </div>
+                        `);
+                    });
+                });
+
+                if (showModal) showModal.style.display = "block";
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error:", textStatus, errorThrown);
+        },
+    });
+
+    // ---- Modal Close ----
+    const span = document.querySelector(".closeShowModal");
+    if (span) {
+        span.onclick = function () {
+            if (showModal) showModal.style.display = "none";
+        };
+    }
+
+    window.onclick = function (event) {
+        if (showModal && event.target == showModal) {
+            showModal.style.display = "none";
+        }
+    };
+}
+
+function showModalNewAssetDetail(projectId) {
+    const showModalNewAsset = document.getElementById("showModalNewAsset");
+    const container = $("#modalValContainerNewAsset");
+
+    container.empty();
+
+    $.ajax({
+        type: "GET",
+        url:
+            "/project-management/get-upgradation-detail/" +
+            encodeURIComponent(projectId),
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        success: function (response) {
+            if (response.status === "success") {
+                let data = response.data;
+
+                const renderBadges = (arr, cls) => {
+                    if (!arr || !arr.length)
+                        return `<span class="text-danger">NA</span>`;
+                    return arr
+                        .map(
+                            (v) =>
+                                `<span class="badge ${cls} me-1 mb-1">${v}</span>`,
+                        )
+                        .join("");
+                };
+
+                container.append(`
+
+                    <div class="col-12 mb-2">
+                        <b>Road Name:</b> ${data.road_name || "NA"}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <b>Start Chainage:</b> ${data.start_chainage || "NA"}
+                        &nbsp;&nbsp;
+                        <b>End Chainage:</b> ${data.end_chainage || "NA"}
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <p class="text-primary text-bold border-bottom">
+                            Existing Assets
+                        </p>
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Culverts:</strong><br>
+                        ${renderBadges(data.culverts, "bg-info")}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Bridges:</strong><br>
+                        ${renderBadges(data.bridges, "bg-warning text-dark")}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Walls:</strong><br>
+                        ${renderBadges(data.walls, "bg-secondary")}
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <strong>Pavements:</strong><br>
+                        ${renderBadges(data.pavements, "bg-success")}
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <p class="text-primary text-bold border-bottom">
+                            New Assets
+                        </p>
+                        <p class="text-muted text-xs mb-2">
+                            <i class="fa fa-info-circle me-1"></i>
+                            These are newly proposed assets and are not part of the above road section.
+                        </p>
+                    </div>
+
+                    <div class="col-sm-4 mb-2">
+                        <label>Roads</label>
+                        <input class="form-control form-control-sm" value="${data.new_roads}" disabled>
+                    </div>
+
+                    <div class="col-sm-4 mb-2">
+                        <label>Bridges</label>
+                        <input class="form-control form-control-sm" value="${data.new_bridges}" disabled>
+                    </div>
+
+                    <div class="col-sm-4 mb-2">
+                        <label>Culverts</label>
+                        <input class="form-control form-control-sm" value="${data.new_culverts}" disabled>
+                    </div>
+
+                    <div class="col-sm-4 mb-2">
+                        <label>Pavements</label>
+                        <input class="form-control form-control-sm" value="${data.new_pavements}" disabled>
+                    </div>
+
+                    <div class="col-sm-4 mb-2">
+                        <label>Walls</label>
+                        <input class="form-control form-control-sm" value="${data.new_walls}" disabled>
+                    </div>
+                `);
+
+                showModalNewAsset.style.display = "block";
+            }
+        },
+    });
+
+    $(".closeShowModalNewAsset").click(() => {
+        showModalNewAsset.style.display = "none";
+    });
+}
+
+function showModalMaintenanceDetail(projectId) {
+    const showModalMaintenance = document.getElementById(
+        "showModalMaintenance",
+    );
+    const container = $("#modalValContainerMaintenance");
+
+    container.empty();
+
+    $.ajax({
+        type: "GET",
+        url:
+            "/project-management/get-maintenance-detail/" +
+            encodeURIComponent(projectId),
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        success: function (response) {
+            if (response.status === "success") {
+                let data = response.data;
+
+                const renderBadges = (arr, cls) => {
+                    if (!arr || !arr.length)
+                        return `<span class="text-danger">NA</span>`;
+                    return arr
+                        .map(
+                            (v) =>
+                                `<span class="badge ${cls} me-1 mb-1">${v}</span>`,
+                        )
+                        .join("");
+                };
+
+                container.append(`
+
+                    <div class="col-12 mb-2">
+                        <b>Road Name:</b> ${data.road_name || "NA"}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <b>Start Chainage:</b> ${data.start_chainage || "NA"}
+                        &nbsp;&nbsp;
+                        <b>End Chainage:</b> ${data.end_chainage || "NA"}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Culverts:</strong><br>
+                        ${renderBadges(data.culverts, "bg-info")}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Bridges:</strong><br>
+                        ${renderBadges(data.bridges, "bg-warning text-dark")}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Walls:</strong><br>
+                        ${renderBadges(data.walls, "bg-secondary")}
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong>Pavements:</strong><br>
+                        ${renderBadges(data.pavements, "bg-success")}
+                    </div>
+                `);
+
+                showModalMaintenance.style.display = "block";
+            }
+        },
+    });
+
+    $(".closeShowModalMaintenance").click(() => {
+        showModalMaintenance.style.display = "none";
+    });
+}
+
+function showItemsDetail(id) {
+    const showItemsModal = document.getElementById("ItemsModal");
+    const modalItemsContainer = $("#modalItemsContainer");
+
+    modalItemsContainer.empty();
+
+    $.ajax({
+        type: "GET",
+        url: "/get-items-detail/" + encodeURIComponent(id),
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+        },
+        cache: false,
+        success: function (response) {
+            if (response.status === "success") {
+                if (response.value.length === 0) {
+                    modalItemsContainer.append(
+                        `<p class="text-danger small">No Items Found</p>`,
+                    );
+                    return;
+                }
+
+                // TABLE
+                let table = `
+                    <table class="table table-bordered table-striped table-sm mt-2">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Item of Work</th>
+                                <th>Quantity</th>
+                                <th>Rate</th>
+                                <th>Amount</th>
+                                <th>BOQ Item</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                $.each(response.value, function (index, item) {
+                    table += `
+                        <tr id="item-row-${index}">
+                            <td>${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td>${item.qty}</td>
+                            <td>${item.rate}</td>
+                            <td>${item.amount}</td>
+                            <td>${item.item_cd}</td>
+                        </tr>
+                    `;
+                });
+
+                table += `</tbody></table>`;
+                modalItemsContainer.append(table);
+
+                if (showItemsModal) showItemsModal.style.display = "block";
+            }
+        },
+        error: function () {
+            console.error("AJAX Error");
+        },
+    });
+
+    // Close modal
+    const span = document.querySelector(".closeItemsModal");
+    if (span) {
+        span.onclick = function () {
+            if (showItemsModal) showItemsModal.style.display = "none";
+        };
+    }
+
+    window.onclick = function (event) {
+        if (showItemsModal && event.target === showItemsModal) {
+            showItemsModal.style.display = "none";
+        }
+    };
+}
+
+// ------------------------------------------------------
+// FETCH SUB ITEMS FUNCTION
+// ------------------------------------------------------
+
+function toggleSubItems(item_cd, index, id) {
+    const container = $("#subitems-" + index);
+    const button = $("#btn-sub-" + index);
+
+    // If already visible → hide it
+    if (container.is(":visible")) {
+        container.hide();
+        button.text("Show Subitems");
+        return;
+    }
+
+    // Load subitems only once
+    if (container.attr("data-loaded") === "1") {
+        container.show();
+        button.text("Hide Subitems");
+        return;
+    }
+
+    container.html(`<span class="text-muted">Loading...</span>`);
+
+    $.ajax({
+        type: "GET",
+        url:
+            "/get-sub-items/" +
+            encodeURIComponent(item_cd) +
+            "/" +
+            encodeURIComponent(id),
+        cache: false,
+        success: function (response) {
+            if (response.status === "success") {
+                if (response.subitems.length === 0) {
+                    container.html(
+                        `<p class="small text-danger">No subitems found</p>`,
+                    );
+                } else {
+                    let html = `<ul class="list-group list-group-sm">`;
+
+                    $.each(response.subitems, function (i, sub) {
+                        html += `
+                            <li class="list-group-item p-1 small">
+                                <b>${sub.name}</b> – Qty: ${sub.quantity ?? "-"}
+                            </li>
+                        `;
+                    });
+
+                    html += `</ul>`;
+                    container.html(html);
+                }
+
+                container.attr("data-loaded", "1");
+                container.show();
+                button.text("Hide Subitems");
+            }
+        },
+        error: function () {
+            container.html(
+                `<p class="text-danger small">Error loading subitems</p>`,
+            );
+        },
+    });
+}
+
+// ----------------------------
+// OPEN Upgradation Modal
+// ----------------------------
+function showUpgradationSubAssetsModal(id) {
+    const modal = document.getElementById("viewUpgradationSubAssetsModal");
+    modal.style.display = "block";
+
+    loadUpgradationSubAssets(id);
+}
+
+// ----------------------------
+// CLOSE Upgradation Modal
+// ----------------------------
+function hideUpgradationSubAssetsModal() {
+    const modal = document.getElementById("viewUpgradationSubAssetsModal");
+    modal.style.display = "none";
+}
+
+// Close button (×)
+document
+    .getElementById("closeUpgradationSubAssets")
+    .addEventListener("click", hideUpgradationSubAssetsModal);
+
+window.addEventListener("click", function (e) {
+    const modal = document.getElementById("viewUpgradationSubAssetsModal");
+    if (e.target === modal) {
+        hideUpgradationSubAssetsModal();
+    }
+});
+
+// ----------------------------
+// OPEN Maintenance Modal
+// ----------------------------
+function showMaintenanceSubAssetsModal(id) {
+    const modal = document.getElementById("viewMaintenanceSubAssetsModal");
+    modal.style.display = "block";
+    loadMaintenanceSubAssets(id);
+}
+
+// ----------------------------
+// CLOSE Maintenance Modal
+// ----------------------------
+function hideMaintenanceSubAssetsModal() {
+    const modal = document.getElementById("viewMaintenanceSubAssetsModal");
+    modal.style.display = "none";
+}
+
+// Close button (×)
+document
+    .getElementById("closeMaintenanceSubAssets")
+    .addEventListener("click", hideMaintenanceSubAssetsModal);
+
+// Optional: Click outside to close
+window.addEventListener("click", function (e) {
+    const modal = document.getElementById("viewMaintenanceSubAssetsModal");
+    if (e.target === modal) {
+        hideMaintenanceSubAssetsModal();
+    }
+});
+
+function loadUpgradationSubAssets(projectId) {
+    $.ajax({
+        url: "/get-upgradation-subassets/" + projectId,
+        type: "GET",
+        success: function (response) {
+            const tbody = $("#viewUpgradationSubAssetsTable tbody");
+            tbody.empty();
+
+            if (!response.status || !response.data) {
+                tbody.append(
+                    `<tr><td colspan="7" class="text-center text-danger">No Data Found</td></tr>`,
+                );
+                return;
+            }
+
+            const data = response.data;
+
+            const roads = data.upgrade_road || [];
+            const startC = data.upg_start_chainage || [];
+            const endC = data.upg_end_chainage || [];
+
+            const walls = data.walls || {};
+            const bridges = data.bridges || {};
+            const culverts = data.culverts || {};
+
+            if (roads.length === 0) {
+                tbody.append(
+                    `<tr><td colspan="7" class="text-center text-danger">No Upgradation Data Found</td></tr>`,
+                );
+                return;
+            }
+
+            roads.forEach((road, index) => {
+                const rowNo = index + 1;
+
+                // ⭐ Show actual values, not count
+                const wallsList = walls[rowNo] ? walls[rowNo].join(", ") : "";
+                const bridgesList = bridges[rowNo]
+                    ? bridges[rowNo].join(", ")
+                    : "";
+                const culvertsList = culverts[rowNo]
+                    ? culverts[rowNo].join(", ")
+                    : "";
+
+                tbody.append(`
+                    <tr>
+                        <td>${rowNo}</td>
+                        <td>${road}</td>
+                        <td>${startC[index] || ""}</td>
+                        <td>${endC[index] || ""}</td>
+                        <td>${culvertsList}</td>
+                        <td>${bridgesList}</td>
+                        <td>${wallsList}</td>
+                    </tr>
+                `);
+            });
+        },
+        error: function () {
+            alert("Failed to load Upgradation Sub-Assets!");
+        },
+    });
+}
+
+function loadMaintenanceSubAssets(projectId) {
+    $.ajax({
+        url: "/get-maintenance-subassets/" + projectId,
+        type: "GET",
+        success: function (response) {
+            const tbody = $("#viewMaintenanceSubAssetsTable tbody");
+            tbody.empty();
+
+            if (!response.status || !response.data) {
+                tbody.append(
+                    `<tr><td colspan="7" class="text-center text-danger">No Data Found</td></tr>`,
+                );
+                return;
+            }
+
+            const data = response.data;
+
+            const roads = data.mnt_road || [];
+            const startC = data.mnt_start_chainage || [];
+            const endC = data.mnt_end_chainage || [];
+
+            const walls = data.mnt_walls || {};
+            const bridges = data.mnt_bridges || {};
+            const culverts = data.mnt_culverts || {};
+
+            if (roads.length === 0) {
+                tbody.append(
+                    `<tr><td colspan="7" class="text-center text-danger">No Maintenance Data Found</td></tr>`,
+                );
+                return;
+            }
+
+            roads.forEach((road, index) => {
+                const rowNo = index + 1;
+
+                // ⭐ Show values instead of count
+                const wallsList = walls[rowNo] ? walls[rowNo].join(", ") : "";
+                const bridgesList = bridges[rowNo]
+                    ? bridges[rowNo].join(", ")
+                    : "";
+                const culvertsList = culverts[rowNo]
+                    ? culverts[rowNo].join(", ")
+                    : "";
+
+                tbody.append(`
+                    <tr>
+                        <td>${rowNo}</td>
+                        <td>${road}</td>
+                        <td>${startC[index] || ""}</td>
+                        <td>${endC[index] || ""}</td>
+                        <td>${culvertsList}</td>
+                        <td>${bridgesList}</td>
+                        <td>${wallsList}</td>
+                    </tr>
+                `);
+            });
+        },
+        error: function () {
+            alert("Failed to load Maintenance Sub-Assets!");
+        },
+    });
+}

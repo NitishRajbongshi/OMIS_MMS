@@ -429,6 +429,7 @@ class PmsController extends Controller
             ->join('asset_road_details as rd', 'rcm.rd_system_id', '=', 'rd.rd_system_id')
             ->join('projects.prt_maintainable_assets as m', 'rd.rd_system_id', '=', 'm.asset_cd')
             ->where('rcm.sub_division_cd', $sub_division_cd)
+            ->where('m.asset_type_cd', 10)
             ->select(
                 'rd.rd_system_id',
                 'rd.rd_name',
@@ -457,6 +458,7 @@ class PmsController extends Controller
 
         $pavements = $applyCommonFilter($pavements)
             ->select('p.rd_pavement_cd', 'm.parent_asset_cd')
+            ->where('m.asset_type_cd', 2)
             ->get();
 
 
@@ -474,6 +476,7 @@ class PmsController extends Controller
                 DB::raw('CAST(w.protection_wall_cd AS TEXT) as protection_wall_cd'),
                 'm.parent_asset_cd'
             )
+            ->where('m.asset_type_cd', 16)
             ->get();
 
 
@@ -482,6 +485,7 @@ class PmsController extends Controller
 
         $bridges = $applyCommonFilter($bridges)
             ->select('b.bridge_name', 'b.rd_bridge_cd', 'm.parent_asset_cd')
+            ->where('m.asset_type_cd', 1)
             ->get();
 
 
@@ -490,6 +494,7 @@ class PmsController extends Controller
 
         $culverts = $applyCommonFilter($culverts)
             ->select('c.rd_cdwork_cd', 'c.culvert_no', 'm.parent_asset_cd')
+            ->where('m.asset_type_cd', 0)
             ->get();
 
       
@@ -502,6 +507,7 @@ class PmsController extends Controller
         ]);
     }
 
+    
 
     public function getMaintenanceBuildingsbysubdivision($catCd, $sub_division_cd)
     {
@@ -524,6 +530,7 @@ class PmsController extends Controller
             )
             ->where('b.sub_division_cd', $sub_division_cd)
             ->where('b.building_class_cd', $catCd)
+            ->where('m.asset_type_cd', 5)
             ->distinct()
             ->get();
 
@@ -568,6 +575,7 @@ class PmsController extends Controller
                 'm.asset_cd'
             )
             ->where('created_at_office_cd', $officeId)
+            ->where('m.asset_type_cd', 6)
             ->select(
                 'v.vehicle_asset_cd',
                 'v.vehicle_name'
@@ -693,6 +701,7 @@ class PmsController extends Controller
                 'm.asset_cd'
             )
             ->where('created_at_office_cd', $officeId)
+            ->where('m.asset_type_cd', 7)
             ->select(
                 'e.euipment_cd',
                 'e.equipment_name'
@@ -737,24 +746,9 @@ class PmsController extends Controller
                 '=',
                 'vt.veh_type_cd'
             )
-            ->leftJoin(
-                'mechanicals.asset_master_vehicle_makers as vm',
-                'v.maker',
-                '=',
-                'vm.maker_cd'
-            )
-            ->leftJoin(
-                'mechanicals.asset_master_fuel_types as ft',
-                'v.fuel_type',
-                '=',
-                'ft.fuel_type_cd'
-            )
-            ->leftJoin(
-                'mechanicals.asset_master_vehicle_conditions as vc',
-                'v.vehicle_condition',
-                '=',
-                'vc.condition_cd'
-            )
+            ->leftJoin('mechanicals.asset_master_vehicle_makers as vm','v.maker','=','vm.maker_cd')
+            ->leftJoin('mechanicals.asset_master_fuel_types as ft','v.fuel_type','=','ft.fuel_type_cd')
+            ->leftJoin('mechanicals.asset_master_vehicle_conditions as vc','v.vehicle_condition','=','vc.condition_cd')
             ->select(
                 'v.vehicle_regn_no',
                 'v.chassis_no',
@@ -775,13 +769,8 @@ class PmsController extends Controller
                 'v.alloted_from'
             )
             ->first();
-
-        return response()->json([
-            'vehiclesDetails' => $vehiclesDetails
-        ]);
-
+        return response()->json(['vehiclesDetails' => $vehiclesDetails]);
     }
-
 
     public function getEquipmentDetails($equipmentId)
     {

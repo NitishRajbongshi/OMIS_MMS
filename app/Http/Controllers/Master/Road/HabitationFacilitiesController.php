@@ -20,6 +20,7 @@ class HabitationFacilitiesController extends Controller
         try {
             DB::table('public.asset_master_habitation_facilities')->insert([
                 'facility_name' => $request->facility_name,
+                'weightage' => $request->weightage,
                 'is_published' => $request->is_published,
                 'created_at' => Carbon::now()
             ]);
@@ -36,6 +37,7 @@ class HabitationFacilitiesController extends Controller
                 ->where('id', $request->id)
                 ->update([
                     'facility_name' => $request->facility_name,
+                    'weightage' => $request->weightage,
                     'is_published' => $request->is_published,
                     'updated_at' => Carbon::now()
                 ]);

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Inspection Report - {{ $inspection->insp_cd }}</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11px;
+            color: #222;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+        .header h1 {
+            font-size: 16px;
+            margin: 0 0 4px 0;
+        }
+        .header .sub {
+            font-size: 11px;
+            color: #555;
+        }
+        .section-title {
+            background-color: #f0f0f0;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 6px;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            border-left: 4px solid #444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        table.kv td {
+            padding: 3px 6px;
+            border: 1px solid #ccc;
+            vertical-align: top;
+        }
+        table.kv td.label {
+            width: 35%;
+            font-weight: bold;
+            background-color: #fafafa;
+        }
+        table.data th, table.data td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            font-size: 10px;
+            text-align: left;
+        }
+        table.data th {
+            background-color: #f0f0f0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #fff;
+        }
+        .badge-good, .badge-s { background-color: #28a745; }
+        .badge-fair { background-color: #ffc107; color: #222; }
+        .badge-critical, .badge-u { background-color: #dc3545; }
+        .badge-default { background-color: #6c757d; }
+
+        .mi-box {
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .mi-box .value {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .mi-note {
+            font-size: 9px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .signature-block {
+            margin-top: 50px;
+            width: 100%;
+        }
+        .signature-block td {
+            width: 50%;
+            vertical-align: top;
+            padding-top: 30px;
+        }
+        .sig-line {
+            border-top: 1px solid #333;
+            width: 220px;
+            margin-top: 40px;
+            padding-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Road Inspection Report</h1>
+        <div class="sub">
+            Inspection Code: <strong>{{ $inspection->insp_cd }}</strong>
+            &nbsp;|&nbsp;
+            Date: {{ \Illuminate\Support\Carbon::parse($inspection->insp_date)->format('d-M-Y') }}
+        </div>
+    </div>
+
+    <!-- General Information -->
+    <div class="section-title">General Information</div>
+    <table class="kv">
+        <tr>
+            <td class="label">Inspection Code</td>
+            <td>{{ $inspection->insp_cd }}</td>
+            <td class="label">Inspection Date</td>
+            <td>{{ \Illuminate\Support\Carbon::parse($inspection->insp_date)->format('d-M-Y') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Inspection Type</td>
+            <td>{{ $inspection->insp_type }}</td>
+            <td class="label">Inspector Name</td>
+            <td>{{ $inspection->inspector_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Inspector Designation</td>
+            <td colspan="3">{{ $inspection->inspector_designation }}</td>
+        </tr>
+    </table>
+
+    <!-- Asset & Location -->
+    <div class="section-title">Asset &amp; Location</div>
+    <table class="kv">
+        <tr>
+            <td class="label">Asset Type</td>
+            <td>{{ $inspection->asset_type }}</td>
+            <td class="label">Asset ID</td>
+            <td>{{ $inspection->insp_asset_id }}</td>
+        </tr>
+        <tr>
+            <td class="label">Location</td>
+            <td colspan="3">{{ $inspection->insp_asset_location }}</td>
+        </tr>
+        <tr>
+            <td class="label">Start Section</td>
+            <td>{{ $inspection->start_section }}</td>
+            <td class="label">End Section</td>
+            <td>{{ $inspection->end_section }}</td>
+        </tr>
+    </table>
+
+    <!-- Condition Ratings -->
+    <div class="section-title">Condition Ratings</div>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>Overall</th>
+                <th>Pavement</th>
+                <th>Drainage</th>
+                <th>Shoulder</th>
+                <th>Structural</th>
+                <th>Safety</th>
+                <th>Signage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $conditions = [
+                    $inspection->overall_condition,
+                    $inspection->pavement_condition,
+                    $inspection->drainage_condition,
+                    $inspection->shoulder_condition,
+                    $inspection->structural_condition,
+                    $inspection->safety_condition,
+                    $inspection->signage_condition,
+                ];
+            @endphp
+            <tr>
+                @foreach ($conditions as $value)
+                    <td>
+                        <span class="badge
+                            @if($value == 'Good') badge-good
+                            @elseif($value == 'Fair') badge-fair
+                            @elseif($value == 'Critical') badge-critical
+                            @else badge-default
+                            @endif">
+                            {{ $value }}
+                        </span>
+                    </td>
+                @endforeach
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- PCI Details -->
+    <div class="section-title">PCI (Pavement Condition Index) Details</div>
+    @if ($pciDetails)
+        <table class="kv">
+            <tr>
+                <td class="label">Section Length</td>
+                <td>{{ $pciDetails->pci_section_length_in_meter ?? '-' }} m</td>
+                <td class="label">PCI Value</td>
+                <td><strong>{{ $pciDetails->pci_value ?? '-' }}</strong></td>
+            </tr>
+            <tr>
+                <td class="label">Total Motorized Traffic / Day</td>
+                <td>{{ $pciDetails->tot_motorized_traffic_per_day ?? '-' }}</td>
+                <td class="label">Total Commercial Vehicle Traffic / Day</td>
+                <td>{{ $pciDetails->tot_comm_veh_traffic_per_day ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Traffic Light Present</td>
+                <td>{{ ($pciDetails->pv_traffic_light ?? 'N') == 'Y' ? 'Yes' : 'No' }}</td>
+                <td class="label">PCI Remarks</td>
+                <td>{{ $pciDetails->pci_remarks ?? '-' }}</td>
+            </tr>
+        </table>
+    @else
+        <p><em>No PCI details recorded for this inspection.</em></p>
+    @endif
+
+    <!-- Field Observations & Grading -->
+    <div class="section-title">Field Observations &amp; Grading</div>
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width: 20%;">Activity</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 20%;">Observation</th>
+                <th style="width: 10%;">Grading</th>
+                <th style="width: 15%;">Weightage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($observations as $observation)
+                <tr>
+                    <td>{{ $observation->activity_title }}</td>
+                    <td>{{ $observation->activity_descr }}</td>
+                    <td>{{ $observation->obsrv_desc }}</td>
+                    <td>
+                        <span class="badge {{ $observation->grading_cd == 'S' ? 'badge-s' : 'badge-u' }}">
+                            {{ $observation->grading_descr }}
+                        </span>
+                    </td>
+                    <td>{{ $observation->obsrv_weightage }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5">No field observations recorded.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <!-- Risk & Recommendation -->
+    <div class="section-title">Risk &amp; Recommendation</div>
+    <table class="kv">
+        <tr>
+            <td class="label">Risk Type</td>
+            <td>{{ $inspection->risk_type }}</td>
+            <td class="label">Priority</td>
+            <td>{{ $inspection->recm_priority }}</td>
+        </tr>
+        <tr>
+            <td class="label">Recommended Action</td>
+            <td>{{ $inspection->recm_action_type }}</td>
+            <td class="label">Recommended Work</td>
+            <td>{{ $inspection->recmnd_work ?? '-' }}</td>
+        </tr>
+    </table>
+
+    <!-- Maintenance Index & Critical Index -->
+    <div class="section-title">Maintenance Index (Auto-Generated) &amp; Critical Index (Road Master)</div>
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; padding-right: 6px;">
+                <div class="mi-box">
+                    <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px;">Maintenance Index</div>
+                    @if ($maintenanceIndex->available)
+                        <div class="value">{{ $maintenanceIndex->index }}</div>
+                        <div style="font-size: 9px;">
+                            PCI Criticality: {{ $maintenanceIndex->pci_criticality }}
+                            &nbsp;|&nbsp;
+                            Inspection Criticality: {{ $maintenanceIndex->inspection_criticality }}
+                        </div>
+                        <div class="mi-note">
+                            (PCI Criticality x 0.5) + (Inspection Criticality x 0.5)
+                        </div>
+                    @else
+                        <div class="value">N/A</div>
+                        <div class="mi-note">PCI data not available for this inspection.</div>
+                    @endif
+                </div>
+            </td>
+            <td style="width: 50%; padding-left: 6px;">
+                <div class="mi-box">
+                    <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px;">Critical Index (Road Master)</div>
+                    @if ($criticalIndex !== null)
+                        <div class="value">{{ $criticalIndex }} / 10</div>
+                        <div class="mi-note">Strategic importance rating, defined at the road level.</div>
+                    @else
+                        <div class="value">Not Rated</div>
+                        <div class="mi-note">No Critical Index set for this road yet.</div>
+                    @endif
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Signature Block -->
+    <table class="signature-block">
+        <tr>
+            <td>
+                <div class="sig-line">
+                    {{ $inspection->inspector_name }}<br>
+                    {{ $inspection->inspector_designation }}
+                </div>
+            </td>
+            <td>
+                <div class="sig-line">
+                    Date: {{ \Illuminate\Support\Carbon::parse($inspection->insp_date)->format('d-M-Y') }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

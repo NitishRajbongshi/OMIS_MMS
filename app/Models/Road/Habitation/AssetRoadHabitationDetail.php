@@ -36,7 +36,8 @@ class AssetRoadHabitationDetail extends Model
         'remarks',
         'created_at_ofis_cd',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'habitation_score',
     ];
 
     public function facilities()

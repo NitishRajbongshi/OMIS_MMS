@@ -157,7 +157,17 @@ class HomeController extends Controller
                 $projectsQuery->where('p.division_cd', $mapping['division_cd']);
             }
 
+            \Log::info('Maintenance landing: starting projects query');
+
+            $queryStart = microtime(true);
+
             $projects = $projectsQuery->get();
+
+            \Log::info('Maintenance landing: projects query completed', [
+                'count' => $projects->count(),
+                'duration_seconds' => round(microtime(true) - $queryStart, 2),
+            ]);
+            
             $today = now()->startOfDay();
             $statusCounts = ['Completed' => 0, 'Ongoing' => 0, 'Delayed' => 0, 'Not Started' => 0];
 

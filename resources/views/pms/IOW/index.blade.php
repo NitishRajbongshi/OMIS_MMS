@@ -63,7 +63,7 @@
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <div>
                             <span>Project Overview</span>
-                            <h2>Selected Project Details <span style="color: #0d6efd;">(Click to know more)</span></h2>
+                            <h2>Selected Project Details</h2>
                         </div>
                         <div class="text-muted"><i class="fas fa-chevron-down" id="flip-icon"></i></div>
                     </div>
