@@ -179,60 +179,15 @@ $(document).on("submit", "#wing_road", function (e) {
     e.preventDefault();
 
     const rowCallback = function (index, data) {
-        const roadNameButton =
-            "<button class='btn btn-xs btn-link' " +
-            "data_road_id='" +
-            data.rd_system_id +
-            "' " +
-            "data_road_name='" +
-            data.rd_name +
-            "' " +
-            "data_division_name='" +
-            data.division_name +
-            "' " +
-            "onclick= 'showRoadAbstract(this)'>" +
-            data.rd_name +
-            "</button>";
-
-        const showInMapButton =
-            "<button class='btn btn-xs btn-outline-primary' " +
-            "id='btnShowInMap" +
-            data.rd_system_id +
-            "' " +
-            "data-road-id='" +
-            data.rd_system_id +
-            "' " +
-            "data-road-name='" +
-            data.rd_name +
-            "' " +
-            "data-division-name='" +
-            data.division_name +
-            "' " +
-            "data-rd-catg-descr='" +
-            data.rd_catg_descr +
-            "' " +
-            "data-rd-length='" +
-            data.road_length +
-            "' " +
-            "data-center-lat='" +
-            data.lat +
-            "' " +
-            "data-center-lng='" +
-            data.lng +
-            "' " +
-            "onclick='showMap(this)';>" +
-            "<i class='fa fa-eye mr-1'></i>Show In Map</button>";
-
         return `<tr>
                     <td>${++index}</td>
                     <td>${data.rd_system_id}</td>
-                    <td>${roadNameButton}</td>
+                    <td>${data.rd_name}</td>
                     <td>${data.road_length}</td>
                     <td>${data.rd_catg_descr}</td>
-                    <td>${showInMapButton}</td>
+                    <td class="text-bold">${data.criticality_index}</td>
                 </tr>`;
     };
-    updateRegions();
     fetchDataAndPopulateTable(
         "#wing_road",
         "/asset-management/mis/criticality-index/roads",

@@ -22,7 +22,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
     <!-- Sidebar -->
     <div class="sidebar">
         <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+                data-accordion="false">
                 {{-- Portal Navigation --}}
                 <li class="nav-item" id="menu_portal_navigation">
                     <a href="#" class="nav-link text-dark">
@@ -123,7 +124,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                         </li>
                     @endif
                 @endif
-                {{-- Master Menu added By pulak--}}
+                {{-- Master Menu added By pulak --}}
                 @if (session('users_office_type_cd') == 'ADM')
                     <li class="nav-item" id="menu_master">
                         <a href="#" class="nav-link text-dark">
@@ -155,61 +156,71 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('itemUnit.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('itemUnit.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Item Units</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('workplanActivity.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('workplanActivity.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Workplan Activities</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('itemOfWorkMaster.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('itemOfWorkMaster.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Item of Work</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('boqItem.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('boqItem.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>BOQ Items</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('subItemOfWork.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('subItemOfWork.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Sub Item of Work</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('projectType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('projectType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Project Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('scheme.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('scheme.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Schemes</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('fundingAgnecies.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('fundingAgnecies.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Funding Agencies</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('mapping.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('mapping.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Scheme Funding Mapping</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('officeDetails.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('officeDetails.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Office Details</p>
                                             </a>
@@ -218,7 +229,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             @endif
 
-                            @if($isOmisPortal)
+                            @if ($isOmisPortal)
                                 {{-- not required --}}
                                 {{-- <li class="nav-item" id="menu_mstr_user">
                                     <a href="#" class="nav-link text-dark">
@@ -250,7 +261,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('districts.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('districts.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>District</p>
                                             </a>
@@ -262,31 +274,36 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('circle.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('circle.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Circle</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('division.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('division.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Division</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('subdivision.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('subdivision.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Sub-Division</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('block.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('block.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Block</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('village.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('village.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Village</p>
                                             </a>
@@ -308,19 +325,22 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('buildingBeamType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('buildingBeamType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Building Beam</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('buildingCategory.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('buildingCategory.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Building Category</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('buildingClass.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('buildingClass.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Building Class</p>
                                             </a>
@@ -361,20 +381,22 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('buildingTypes.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('buildingTypes.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Building Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('buildingWallType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('buildingWallType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Building Wall Types</p>
                                             </a>
                                         </li>
                                     </ul>
                                 </li>
-								{{-- Criticality Index: nitish --}}
+                                {{-- Criticality Index: nitish --}}
                                 <li class="nav-item" id="menu_criticality">
                                     <a href="#" class="nav-link text-dark">
                                         <i class="nav-iconn fas fa-database mr-1 ml-3" aria-hidden="true"></i>
@@ -391,7 +413,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                         </li>
                                     </ul>
                                 </li>
-                                {{-- End Criticality Index --}}								   
+                                {{-- End Criticality Index --}}
                                 <li class="nav-item" id="menu_mstr_roads">
                                     <a href="#" class="nav-link text-dark">
                                         <i class="nav-iconn fas fa-database mr-1 ml-3" aria-hidden="true"></i>
@@ -400,37 +422,41 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('roadCategory.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('roadCategory.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Road Category</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('roadCondition.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('roadCondition.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Road Condition</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('roadOwner.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('roadOwner.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Road Owner</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('chainageStep.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('chainageStep.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Chainage Steps</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-											<a href="{{ route('populationWeightage.index') }}" class="nav-link"
+                                            <a href="{{ route('populationWeightage.index') }}" class="nav-link"
                                                 style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Population Weightage</p>
                                             </a>
                                         </li>
-                                        <li class="nav-item">																																							
+                                        <li class="nav-item">
                                             <a href="{{ route('habitationFacilities.index') }}" class="nav-link"
                                                 style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
@@ -460,37 +486,43 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('bridgeType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('bridgeType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Bridge Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('bearingType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('bearingType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Bearing Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('abutmentType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('abutmentType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Abutment Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('deckType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('deckType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Deck Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('pierType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('pierType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Pier Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('pileType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('pileType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Pile Types</p>
                                             </a>
@@ -503,13 +535,15 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('headWall.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('headWall.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Head Walls</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('streamType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('streamType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Head Wall Stream Types</p>
                                             </a>
@@ -524,19 +558,22 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('drainageType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('drainageType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Drainage Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('lineDrainageType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('lineDrainageType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Line Drainage Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('drainageSide.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('drainageSide.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Drainage Sides</p>
                                             </a>
@@ -551,31 +588,36 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('vehicleType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('vehicleType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Vehicle Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('vehicleMaker.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('vehicleMaker.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Vehicle Makers</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('vehicleModels.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('vehicleModels.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Vehicle Models</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('vehicleCondition.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('vehicleCondition.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Vehicle Conditions</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('equipmentType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('equipmentType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Equipment Types</p>
                                             </a>
@@ -588,7 +630,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('fuelType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('fuelType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Fuel Types</p>
                                             </a>
@@ -603,49 +646,57 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('constructionType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('constructionType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Construction Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('materialType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('materialType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Material Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('foundationType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('foundationType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Foundation Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('faceWallType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('faceWallType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Face Wall Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('cdWorkType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('cdWorkType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>CD Work Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('retainWallType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('retainWallType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Retain Wall Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('toeWallType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('toeWallType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Toe Wall Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('wingWallType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('wingWallType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Wing Wall Types</p>
                                             </a>
@@ -660,7 +711,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                     <ul class="nav nav-treeview text-sm ml-3">
                                         <li class="nav-item">
-                                            <a href="{{ route('pavementType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('pavementType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Pavement Types</p>
                                             </a>
@@ -673,13 +725,15 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('topographyType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('topographyType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Topography Types</p>
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{ route('surfaceType.index') }}" class="nav-link" style="color:dark">
+                                            <a href="{{ route('surfaceType.index') }}" class="nav-link"
+                                                style="color:dark">
                                                 <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                                 <p>Surface Types</p>
                                             </a>
@@ -698,7 +752,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                     </li>
                 @endif
                 {{-- -End by Pulak --}}
-                @if($isPmsPortal)
+                @if ($isPmsPortal)
                     {{-- @if (session('users_office_type_cd') == 'ADM') --}}
                     <li class="nav-item" id="menu_pms">
                         <a href="#" class="nav-link text-dark">
@@ -731,8 +785,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             </li> --}}
                             @if (in_array(17, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ url('project-management/manage-project?mode=create') }}" class="nav-link"
-                                        style="color:dark">
+                                    <a href="{{ url('project-management/manage-project?mode=create') }}"
+                                        class="nav-link" style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Create & Manage</p>
                                     </a>
@@ -749,7 +803,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
 
                             @if (in_array(19, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('project.verified.list') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('project.verified.list') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Approved Projects</p>
                                     </a>
@@ -757,7 +812,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(20, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('project.request.list') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('project.request.list') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Request for Modification</p>
                                     </a>
@@ -765,7 +821,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(21, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('pendingproject.request.list') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('pendingproject.request.list') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Modification Approval</p>
                                     </a>
@@ -791,7 +848,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(25, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('progress.verify.index') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('progress.verify.index') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Verify Progress</p>
                                     </a>
@@ -799,7 +857,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(24, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('project.progress.report') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('project.progress.report') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Progress Report</p>
 
@@ -808,7 +867,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(26, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('project.pms-completion-report') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('project.pms-completion-report') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Verify/Approve Completion Report</p>
                                     </a>
@@ -817,7 +877,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             <!-- Modified by Pulak 19-06-26 -->
                             @if (in_array(27, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('pms.certificates.index')}}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('pms.certificates.index') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Issue Completion Certificate</p>
                                     </a>
@@ -825,7 +886,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             @endif
                             @if (in_array(28, session('menu')))
                                 <li class="nav-item">
-                                    <a href="{{ route('pms.progress.financial') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('pms.progress.financial') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Financial Progress</p>
                                     </a>
@@ -843,7 +905,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                 {{-- -End by Pulak --}}
                 {{-- @endif --}}
 
-                @if($isMtncPortal)
+                @if ($isMtncPortal)
                     <!--Added by Pulak 09-09-2026-->
                     <li class="nav-item" id="menu_inspection">
                         <a href="#" class="nav-link text-dark">
@@ -867,7 +929,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     <p>Critical Index Calculation</p>
                                 </a>
                             </li>
-                            @endif--}}
+                            @endif --}}
                             {{-- @if (in_array(20, session('menu')))
                             <li class="nav-item">
                                 <a href="{{ route('master.criticality.index') }}" class="nav-link" style="color:dark">
@@ -884,29 +946,33 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('mmis.maintenance-assessment.index') }}" class="nav-link" style="color:dark">
+                                <a href="{{ route('mmis.maintenance-assessment.index') }}" class="nav-link"
+                                    style="color:dark">
                                     <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                     <p>Maintenance Assessment </p>
                                 </a>
                             </li>
-							{{-- Added by Dipshikha 29-09-2026 start --}}
+                            {{-- Added by Dipshikha 29-09-2026 start --}}
                             @if (session('users_office_type_cd') == 'ADM')
                                 <li class="nav-item">
-                                    <a href="{{ route('mmis.parameter-weightage.mapping') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('mmis.parameter-weightage.mapping') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Parameter Mapping </p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{ route('mmis.parameter-weightage.index') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('mmis.parameter-weightage.index') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                         <p>Parameter Weightage </p>
                                     </a>
                                 </li>
-                            @endif									   
-							{{-- Added by Dipshikha 29-09-2026 end --}}											  
+                            @endif
+                            {{-- Added by Dipshikha 29-09-2026 end --}}
                             <li class="nav-item">
-                                <a href="{{ route('mmis.completed-maintenance-assessment.index') }}" class="nav-link" style="color:dark">
+                                <a href="{{ route('mmis.completed-maintenance-assessment.index') }}" class="nav-link"
+                                    style="color:dark">
                                     <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
                                     <p>Completed Maintenance Assessment </p>
                                 </a>
@@ -925,7 +991,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                     $showDropdown = count(array_intersect($validMenuItems, $menuItems)) > 0;
                 @endphp
                 @if ($showDropdown)
-                    @if($isOmisPortal)
+                    @if ($isOmisPortal)
                         <li class="nav-item" id="menu_manage_system">
                             <a href="#" class="nav-link text-dark">
                                 <i class="nav-iconn fa-solid fa-gear mr-1"></i>
@@ -1015,22 +1081,21 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                 @endif
 
                 <!-- Saiful Temp Start-->
-                @if(($isOmisPortal || $isPmsPortal) && in_array(29, session('menu')))
+                @if (($isOmisPortal || $isPmsPortal) && in_array(29, session('menu')))
                     <li class="nav-item">
-                        <a href="{{ route('project.list.assets') }}" class="nav-link text-dark"><i class="fas fa-road"></i>
+                        <a href="{{ route('project.list.assets') }}" class="nav-link text-dark"><i
+                                class="fas fa-road"></i>
                             <p>Asset from Projects</p>
                         </a>
                     </li>
                 @endif
                 <!-- Saiful Temp End-->
 
-                @if($isOmisPortal)
-                    @if (
-                            session('users_office_type_cd') == 'ADM' ||
+                @if ($isOmisPortal)
+                    @if (session('users_office_type_cd') == 'ADM' ||
                             session('users_office_type_cd') == 'SO' ||
                             session('user_dept_cd') === 16 ||
-                            session('user_dept_cd') === 18
-                        )
+                            session('user_dept_cd') === 18)
                         <li class="nav-item" id="menu_dashboard">
 
                             <a href="#" class="nav-link text-dark">
@@ -1074,7 +1139,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{ route('dashboard.equipment') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('dashboard.equipment') }}" class="nav-link"
+                                        style="color:dark">
                                         {{-- ---old code...<i class="far fa-circle nav-icon text-xs"></i>
                                         - --}}
                                         {{-- -new code start...07-10-2025 15:02 By Pulak- --}}
@@ -1087,7 +1153,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                         </li>
                     @endif
                 @endif
-                @if($isOmisPortal)
+                @if ($isOmisPortal)
                     @if (in_array(7, session('menu')))
                         <li class="nav-item">
                             <a href="{{ route('manageRoad') }}" class="nav-link text-dark">
@@ -1104,7 +1170,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>												 -->
                     @endif
                 @endif
-                @if($isOmisPortal)
+                @if ($isOmisPortal)
                     @if (in_array(16, session('menu')))
                         <li class="nav-item">
                             <a href="{{ route('viewRoadsInMapToDelete') }}" class="nav-link text-dark">
@@ -1171,12 +1237,10 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             <p>Manage Workflow</p>
                         </a>
                     </li>
-                    @if (
-                            session('users_office_type_cd') == 'ADM' ||
+                    @if (session('users_office_type_cd') == 'ADM' ||
                             session('users_office_type_cd') == 'SO' ||
                             session('users_office_type_cd') == 'DA' ||
-                            in_array(2, session('user_role_ids'))
-                        )
+                            in_array(2, session('user_role_ids')))
                         <li class="nav-item">
                             <a href="{{ route('viewUsers') }}" class="nav-link text-dark">
                                 <i class="nav-iconn fas fa-user mr-1"></i>
@@ -1194,8 +1258,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                         </li>
                     @endif
                     {{-- @if ($menu == 12 && session('user_dept_cd') == 6 && session('can_aprv_modify_req') == 1) --}}
-                    {{-- @if (in_array(12, session('menu')) && session('user_dept_cd') == 6 &&
-                    session('can_aprv_modify_req') == 1)
+                    {{-- @if (in_array(12, session('menu')) && session('user_dept_cd') == 6 && session('can_aprv_modify_req') == 1)
                     <li class="nav-item">
                         <a href="{{ route('GetModifyRoad') }}" class="nav-link text-dark">
                             <i class="nav-iconn fa-circle nav-icon"></i>
@@ -1254,13 +1317,11 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             <p>Report</p>
                             <i class="nav-iconn right fas fa-angle-left"></i>
                         </a>
-                        @if (
-                                session('user_dept_cd') === 14 ||
+                        @if (session('user_dept_cd') === 14 ||
                                 session('user_dept_cd') === 3 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('abstract.r&b') }}" class="nav-link" style="color:dark">
@@ -1274,12 +1335,10 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             </ul>
                         @endif
-                        @if (
-                                session('user_dept_cd') === 6 ||
+                        @if (session('user_dept_cd') === 6 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('abstract') }}" class="nav-link" style="color:dark">
@@ -1293,12 +1352,10 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             </ul>
                         @endif
-                        @if (
-                                session('user_dept_cd') === 14 ||
+                        @if (session('user_dept_cd') === 14 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('viewRoadWings') }}" class="nav-link" style="color:dark">
@@ -1312,12 +1369,10 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             </ul>
                         @endif
-                        @if (
-                                session('user_dept_cd') === 3 ||
+                        @if (session('user_dept_cd') === 3 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('viewNHWings') }}" class="nav-link" style="color:dark">
@@ -1331,12 +1386,10 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             </ul>
                         @endif
-                        @if (
-                                session('user_dept_cd') === 6 ||
+                        @if (session('user_dept_cd') === 6 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('viewBuildingWings') }}" class="nav-link" style="color:dark">
@@ -1350,15 +1403,14 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                 </li>
                             </ul>
                         @endif
-                        @if (
-                                session('user_dept_cd') === 15 ||
+                        @if (session('user_dept_cd') === 15 ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'SO' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ route('viewEquipmentWings') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('viewEquipmentWings') }}" class="nav-link"
+                                        style="color:dark">
                                         {{-- ---old code...<i class="far fa-circle nav-icon text-xs"></i>
                                         - --}}
                                         {{-- -new code start...07-10-2025 15:02 By Pulak- --}}
@@ -1380,17 +1432,25 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                                     <p>User Report</p>
                                 </a>
                             </li>
+                            {{-- Nitish: Sidebar link for view criticality reports --}}
+                            <li class="nav-item">
+                                <a href="{{ route('criticality.report.roads') }}" class="nav-link"
+                                    style="color:dark">
+                                    <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
+                                    <p>Criticality Index Report</p>
+                                </a>
+                            </li>
+                            {{-- Nitish: End of sidebar link for view criticality reports --}}
                         </ul>
-                        @if (
-                                session('user_dept_cd') == 14 ||
+                        @if (session('user_dept_cd') == 14 ||
                                 session('user_dept_cd') == 16 ||
                                 session('users_office_type_cd') == 'SO' ||
                                 session('users_office_type_cd') == 'ADM' ||
-                                session('users_office_type_cd') == 'ECO'
-                            )
+                                session('users_office_type_cd') == 'ECO')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ route('getDistressDetails') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('getDistressDetails') }}" class="nav-link"
+                                        style="color:dark">
                                         {{-- ---old code...<i class="far fa-circle nav-icon text-xs"></i>
                                         - --}}
                                         {{-- -new code start...07-10-2025 15:02 By Pulak- --}}
@@ -1402,15 +1462,14 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             </ul>
                         @endif
 
-                        @if (
-                                session('users_office_type_cd') == 'SO' ||
+                        @if (session('users_office_type_cd') == 'SO' ||
                                 session('users_office_type_cd') == 'ADM' ||
                                 session('users_office_type_cd') == 'ECO' ||
-                                session('users_office_type_cd') == 'HQ'
-                            )
+                                session('users_office_type_cd') == 'HQ')
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ route('misOfficesWithoutOfficer') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('misOfficesWithoutOfficer') }}" class="nav-link"
+                                        style="color:dark">
                                         {{-- ---old code...<i class="far fa-circle nav-icon text-xs"></i>
                                         - --}}
                                         {{-- -new code start...07-10-2025 15:02 By Pulak- --}}
@@ -1445,7 +1504,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
 
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ route('uploadNotification') }}" class="nav-link" style="color:dark">
+                                    <a href="{{ route('uploadNotification') }}" class="nav-link"
+                                        style="color:dark">
                                         <i class="far fa-circle nav-icon text-xs"></i>
                                         <p>Notification/Circulars</p>
                                     </a>
@@ -1465,11 +1525,9 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             </ul>
                         </li>
                     @endif
-                    @if (
-                            session('users_office_type_cd') == 'ADM' ||
+                    @if (session('users_office_type_cd') == 'ADM' ||
                             session('users_office_type_cd') == 'DA' ||
-                            in_array(2, session('user_role_ids'))
-                        )
+                            in_array(2, session('user_role_ids')))
                         <li class="nav-item">
                             <a href="{{ route('unlockPage') }}" class="nav-link text-dark">
                                 {{-- -old code...<i class="fa fa-unlock" aria-hidden="true"></i>
@@ -1493,7 +1551,8 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
 
                     @if (session('userId') === 1)
                         <li class="nav-item">
-                            <a href="{{ route('loadShortMsgPage') }}" class="nav-link text-dark" style="color:dark;">
+                            <a href="{{ route('loadShortMsgPage') }}" class="nav-link text-dark"
+                                style="color:dark;">
                                 {{-- -old code...<i class="fa fa-bullhorn"></i>- --}}
                                 {{-- -new code start...07-10-2025 16:05 By Pulak- --}}
                                 <i class="nav-iconn fa fa-bullhorn"></i>

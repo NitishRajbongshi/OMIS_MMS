@@ -6,8 +6,8 @@
                 <li class="breadcrumb-item">
                     <a href="{{ route('home') }}">Home</a>
                 </li>
-                <li class="breadcrumb-item"> Criticality Index</li>
-                <li class="breadcrumb-item"> Roads</li>
+                <li class="breadcrumb-item">Criticality Reports</li>
+                <li class="breadcrumb-item">/ Roads</li>
             </ol>
         </div>
     </div>
@@ -18,10 +18,12 @@
         <div class="container-fluid mainBody py-2">
             <div class="road-page-hero">
                 <div>
-                    <span class="road-page-eyebrow">Road & Bridges</span>
-                    <h1>Road Criticality Report</h1>
-                    <p>Lists and reports for Road Criticality Index</p>
+                    <span class="road-page-eyebrow">Criticality Index Report</span>
+                    <h1>Criticality Indexes for Roads</h1>
+                    <p>Filter, review and summarize the criticality indexes of road assets across Nagaland PWD
+                        jurisdictions.</p>
                 </div>
+                <span class="road-page-chip"><i class="fas fa-road"></i> State Roads</span>
             </div>
 
             <div class="d-flex justify-content-start flex-wrap text-xs road-wing-tabs">
@@ -29,7 +31,7 @@
                     <span class="py-1">
                         <a id="cd_work_link" class="wing_btn px-2 btn btn-sm text-light rounded-0"
                             style="width: 8rem; border-top: 1px solid #417dbe; border-left: 1px solid #417dbe; border-right: 1px solid #417dbe; background-color: #417dbe;"
-                            href={{ route('viewRoadWings') }}>
+                            href={{ route('criticality.report.roads') }}>
                             Road
                         </a>
                     </span>
@@ -38,7 +40,8 @@
                     <span class="py-1">
                         <a id="cd_work_link"
                             class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewCDWorks') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewCDWorks') }}>
                             CD Works
                         </a>
                     </span>
@@ -47,7 +50,8 @@
                     <span class="py-1">
                         <a id="cd_work_link"
                             class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewBridge') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewBridge') }}>
                             Bridge
                         </a>
                     </span>
@@ -56,7 +60,8 @@
                     <span class="py-1">
                         <a id="cd_work_link"
                             class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewPCI') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewPCI') }}>
                             PCI
                         </a>
                     </span>
@@ -64,7 +69,8 @@
                 <div class="text-bold mr-1">
                     <span class="py-1">
                         <a class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewProtectionWall') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewProtectionWall') }}>
                             Protection Wall
                         </a>
                     </span>
@@ -73,7 +79,8 @@
                     <span class="py-1">
                         <a id="cd_work_link"
                             class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewSurfaceType') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewSurfaceType') }}>
                             Surface Types
                         </a>
                     </span>
@@ -83,7 +90,8 @@
                     <span class="py-1">
                         <a id="cd_work_link"
                             class="wing_btn rounded-0 px-2 btn btn-sm border border-primary border-bottom-0"
-                            style="width: 8rem;" href={{ route('viewHabitation') }}>
+                            style="width: 8rem; pointer-events: none; cursor: default; color: gray;"
+                            href={{ route('viewHabitation') }}>
                             Habitation
                         </a>
                     </span>
@@ -92,7 +100,7 @@
 
             <h6 class="p-2 border border-primary text-light bg-primary">
                 <span class="border border-primary text-light bg-primary text-sm text-uppercase">
-                    LIST OF CRITICALILTY INDEX OF ROADS UNDER NAGALAND P W D.
+                    CRITICALITY INDEXES FOR ROADS UNDER NAGALAND P W D.
                 </span>
             </h6>
             <div class="border border-primary px-1 rounded loaderContainer road-list-card">
@@ -191,7 +199,7 @@
                             </div>
                             <div class="col-sm-12 col-md-1 d-flex justify-content-end">
                                 <button type="submit" class="text-xs btn btn-xs btn-outline-primary">
-                                    View
+                                    View Criticality Indexes
                                 </button>
                             </div>
                         </div>
@@ -211,89 +219,32 @@
                                 value="{{ config('customconfigpath.GET_DIVISIONS_GEOJSON_DATA_OF_ROAD_API') }}" />
                             <input type="hidden" id="hdnGetSingleRoadJsonDataUrl" name="hdnGetSingleRoadJsonDataUrl"
                                 value="{{ config('customconfigpath.GET_GEOJSON_DATA_OF_SINGLE_ROAD_API') }}" />
-                            <h6 class="text-bold text-lg road-summary-title">Road Summary</h6>
-                            <div class="row border-bottom border-top text-sm road-summary-grid">
-                                <div class="col-12 col-md-6">
-                                    <ul>
-                                        <li>
-                                            Total Road Count: <span class="road_count text-bold"></span>
-                                        </li>
-                                        <li>
-                                            Zone: <span class="show_zone text-bold">All Zones</span>
-                                        </li>
-                                        <li>
-                                            Circle: <span class="show_circle text-bold">All Circles</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <ul>
-                                        <li>
-                                            Division: <span class="show_division text-bold">All Divisions</span>
-                                        </li>
-                                        <li>
-                                            Sub_division: <span class="show_subdiv text-bold">All Sub Divisions</span>
-                                        </li>
-                                        <li>
-                                            Total Road Length (KM): <span class="tot_rd_len text-bold">0</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
                         </div>
                         <div class="row my-1 justify-content-end align-item-center">
                             <div class="col-sm-6 col-md-3 d-flex justify-content-end my-1">
                                 <span class="mis-btn-road"></span>
                             </div>
                         </div>
-                        <table
-                            class="table-responsive text-xs table table-bordered table-striped user_list road-registry-table"
-                            id="road_details_table">
-                            <thead class="theader text-xs text-white" style="background-color:#417dbe">
-                                <th class="text-center" style="min-width: 4rem;">Sl. No</th>
-                                <th class="text-center" style="min-width: 5rem;">Road ID</th>
-                                <th class="text-center" style="min-width: 10rem;">Road Name</th>
-                                <th class="text-center" style="min-width: 5rem;">Length (km)</th>
-                                <th class="text-center" style="min-width: 8rem;">Road Category</th>
-                                <th class="text-center" style="min-width: 8rem;">Criticality Index</th>
-                            </thead>
+                        <div class="table-responsive p-3">
+                            <table class="table table-striped table-bordered text-xs user_list w-100"
+                                id="road_details_table">
 
-                            <tbody class="text-center">
-                                {{-- dynamic table body --}}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                <thead class="theader text-xs text-white" style="background-color:#417dbe">
+                                    <th class="text-center" style="min-width: 4rem;">Sl. No</th>
+                                    <th class="text-center" style="min-width: 5rem;">Road ID</th>
+                                    <th class="text-center" style="min-width: 10rem;">Road Name</th>
+                                    <th class="text-center" style="min-width: 5rem;">Length (km)</th>
+                                    <th class="text-center" style="min-width: 8rem;">Road Category</th>
+                                    <th class="text-center" style="min-width: 8rem;">Critical Index</th>
+                                </thead>
 
-                <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="exampleModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <label class="modal-title" id="mapTitle">Nagaland PWD Road Map, </label>
-                                <label id="lblRoadInfo" name = "lblRoadInfo"></label>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="row justify-content-center align-item-center">
-                                <div class="col-md-10 mb-1">
-                                    <div class="modal-body modal-dialog-centered" id='map'
-                                        style='width: 100%; height: 500px;'>
-                                        <form action="#" id="frm_map_modal">
-                                            @csrf
-                                        </form>
-                                    </div>
-                                </div>
-                                <div class="col-md-2 mb-1">
-                                    <div id="road-sum-info" class="text-xs"
-                                        style="display: flex; justify-content: space-around">
-                                    </div>
-                                </div>
-                            </div>
+                                <tbody class="text-center">
+                                    {{-- dynamic table body --}}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-
                 {{-- Show road abstract modal --}}
                 <x-reports.roads.abstract-modal />
                 <x-reports.roads.culvert-abstract-modal />
@@ -524,76 +475,10 @@
         .road-summary-grid span {
             color: var(--oamis-ink);
         }
-
-        .road-registry-table {
-            border-collapse: separate !important;
-            border-spacing: 0;
-            display: table !important;
-            margin-bottom: 0 !important;
-            min-width: 960px;
-            width: 100% !important;
-        }
-
-        .road-registry-table tbody td {
-            font-size: 13px !important;
-            padding: 12px !important;
-            vertical-align: middle !important;
-        }
-
-        .road-registry-table tbody tr:hover td {
-            background: rgba(11, 107, 74, .06) !important;
-        }
-
-        #mapModal .modal-dialog {
-            max-width: min(1180px, calc(100vw - 28px));
-        }
-
-        #mapModal #map {
-            border: 1px solid var(--oamis-border);
-            border-radius: 20px;
-            overflow: hidden;
-        }
-
-        #road-sum-info {
-            background: var(--oamis-soft);
-            border: 1px solid var(--oamis-border);
-            border-radius: 18px;
-            color: var(--oamis-ink);
-            padding: 12px;
-        }
-
-        html[data-theme="dark"] .road-page-chip {
-            background: rgba(52, 211, 153, .13);
-            border-color: rgba(52, 211, 153, .28);
-            color: #6ee7b7;
-        }
-
-        html[data-theme="dark"] .road-summary-grid,
-        html[data-theme="dark"] #road-sum-info {
-            background: var(--oamis-soft);
-        }
-
-        @media (max-width: 767px) {
-            .road-page-hero {
-                align-items: flex-start;
-                flex-direction: column;
-                padding: 18px;
-            }
-
-            .road-wing-tabs {
-                overflow-x: auto;
-                flex-wrap: nowrap !important;
-            }
-
-            .road-results-card {
-                overflow-x: auto;
-                padding: 0 12px 12px !important;
-            }
-        }
     </style>
 @endpush
 @push('scripts')
-    <script src="{{ asset('js/wings/roads/script.js') }}" defer></script>
+    <script src="{{ asset('js/criticalityIndex/index.js') }}" defer></script>
     <script>
         const zoneDetails = @json($zoneDetails);
         const circleDetails = @json($circleDetails);
@@ -601,7 +486,6 @@
         const subDivisionDetails = @json($subDivisionDetails);
         $("#zone").on("change", function() {
             const selectedZone = $("#zone").val();
-
             $("#circle").empty().append('<option value="null">ALL CIRCLES</option>');
             $("#division").empty().append('<option value="null">ALL DIVISIONS</option>');
             $("#subDivision").empty().append('<option value="null">ALL SUBDIVISIONS</option>');
@@ -670,7 +554,6 @@
 
         $("#division").on("change", function() {
             const selectedDivision = $("#division").val();
-
             $("#subDivision").empty().append('<option value="null">ALL SUBDIVISIONS</option>');
             console.log(selectedDivision);
             if (selectedDivision === 'null') {

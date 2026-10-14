@@ -12,7 +12,9 @@ use App\Models\AssetMasterRoadCondition;
 use App\Models\AssetMasterRoadOwner;
 use App\Models\AssetMasterSubDivision;
 use App\Models\AssetMasterZone;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,19 +22,28 @@ class CriticalityReportController extends Controller
 {
     public function roadCriticalityReport()
     {
-        DB::enableQueryLog();
-        Log::info('View Road and Bridge controller: ');
-        $districts = AssetMasterLgdDistrict::all();
-        $zoneDetails = AssetMasterZone::where('dept_cd', '14')->get();
-        $circleDetails = AssetMasterCircle::where('dept_cd', '14')->get();
-        $divisionDetails = AssetMasterDivision::where('dept_cd', '14')->get();
-        $subDivisionDetails = AssetMasterSubDivision::where('dept_cd', '14')->get();
-        $roadCategories = AssetMasterRoadCategory::all();
-        $roadConditions = AssetMasterRoadCondition::all();
-        $roadTypes = AssetMasterRdType::all();
-        $roadOwners = AssetMasterRoadOwner::all();
-        $query = DB::getQueryLog();
-        Log::info($query);
-        return view('criticalityReport.roadCriticalityReport', compact('districts', 'zoneDetails', 'circleDetails', 'divisionDetails', 'subDivisionDetails', 'roadOwners', 'roadCategories', 'roadConditions', 'roadTypes'));
+        try {
+            DB::enableQueryLog();
+            Log::info('View Road and Bridge controller: ');
+            $user = Auth::user();
+            $districts = AssetMasterLgdDistrict::all();
+            $zoneDetails = AssetMasterZone::where('dept_cd', '14')->get();
+            $circleDetails = AssetMasterCircle::where('dept_cd', '14')->get();
+            $divisionDetails = AssetMasterDivision::where('dept_cd', '14')->get();
+            $subDivisionDetails = AssetMasterSubDivision::where('dept_cd', '14')->get();
+            $roadCategories = AssetMasterRoadCategory::all();
+            $roadConditions = AssetMasterRoadCondition::all();
+            $roadTypes = AssetMasterRdType::all();
+            $roadOwners = AssetMasterRoadOwner::all();
+            $query = DB::getQueryLog();
+            Log::info($query);
+            return view('criticalityReport.roadCriticalityReport', compact('districts', 'zoneDetails', 'circleDetails', 'divisionDetails', 'subDivisionDetails', 'roadOwners', 'roadCategories', 'roadConditions', 'roadTypes'));
+        } catch (Exception $e) {
+            Log::error("Error message: " . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return view('error');
+        }
     }
 }
