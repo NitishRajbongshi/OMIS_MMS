@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Master\Road\PopulationWeightageController;																   
+use App\Http\Controllers\Master\Road\PopulationWeightageController;
 use App\Http\Controllers\PMS\AssetPlanCntroller;
 use App\Http\Controllers\Master\Projects\FundingAgnecies;
 use App\Http\Controllers\Master\Projects\SchemeController;
@@ -52,7 +52,7 @@ use App\Http\Controllers\HQRoadChainage\HqRoadChainageController;
 use App\Http\Controllers\Dashboard\AssetRoadDistressDetailsController;
 use App\Http\Controllers\Admin\UnlockDataFieldController;
 use App\Http\Controllers\AssetCriticality\CriticalityIndexController;
-use App\Http\Controllers\AssetCriticality\CriticalityReportController;																	 
+use App\Http\Controllers\AssetCriticality\CriticalityReportController;
 use App\Http\Controllers\AssetImage\AssetImageController;
 use App\Http\Controllers\Building\BuildingLocationController;
 use App\Http\Controllers\Building\BuildingOccupancyController;
@@ -138,7 +138,7 @@ use App\Http\Controllers\Master\Road\RoadSubAssetController;
 use App\Http\Controllers\Mechanical\FinalizEquipmentController;
 use App\Http\Controllers\Mechanical\FinalizVehicleController;
 use App\Http\Controllers\Mechanical\MechanicalCitizenDashboard;
-use App\Http\Controllers\MIS\CriticalityIndex\CriticalityIndexMisController;																			
+use App\Http\Controllers\MIS\CriticalityIndex\CriticalityIndexMisController;
 use App\Http\Controllers\MIS\Housing\HousingMISController;
 use App\Http\Controllers\MIS\Mechanical\MechanicalMISController;
 use App\Http\Controllers\MIS\NationalHighway\NationalHighwayMISController;
@@ -221,7 +221,7 @@ Route::prefix('project-management')->middleware(['auth', 'prevent.cache'])->grou
     Route::middleware(['menu.access:19'])->group(function () {
         Route::get('/project-list', [ProjectManagementFinalizeController::class, 'index'])->name('project.verified.list');
     });
-    Route::middleware(['menu.access:18','context.access:department=14|3|6|15'])->group(function () {
+    Route::middleware(['menu.access:18', 'context.access:department=14|3|6|15'])->group(function () {
         Route::get('/finalize-project', [ProjectManagementFinalizeController::class, 'create'])->name('finalize.project');
     });
     Route::post('/freeze-project-details', [ProjectManagementFinalizeController::class, 'acceptProject'])->name('freeze.project.details');
@@ -459,7 +459,7 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     // Road Masters
     Route::resource('roadCategory', RoadCategoryController::class)->only(['index', 'store', 'update']);
     Route::resource('chainageStep', ChainageStepController::class)->only(['index', 'store', 'update']);
-	//dipshikha 9-10-2026
+    //dipshikha 9-10-2026
     Route::resource('populationWeightage', PopulationWeightageController::class)->only(['index', 'store', 'update']);
     //end					 
     Route::resource('habitationFacilities', HabitationFacilitiesController::class)->only(['index', 'store', 'update']);
@@ -495,14 +495,14 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::resource('buildingTypes', BuildingTypeController::class)->only(['index', 'store', 'update']);
     Route::resource('buildingCondition', BuildingConditionController::class)->only(['index', 'store', 'update']);
 
-	// criticality index
+    // criticality index
     Route::get('/criticality-index', [CriticalityIndexController::class, 'index'])->name('criticality.index');
     Route::post('/criticality-index', [CriticalityIndexController::class, 'store'])->name('criticality.store');
     Route::put('/criticality-index/{id}', [CriticalityIndexController::class, 'update'])->name('criticality.update');
     Route::get('/criticality-index/assets/{assetType}', [CriticalityIndexController::class, 'assets'])->name('criticality.assets');
     Route::get('/criticality-index/parameter', [CriticalityIndexController::class, 'parameter'])->name('criticality.parameter');
     Route::get('/criticality-index/list', [CriticalityIndexController::class, 'list'])->name('criticality.list');
-					
+
     // Bridge Masters
     Route::resource('abutmentType', AbutmentTypeController::class)->only(['index', 'store', 'update']);
     Route::resource('bearingType', BearingTypeController::class)->only(['index', 'store', 'update']);
@@ -547,31 +547,31 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     // -------------------------------------------------------------------------
     // DEPARTMENT MANAGEMENT
     // -------------------------------------------------------------------------
-	Route::middleware(['user.admin'])->group(function () {
+    Route::middleware(['user.admin'])->group(function () {
         Route::get('add-department', [DepartmentController::class, 'GetAddDepartment'])->name('GetAddDepartment');
         Route::post('adddepartment', [DepartmentController::class, 'AddDepartment'])->name('AddDepartment');
         Route::post('updateDepartment', [DepartmentController::class, 'updateDepartment'])->name('updateDepartment');
         Route::get("deletedepartment/{id}", [DepartmentController::class, 'deleteDepartment'])->name('deleteDepartment');
     });
-	
+
     Route::get('department-list', [DepartmentController::class, 'departmentList'])->name('departmentList');
     Route::get('datatable-department-list', [DepartmentController::class, 'DatatableDepartmentList'])->name('DatatableDepartmentList');
 
     // -------------------------------------------------------------------------
     // DESIGNATION MANAGEMENT
     // -------------------------------------------------------------------------
-	Route::middleware(['user.admin'])->group(function () {													  
-		Route::get('/manage-designation', [DesignationController::class, 'index'])->name('manageDesignation');
-		Route::post('/manage-designation', [DesignationController::class, 'store']);
-		Route::post('/update-Designation', [DesignationController::class, 'update'])->name('updateDesignation');
-		Route::get("/delete-designation/{id}", [DesignationController::class, 'destroy'])->name('deleteDesignation');
-	});   
+    Route::middleware(['user.admin'])->group(function () {
+        Route::get('/manage-designation', [DesignationController::class, 'index'])->name('manageDesignation');
+        Route::post('/manage-designation', [DesignationController::class, 'store']);
+        Route::post('/update-Designation', [DesignationController::class, 'update'])->name('updateDesignation');
+        Route::get("/delete-designation/{id}", [DesignationController::class, 'destroy'])->name('deleteDesignation');
+    });
     Route::get('/designation-history', [DesignationController::class, 'getDesignationHistory'])->name('designationUserHistory')->middleware('signed');
 
     // -------------------------------------------------------------------------
     // OFFICE MANAGEMENT
     // -------------------------------------------------------------------------
-	Route::middleware(['user.admin'])->group(function () {
+    Route::middleware(['user.admin'])->group(function () {
         Route::get('/manage-office', [OfficeController::class, 'index'])->name('manageOffice');
         Route::post('/manage-office', [OfficeController::class, 'store']);
         Route::post('/update-office', [OfficeController::class, 'update'])->name('updateOffice');
@@ -668,16 +668,16 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
         Route::get('/abstract-road-and-bridge-division', [RoadController::class, 'getRoadAbstractByDivision'])->name('abstract.R&BDivison');
         Route::get('/getRoadsAssetsAbstractDetails/{rd_id}', [RoadController::class, 'getRoadsAssetsAbstractDetails'])->middleware(['auth'])->name('getRoadsAssetsAbstractDetails');
 
-		// Maker Checker Workflow
-		Route::get('/handle-maker-checker-workflow', [MakerCheckerHandleController::class, 'index'])->name('handleMakerChecker');
-		Route::post('/update-maker-checker-workflow', [MakerCheckerHandleController::class, 'update'])->name('updateMakerChecker');
+        // Maker Checker Workflow
+        Route::get('/handle-maker-checker-workflow', [MakerCheckerHandleController::class, 'index'])->name('handleMakerChecker');
+        Route::post('/update-maker-checker-workflow', [MakerCheckerHandleController::class, 'update'])->name('updateMakerChecker');
 
-		// Road Abstract - Sub-assets Details
+        // Road Abstract - Sub-assets Details
         Route::get('/getCDWorkDetailsOfARoad/{rd_id}', [CulvertAbstractController::class, 'getCulvertDetails'])->name('getCDWorkDetailsOfARoad');
 
-		// Chainage
+        // Chainage
         Route::get('/chainage/{id}', [ChainageController::class, 'index']);
-        Route::get('/get-chainage', [ChainageController::class, 'show'])->name('roadChainage');															   
+        Route::get('/get-chainage', [ChainageController::class, 'show'])->name('roadChainage');
 
         // CD Works (Culverts)
         Route::get('/manage-cdWorks/{id}', [RoadCDWorkController::class, 'index'])->name('manageCDWorks');
@@ -694,7 +694,7 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
         Route::get('/get-head-wall-detail-finalized/{id}', [RoadCDWorkController::class, 'getFinalizedHeadWallDetails']);
         Route::get('/get-culvert-lat-lng/{id}', [RoadCDWorkController::class, 'getLatLng']);
         Route::get('/get-culvert-details/{id}', [RoadCDWorkController::class, 'getCulvertDetails']);
-        
+
         // Pavement
         Route::get('/manage-pavement/{id}', [RoadPavementController::class, 'index'])->name('managePavement');
         Route::get('/create-pavement', [RoadPavementController::class, 'create'])->name('createPavement');
@@ -751,10 +751,10 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::get('/village/{id}', [RoadHabitationController::class, 'getVillage'])->name('villageList');
     Route::get('/block/{id}', [RoadHabitationController::class, 'getBlock'])->name('blockList');
     Route::get('/habitation-population/{id}', [RoadHabitationController::class, 'getPopulation'])->middleware(['auth']);
-	//dipshikha 9-10-2026
-    Route::get('/get-population-weightage',[RoadHabitationController::class, 'getWeightage'])->name('getPopulationWeightage');
-    Route::get('/get-facility-weightage',[RoadHabitationController::class, 'getFacilityWeightage'])->name('getFacilityWeightage');
-    Route::get('/get-sub-facility-weightage',[RoadHabitationController::class, 'getSubFacilityWeightage'])->name('getSubFacilityWeightage');					 
+    //dipshikha 9-10-2026
+    Route::get('/get-population-weightage', [RoadHabitationController::class, 'getWeightage'])->name('getPopulationWeightage');
+    Route::get('/get-facility-weightage', [RoadHabitationController::class, 'getFacilityWeightage'])->name('getFacilityWeightage');
+    Route::get('/get-sub-facility-weightage', [RoadHabitationController::class, 'getSubFacilityWeightage'])->name('getSubFacilityWeightage');
 
     // Protection Wall
     Route::get('/add-protection-wall/{id}', [ProtectionWallController::class, 'index'])->name('road.protection.wall');
@@ -979,8 +979,8 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::get('/view-surface-types', [ViewRoadAndBridgeController::class, 'showSurfaceTypeDetails'])->name('viewSurfaceType');
     Route::get('/view-habitation', [ViewRoadAndBridgeController::class, 'showHabitationDetails'])->name('viewHabitation');
 
-	// Critical index Reports
-    Route::get('/critical-index/roads', [CriticalityReportController::class, 'roadCriticalityReport'])->name('criticality.report.roads');						 
+    // Critical index Reports
+    Route::get('/critical-index/roads', [CriticalityReportController::class, 'roadCriticalityReport'])->name('criticality.report.roads');
 
     // National Highway
     Route::get('/view-national-highway', [ViewNationalHighwayController::class, 'showNationalHighway'])->name('viewNHWings');
@@ -1015,7 +1015,7 @@ Route::prefix('asset-management')->middleware(['auth', 'prevent.cache'])->group(
     Route::get('/mis-road-surfaceType', [RoadMISController::class, 'searchSurfaceType'])->name('searchSurfaceType');
     Route::get('/mis-road-habitation', [RoadMISController::class, 'searchHabitation'])->name('searchHabitation');
 
-	// MIS - Criticality Index
+    // MIS - Criticality Index
     Route::get('/mis/criticality-index/roads', [CriticalityIndexMisController::class, 'searchCriticalityIndexRoads'])->name('mis.ci.roads');
 
     // MIS Filters
@@ -1062,8 +1062,8 @@ Route::prefix('maintenance-management')->middleware(['auth', 'prevent.cache'])->
     Route::get('/maintenance-assessment', [MaintenanceAssessmentController::class, 'index'])->name('mmis.maintenance-assessment.index');
     Route::get('/maintenance-assessment/assets/{assetType}', [MaintenanceAssessmentController::class, 'assets'])->name('mmis.maintenance-assessment.assets');
     Route::get('/maintenance-assessment/{inspection}', [MaintenanceAssessmentController::class, 'show'])->name('mmis.maintenance-assessment.show');
-    Route::post('/maintenance-assessment/calculate',[MaintenanceAssessmentController::class, 'calculate'])->name('mmis.maintenance-assessment.calculate');
-    Route::post('/maintenance-assessment/save',[MaintenanceAssessmentController::class, 'saveAssessment'])->name('mmis.maintenance-assessment.save');
+    Route::post('/maintenance-assessment/calculate', [MaintenanceAssessmentController::class, 'calculate'])->name('mmis.maintenance-assessment.calculate');
+    Route::post('/maintenance-assessment/save', [MaintenanceAssessmentController::class, 'saveAssessment'])->name('mmis.maintenance-assessment.save');
     // Added by PUlak 11-09-2026
     // Route::get('/inspection', [InspectionController::class, 'index'])->name('mmis.inspection.index');
     // Route::get('/inspection/{id}', [InspectionController::class, 'show'])->name('mmis.inspection.show');
@@ -1080,18 +1080,18 @@ Route::prefix('maintenance-management')->middleware(['auth', 'prevent.cache'])->
     // ================================================================
     // COMPLETED MAINTENANCE ASSESSMENTS
     // ================================================================
-    Route::get('/completed-maintenance-assessments',[CompletedMaintenanceAssessmentController::class, 'index'])->name('mmis.completed-maintenance-assessment.index');
-    Route::get('/completed-maintenance-assessments/{assessment}',[CompletedMaintenanceAssessmentController::class, 'show'])->name('mmis.completed-maintenance-assessment.show');
-																	   
-	// Added by Dipshikha 29-09-2026								
+    Route::get('/completed-maintenance-assessments', [CompletedMaintenanceAssessmentController::class, 'index'])->name('mmis.completed-maintenance-assessment.index');
+    Route::get('/completed-maintenance-assessments/{assessment}', [CompletedMaintenanceAssessmentController::class, 'show'])->name('mmis.completed-maintenance-assessment.show');
+
+    // Added by Dipshikha 29-09-2026								
     Route::get('/parameter-weightage', [WeightageController::class, 'index'])->name('mmis.parameter-weightage.index');
     Route::get('/getAssetList', [WeightageController::class, 'getAssetList'])->name('getAssetList');
     Route::get('/parameters', [WeightageController::class, 'getParameters'])->name('mmis.parameters');
     Route::post('/save', [WeightageController::class, 'saveWeightage'])->name('mmis.save');
     Route::get('/parameter-mapping', [WeightageController::class, 'mapping'])->name('mmis.parameter-weightage.mapping');
-    Route::get('/mapping-parameters',[WeightageController::class, 'getMappingParameters']);
-    Route::post('/save-mapping',[WeightageController::class, 'saveMapping']);
-	// Added by Dipshikha 29-09-2026 -- End				  
+    Route::get('/mapping-parameters', [WeightageController::class, 'getMappingParameters']);
+    Route::post('/save-mapping', [WeightageController::class, 'saveMapping']);
+    // Added by Dipshikha 29-09-2026 -- End				  
 });
 
 // =============================================================================

@@ -10,69 +10,62 @@ use Illuminate\Support\Facades\Log;
 
 class CriticalityIndexMisController extends Controller
 {
+
     public function searchCriticalityIndexRoads(Request $request)
     {
         try {
             if ($request->header('X-CSRF-TOKEN')) {
+                DB::enableQueryLog();
+                Log::info('MIS Road Controller: ');
                 $category = $request->input('category');
                 $type = $request->input('type');
-                $owner = $request->input('owner');
                 $zoneCd = $request->input('zone');
                 $circleCd = $request->input('circle');
                 $divisionCd = $request->input('division');
                 $subDivisionCd = $request->input('subDivision');
-                $baseQuery = DB::table('asset_road_details')
+                $baseQuery = DB::table('maintenance.master_asset_criticality_indexes as ci')
                     ->select(
-                        'asset_road_details.rd_system_id',
-                        'asset_road_details.rd_number',
-                        'asset_road_details.rd_name',
-                        'asset_road_details.road_length',
-                        'asset_road_details.district_name',
-                        'asset_road_details.division_name',
-                        'asset_road_details.rd_category_cd',
-                        'asset_road_details.lat',
-                        'asset_road_details.lng',
+                        'ci.asset_id',
+                        'ci.criticality_index',
+                        'rd.rd_system_id',
+                        'rd.rd_number',
+                        'rd.rd_name',
+                        'rd.road_length',
                         'asset_master_road_category.rd_catg_descr',
-                        'asset_master_rd_type.rd_type_descr',
-                        'asset_master_road_owner.owner_name'
                     )
-                    ->leftJoin('asset_master_road_category', 'asset_road_details.rd_category_cd', '=', 'asset_master_road_category.rd_catg_cd')
-                    ->leftJoin('asset_master_rd_type', 'asset_road_details.rd_type_cd', '=', 'asset_master_rd_type.rd_type_cd')
-                    ->leftJoin('asset_master_road_owner', 'asset_road_details.rd_owner_cd', '=', 'asset_master_road_owner.owner_cd')
-                    ->where('asset_road_details.road_type', '=', 'SR')
-                    ->orderBy('created_at', 'desc');
+                    ->leftJoin('asset_road_details as rd', 'rd.rd_system_id', '=', 'ci.asset_id')
+                    ->leftJoin('asset_master_road_category', 'rd.rd_category_cd', '=', 'asset_master_road_category.rd_catg_cd')
+                    ->where('rd.road_type', '=', 'SR')
+                    ->orderBy('rd.created_at', 'desc');
                 if ($category != 'null') {
-                    $baseQuery->where('asset_road_details.rd_category_cd', $category);
+                    $baseQuery->where('rd.rd_category_cd', $category);
                 }
                 if ($type != 'null') {
-                    $baseQuery->where('asset_road_details.rd_type_cd', $type);
+                    $baseQuery->where('rd.rd_type_cd', $type);
                 }
-                // if ($owner != 'null') {
-                //     $baseQuery->where('asset_road_details.rd_owner_cd', $owner);
-                // }
                 if ($zoneCd != 'null') {
-                    $baseQuery->whereIn('asset_road_details.rd_system_id', function ($query) use ($zoneCd) {
+                    $baseQuery->whereIn('rd.rd_system_id', function ($query) use ($zoneCd) {
                         $query->select(DB::raw('distinct(arcm.rd_system_id)'))
                             ->from('asset_road_chainage_mappings as arcm')
                             ->where('zone_cd', $zoneCd);
                     });
                 }
                 if ($circleCd != 'null') {
-                    $baseQuery->whereIn('asset_road_details.rd_system_id', function ($query) use ($circleCd) {
+                    $baseQuery->whereIn('rd.rd_system_id', function ($query) use ($circleCd) {
                         $query->select(DB::raw('distinct(arcm.rd_system_id)'))
                             ->from('asset_road_chainage_mappings as arcm')
                             ->where('circle_cd', $circleCd);
                     });
                 }
                 if ($divisionCd != 'null') {
-                    $baseQuery->whereIn('asset_road_details.rd_system_id', function ($query) use ($divisionCd) {
+                    $baseQuery->whereIn('rd.rd_system_id', function ($query) use ($divisionCd) {
                         $query->select(DB::raw('distinct(arcm.rd_system_id)'))
                             ->from('asset_road_chainage_mappings as arcm')
                             ->where('division_cd', $divisionCd);
                     });
                 }
                 if ($subDivisionCd != 'null') {
-                    $baseQuery->whereIn('asset_road_details.rd_system_id', function ($query) use ($subDivisionCd) {
+                    $baseQuery->whereIn('rd.rd_system_id', function ($query) use ($subDivisionCd) {
                         $query->select(DB::raw('distinct(arcm.rd_system_id)'))
                             ->from('asset_road_chainage_mappings as arcm')
                             ->where('sub_division_cd', $subDivisionCd);
