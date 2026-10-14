@@ -14,9 +14,11 @@ use Throwable;
 
 class InspectionController extends Controller
 {
+    private const DB_CONNECTION = 'pgsql_maintenance';
     private function inspectionQuery()
     {
-        return DB::table('maintenance.mtn_inspection_details as insp')
+        return DB::connection(self::DB_CONNECTION)
+            ->table('maintenance.mtn_inspection_details as insp')
             ->leftJoin(
                 'maintenance.master_mtn_inspection_types as insp_type',
                 'insp_type.inspection_type_cd',
@@ -169,9 +171,9 @@ class InspectionController extends Controller
             'created_at'                    => $now,
             'updated_at'                    => $now,
             'created_at_office_cd'          => $pciData['created_at_office_cd'] ?? null,
-            'sent_for_finalize'             => 'N',
+            // 'sent_for_finalize'             => 'N',
             'pci_year'                      => $pciData['pci_year'] ?? null,
-            'is_rejected'                   => 'N',
+            // 'is_rejected'                   => 'N',
         ];
 
         Log::info('Attempting to insert PCI record', [
@@ -180,9 +182,9 @@ class InspectionController extends Controller
             'user_id' => $userId,
         ]);
 
-        $inserted = DB::table(
-            'public.asset_road_pavement_condition_indexes_draft'
-        )->insert($insertData);
+        $inserted = DB::connection(self::DB_CONNECTION)
+            ->table('public.asset_road_pavement_condition_indexes')
+            ->insert($insertData);
 
         if (!$inserted) {
             Log::error('PCI insert returned false', [
@@ -205,14 +207,10 @@ class InspectionController extends Controller
     public function store(StoreInspectionRequest $request)
     {
         try {
-
-            $inspection = DB::transaction(function () use ($request) {
-
+            $inspection = DB::connection(self::DB_CONNECTION)->transaction(function () use ($request) {
                 $data = $request->validated();
-
                 // Get authenticated user once
                 $userId = $data['created_by'];
-
                 Log::info('Inspection API request received', [
                     'user_id' => $userId,
                     'pci_value' => $data['pci_value'] ?? null,
@@ -225,23 +223,14 @@ class InspectionController extends Controller
 
                 unset($data['observations']);
 
-                /*
-            |--------------------------------------------------------------------------
-            | PCI DATA
-            |--------------------------------------------------------------------------
-            */
-
                 $pciReference = null;
-
                 $hasPciValue =
                     array_key_exists('pci_value', $data)
                     && $data['pci_value'] !== null
                     && $data['pci_value'] !== '';
 
                 if ($hasPciValue) {
-
                     Log::info('PCI value exists. Creating PCI record.');
-
                     $pciData = [
                         'pci_section_length_in_meter'   => $data['pci_section_length_in_meter'] ?? null,
                         'rd_system_id'                  => $data['rd_system_id'] ?? null,
@@ -261,10 +250,6 @@ class InspectionController extends Controller
                         'created_at_office_cd'          => $data['created_at_office_cd'] ?? null,
                         'pci_year'                      => $data['pci_year'] ?? null,
                     ];
-
-                    /*
-                 * Store PCI first
-                 */
                     $pciReference = $this->storePciRecord(
                         $pciData,
                         $userId
@@ -273,10 +258,6 @@ class InspectionController extends Controller
                     Log::info('PCI record created', [
                         'pci_section_cd' => $pciReference,
                     ]);
-
-                    /*
-                 * Remove PCI-specific fields from inspection data.
-                 */
                     unset(
                         $data['pci_section_length_in_meter'],
                         $data['rd_system_id'],
@@ -296,19 +277,9 @@ class InspectionController extends Controller
                         $data['created_at_office_cd'],
                         $data['pci_year']
                     );
-
-                    /*
-                 * Store returned PCI reference in inspection.
-                 */
                     $data['pci_section_cd'] = $pciReference;
                 } else {
-
                     Log::info('PCI value is NULL. No PCI record will be created.');
-
-                    /*
-                 * Remove PCI fields because they don't belong
-                 * to mtn_inspection_details.
-                 */
                     unset(
                         $data['pci_section_length_in_meter'],
                         $data['rd_system_id'],
@@ -328,18 +299,8 @@ class InspectionController extends Controller
                         $data['created_at_office_cd'],
                         $data['pci_year']
                     );
-
-                    /*
-                 * Make sure inspection has no PCI reference.
-                 */
                     $data['pci_section_cd'] = null;
                 }
-
-                /*
-            |--------------------------------------------------------------------------
-            | INSPECTION
-            |--------------------------------------------------------------------------
-            */
 
                 if (empty($data['insp_cd'])) {
                     $data['insp_cd'] =
@@ -362,22 +323,13 @@ class InspectionController extends Controller
                     'insp_cd' => $inspection->insp_cd,
                 ]);
 
-                /*
-            |--------------------------------------------------------------------------
-            | OBSERVATIONS
-            |--------------------------------------------------------------------------
-            */
-
                 if (!empty($observations)) {
-
                     $now = now();
-
                     $rows = array_map(function ($obs) use (
                         $inspection,
                         $now,
                         $userId
                     ) {
-
                         return [
                             'insp_id'         => $inspection->id,
                             'activity_cd'     => $obs['activity_cd'],
@@ -390,23 +342,14 @@ class InspectionController extends Controller
                             'updated_at'      => $now,
                         ];
                     }, $observations);
-
                     MtnInspObservationDetail::insert($rows);
-
                     Log::info('Inspection observations created', [
                         'inspection_id' => $inspection->id,
                         'count' => count($rows),
                     ]);
                 }
-
                 return $inspection;
             });
-
-            /*
-        |--------------------------------------------------------------------------
-        | SUCCESS
-        |--------------------------------------------------------------------------
-        */
 
             return response()->json([
                 'success' => true,
@@ -419,15 +362,12 @@ class InspectionController extends Controller
                 ],
             ], 201);
         } catch (QueryException $e) {
-
             Log::error('Database error creating inspection', [
                 'sql_state' => $e->getCode(),
                 'message' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ]);
-
             if ($e->getCode() === '23505') {
-
                 return response()->json([
                     'success' => false,
                     'status_code' => 409,
@@ -436,9 +376,7 @@ class InspectionController extends Controller
                     'data' => null,
                 ], 409);
             }
-
             if ($e->getCode() === '23503') {
-
                 return response()->json([
                     'success' => false,
                     'status_code' => 422,
@@ -456,7 +394,6 @@ class InspectionController extends Controller
                 'data' => null,
             ], 500);
         } catch (Throwable $e) {
-
             Log::error('Unexpected error creating inspection', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
@@ -464,7 +401,6 @@ class InspectionController extends Controller
                 'line' => $e->getLine(),
                 'user_id' => auth()->id(),
             ]);
-
             return response()->json([
                 'success' => false,
                 'status_code' => 500,
@@ -487,13 +423,10 @@ class InspectionController extends Controller
                     'data' => null,
                 ], 422);
             }
-
             $id = (int) $id;
-
             $inspection = $this->inspectionQuery()
                 ->where('insp.id', $id)
                 ->first();
-
             // Record not found
             if (!$inspection) {
                 return response()->json([
@@ -511,7 +444,6 @@ class InspectionController extends Controller
                 'data' => $inspection,
             ], 200);
         } catch (Throwable $e) {
-
             Log::error('Failed to retrieve inspection details.', [
                 'inspection_id' => $id ?? null,
                 'exception' => get_class($e),
@@ -519,7 +451,6 @@ class InspectionController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
-
             return response()->json([
                 'success' => false,
                 'status_code' => 500,
