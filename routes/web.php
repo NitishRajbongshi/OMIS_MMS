@@ -201,6 +201,8 @@ Route::group(['middleware' => ['auth', 'prevent.cache']], function () {
 Route::prefix('project-management')->middleware(['auth', 'prevent.cache'])->group(function () {
     // Project CRUD Operations
     Route::get('/', [HomeController::class, 'pmsLanding'])->name('pms.landing');
+    Route::get('/completed-projects', [HomeController::class, 'completedProjects'])->name('pms.completed-projects');
+
     Route::middleware(['menu.access:17', 'context.access:department=14|3|6|15'])->group(function () {
         Route::get('/manage-project', [ProjectManagementController::class, 'create'])->name('manage-project');
         Route::post('/manage-project', [ProjectManagementController::class, 'store']);

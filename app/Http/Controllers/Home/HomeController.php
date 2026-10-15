@@ -9,7 +9,6 @@ use App\Models\UserMenuDetail;
 use Exception;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
-use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -33,6 +32,11 @@ class HomeController extends Controller
             Log::error("message: " . $e->getMessage());
             return view('error');
         }
+    }
+
+    public function completedProjects()
+    {
+        dd('here');
     }
 
     public function portalLanding()
@@ -107,7 +111,7 @@ class HomeController extends Controller
         }
     }
 
-    public function pmsLanding()
+    public function pmsLandingOld()
     {
         try {
             $itemProgress = DB::table('projects.prt_project_work_items_details as wi')
@@ -157,17 +161,17 @@ class HomeController extends Controller
                 $projectsQuery->where('p.division_cd', $mapping['division_cd']);
             }
 
-            \Log::info('Maintenance landing: starting projects query');
+            Log::info('Maintenance landing: starting projects query');
 
             $queryStart = microtime(true);
 
             $projects = $projectsQuery->get();
 
-            \Log::info('Maintenance landing: projects query completed', [
+            Log::info('Maintenance landing: projects query completed', [
                 'count' => $projects->count(),
                 'duration_seconds' => round(microtime(true) - $queryStart, 2),
             ]);
-            
+
             $today = now()->startOfDay();
             $statusCounts = ['Completed' => 0, 'Ongoing' => 0, 'Delayed' => 0, 'Not Started' => 0];
 
@@ -246,7 +250,351 @@ class HomeController extends Controller
 
             return view('pms.pmsHome', compact('dashboard', 'monthlyCompletions', 'contractorProgress'));
         } catch (Exception $e) {
-            Log::error('PMS dashboard error: '.$e->getMessage(), ['exception' => $e]);
+            Log::error('PMS dashboard error: ' . $e->getMessage(), ['exception' => $e]);
+            return view('error');
+        }
+    }
+
+
+    public function pmsLanding(Request $request)
+    {
+        try {
+            // -------------------------------------------------
+            // 1. Calculate project-level physical progress
+            // -------------------------------------------------
+            $itemProgress = DB::table('projects.prt_project_work_items_details as wi')
+                ->leftJoin('projects.prt_project_progress_details_work_item_wise as pp', function ($join) {
+                    $join->on('pp.item_id', '=', 'wi.id')
+                        ->where('pp.status', 'A');
+                })
+                ->select(
+                    'wi.project_cd',
+                    DB::raw('
+                    CASE
+                        WHEN wi.quantity > 0
+                        THEN LEAST(
+                            (COALESCE(SUM(pp.quantity_done), 0) / wi.quantity) * 100,
+                            100
+                        )
+                        ELSE 0
+                    END AS item_progress
+                ')
+                )
+                ->groupBy('wi.project_cd', 'wi.id', 'wi.quantity');
+
+            $projectProgress = DB::query()
+                ->fromSub($itemProgress, 'item_progress')
+                ->select(
+                    'project_cd',
+                    DB::raw('ROUND(AVG(item_progress), 2) AS physical_progress')
+                )
+                ->groupBy('project_cd');
+
+            $payments = DB::table('projects.prt_project_payment_details')
+                ->select(
+                    'project_cd',
+                    DB::raw('COALESCE(SUM(payment_amount), 0) AS paid_amount')
+                )
+                ->groupBy('project_cd');
+
+            // -------------------------------------------------
+            // 2. Main dashboard project query
+            // Existing dashboard scope remains unchanged
+            // -------------------------------------------------
+            $projectsQuery = DB::table('projects.prt_project_details as p')
+                ->leftJoinSub(
+                    $projectProgress,
+                    'progress',
+                    'progress.project_cd',
+                    '=',
+                    'p.project_cd'
+                )
+                ->leftJoinSub(
+                    $payments,
+                    'payments',
+                    'payments.project_cd',
+                    '=',
+                    'p.project_cd'
+                )
+                ->leftJoin(
+                    'projects.prt_contractor_details as contractor',
+                    'contractor.regn_no',
+                    '=',
+                    'p.project_awarded_to'
+                )
+                ->select(
+                    'p.project_cd',
+                    'p.project_end_date',
+                    'p.work_order_amount',
+                    'p.project_awarded_to',
+                    'contractor.contractors_name as contractor_name',
+                    DB::raw('COALESCE(progress.physical_progress, 0) AS physical_progress'),
+                    DB::raw('COALESCE(payments.paid_amount, 0) AS paid_amount')
+                )
+                ->where('p.is_published', 'Y');
+
+            $user = Auth::user();
+
+            if ($user && $user->department) {
+                $projectsQuery->where('p.owner_dept_cd', $user->department);
+            }
+
+            $mapping = (array) session('userMapping', []);
+            $officeType = $mapping['office_type_cd'] ?? null;
+
+            if ($officeType === 'SDO' && !empty($mapping['sub_division_cd'])) {
+                $projectsQuery->where(
+                    'p.sub_division_cd',
+                    $mapping['sub_division_cd']
+                );
+            } elseif ($officeType === 'DO' && !empty($mapping['division_cd'])) {
+                $projectsQuery->where(
+                    'p.division_cd',
+                    $mapping['division_cd']
+                );
+            }
+
+            $projects = $projectsQuery->get();
+
+            // -------------------------------------------------
+            // 3. Dashboard KPIs and status counts
+            // -------------------------------------------------
+            $today = now()->startOfDay();
+
+            $statusCounts = [
+                'Completed' => 0,
+                'Ongoing' => 0,
+                'Delayed' => 0,
+                'Not Started' => 0,
+            ];
+
+            foreach ($projects as $project) {
+                $physical = (float) $project->physical_progress;
+
+                if ($physical >= 100) {
+                    $statusCounts['Completed']++;
+                } elseif (
+                    $project->project_end_date &&
+                    \Carbon\Carbon::parse($project->project_end_date)
+                    ->startOfDay()->lt($today)
+                ) {
+                    $statusCounts['Delayed']++;
+                } elseif ($physical <= 0) {
+                    $statusCounts['Not Started']++;
+                } else {
+                    $statusCounts['Ongoing']++;
+                }
+            }
+
+            $totalProjects = $projects->count();
+            $totalBudget = (float) $projects->sum('work_order_amount');
+            $totalPaid = (float) $projects->sum('paid_amount');
+
+            $dashboard = [
+                'total_projects' => $totalProjects,
+                'completed_projects' => $statusCounts['Completed'],
+                'delayed_projects' => $statusCounts['Delayed'],
+                'total_budget' => $totalBudget,
+                'total_paid' => $totalPaid,
+                'physical_progress' => $totalProjects
+                    ? round((float) $projects->avg('physical_progress'), 1)
+                    : 0,
+                'financial_progress' => $totalBudget > 0
+                    ? round(min(($totalPaid / $totalBudget) * 100, 100), 1)
+                    : 0,
+                'status_counts' => $statusCounts,
+            ];
+
+            // -------------------------------------------------
+            // 4. Contractor-wise physical progress chart
+            // -------------------------------------------------
+            $contractorProgress = $projects
+                ->filter(function ($project) {
+                    return !empty($project->project_awarded_to);
+                })
+                ->groupBy('project_awarded_to')
+                ->map(function ($contractorProjects) {
+                    $firstProject = $contractorProjects->first();
+
+                    return [
+                        'name' => $firstProject->contractor_name
+                            ?: $firstProject->project_awarded_to,
+                        'progress' => round(
+                            (float) $contractorProjects->avg('physical_progress'),
+                            1
+                        ),
+                        'projects' => $contractorProjects->count(),
+                    ];
+                })
+                ->sortByDesc('progress')
+                ->values();
+
+            // -------------------------------------------------
+            // 5. Monthly Project Completion filters
+            // These filters are independent of the logged-in
+            // user's department and office mapping.
+            // -------------------------------------------------
+            $selectedDepartment = $request->filled('department_id')
+                ? (int) $request->input('department_id')
+                : null;
+
+            $selectedContractor = $request->filled('contractor_id')
+                ? (string) $request->input('contractor_id')
+                : null;
+
+            // Validate selected department
+            if (
+                $selectedDepartment !== null &&
+                !DB::table('public.department_details')
+                    ->where('id', $selectedDepartment)
+                    ->exists()
+            ) {
+                $selectedDepartment = null;
+            }
+
+            // Validate contractor against the selected department
+            if ($selectedContractor !== null) {
+                $contractorExists = DB::table('projects.prt_project_details as p')
+                    ->where('p.project_awarded_to', $selectedContractor)
+                    ->when(
+                        $selectedDepartment !== null,
+                        function ($query) use ($selectedDepartment) {
+                            $query->where(
+                                'p.owner_dept_cd',
+                                $selectedDepartment
+                            );
+                        }
+                    )
+                    ->exists();
+
+                if (!$contractorExists) {
+                    $selectedContractor = null;
+                }
+            }
+
+            // Department dropdown
+            $departments = DB::table('public.department_details')
+                ->select('id', 'department_name')
+                ->orderBy('precedence_order')
+                ->orderBy('department_name')
+                ->get();
+
+            // Contractor dropdown: only contractors with projects
+            // in the selected department, or all contractors if
+            // no department has been selected.
+            $contractorsQuery = DB::table('projects.prt_project_details as p')
+                ->join(
+                    'projects.prt_contractor_details as c',
+                    'c.regn_no',
+                    '=',
+                    'p.project_awarded_to'
+                )
+                ->whereNotNull('p.project_awarded_to')
+                ->where('p.project_awarded_to', '<>', '');
+
+            if ($selectedDepartment !== null) {
+                $contractorsQuery->where(
+                    'p.owner_dept_cd',
+                    $selectedDepartment
+                );
+            }
+
+            $contractors = $contractorsQuery
+                ->select('c.regn_no', 'c.contractors_name')
+                ->distinct()
+                ->orderBy('c.contractors_name')
+                ->get();
+
+            // -------------------------------------------------
+            // 6. Monthly completion chart
+            // Last 12 calendar months, including current month
+            // -------------------------------------------------
+            $monthStart = now()->startOfMonth()->subMonths(11);
+            $monthEnd = now()->endOfMonth();
+
+            $completionQuery = DB::table(
+                'projects.prt_project_report_movements as movement'
+            )
+                ->join(
+                    'projects.prt_project_details as p',
+                    'p.project_cd',
+                    '=',
+                    'movement.project_cd'
+                )
+                ->whereNotNull('movement.prj_completion_date')
+                ->whereDate(
+                    'movement.prj_completion_date',
+                    '>=',
+                    $monthStart->toDateString()
+                )
+                ->whereDate(
+                    'movement.prj_completion_date',
+                    '<=',
+                    $monthEnd->toDateString()
+                );
+
+            // Selected department filter
+            if ($selectedDepartment !== null) {
+                $completionQuery->where(
+                    'p.owner_dept_cd',
+                    $selectedDepartment
+                );
+            }
+
+            // Selected contractor filter
+            if ($selectedContractor !== null) {
+                $completionQuery->where(
+                    'p.project_awarded_to',
+                    $selectedContractor
+                );
+            }
+
+            // Count each project once, using its earliest
+            // completion date within the selected time window.
+            $completedProjects = $completionQuery
+                ->select(
+                    'p.project_cd',
+                    DB::raw('MIN(movement.prj_completion_date) AS completion_date')
+                )
+                ->groupBy('p.project_cd')
+                ->get();
+
+            $monthlyCompletions = collect(range(0, 11))
+                ->map(function ($offset) use (
+                    $monthStart,
+                    $completedProjects
+                ) {
+                    $month = $monthStart->copy()->addMonths($offset);
+
+                    $count = $completedProjects->filter(
+                        function ($project) use ($month) {
+                            return \Carbon\Carbon::parse(
+                                $project->completion_date
+                            )->format('Y-m') === $month->format('Y-m');
+                        }
+                    )->count();
+
+                    return [
+                        'label' => $month->format('M Y'),
+                        'count' => $count,
+                    ];
+                })
+                ->values();
+
+            return view('pms.pmsHome', compact(
+                'dashboard',
+                'monthlyCompletions',
+                'contractorProgress',
+                'departments',
+                'contractors',
+                'selectedDepartment',
+                'selectedContractor'
+            ));
+        } catch (\Exception $e) {
+            Log::error('PMS dashboard error: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
             return view('error');
         }
     }
