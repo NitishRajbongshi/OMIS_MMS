@@ -92,7 +92,7 @@
                 <div class="pms-chart-wrap pms-chart-line"><canvas id="completionChart"></canvas></div>
             </article> --}}
 
-
+            {{-- Nitish: 15-10-26 --}}
             <article class="pms-panel pms-panel-wide">
                 <div class="pms-panel-heading">
                     <div>
@@ -154,7 +154,7 @@
                     <canvas id="completionChart"></canvas>
                 </div>
             </article>
-
+            {{-- Nitish: 15-10-26 --}}
 
             <article class="pms-panel pms-panel-wide">
                 <div class="pms-panel-heading">
@@ -275,54 +275,7 @@
                 }
             });
 
-            // new Chart(document.getElementById('completionChart'), {
-            //     type: 'line',
-            //     data: {
-            //         labels: monthData.map(function(row) {
-            //             return row.label;
-            //         }),
-            //         datasets: [{
-            //             label: 'Completed Projects',
-            //             data: monthData.map(function(row) {
-            //                 return row.count;
-            //             }),
-            //             borderColor: '#3976c5',
-            //             backgroundColor: 'rgba(57,118,197,.10)',
-            //             pointBackgroundColor: '#3976c5',
-            //             pointRadius: 4,
-            //             borderWidth: 3,
-            //             fill: true,
-            //             lineTension: .28
-            //         }]
-            //     },
-            //     options: {
-            //         responsive: true,
-            //         maintainAspectRatio: false,
-            //         legend: {
-            //             display: false
-            //         },
-            //         scales: {
-            //             yAxes: [{
-            //                 ticks: {
-            //                     beginAtZero: true,
-            //                     precision: 0
-            //                 },
-            //                 gridLines: {
-            //                     color: '#edf1f5'
-            //                 }
-            //             }],
-            //             xAxes: [{
-            //                 gridLines: {
-            //                     display: false
-            //                 }
-            //             }]
-            //         }
-            //     }
-            // });
-
-
             var completionCanvas = document.getElementById('completionChart');
-
             if (completionCanvas) {
                 new Chart(completionCanvas, {
                     type: 'line',
@@ -372,7 +325,56 @@
                                     return ' ' + item.yLabel + ' completed projects';
                                 }
                             }
+                        },
+                        // Nitish: 15-10-26
+                        onClick: function(event, elements) {
+                            if (!elements || elements.length === 0) {
+                                return;
+                            }
+
+                            // Support both Chart.js v2 and newer versions.
+                            var index = elements[0].index;
+
+                            if (index === undefined) {
+                                index = elements[0]._index;
+                            }
+
+                            // Prevent accessing an invalid data point.
+                            if (
+                                index === undefined ||
+                                index < 0 ||
+                                index >= monthData.length
+                            ) {
+                                console.error('Invalid chart point index:', index);
+                                return;
+                            }
+
+                            var selectedData = monthData[index];
+
+                            if (!selectedData || !selectedData.month_start) {
+                                console.error('Missing month_start:', selectedData);
+                                return;
+                            }
+
+                            var params = new URLSearchParams();
+                            params.set('month', selectedData.month_start);
+
+                            var department = document.getElementById('department_id');
+                            var contractor = document.getElementById('contractor_id');
+
+                            if (department && department.value) {
+                                params.set('department_id', department.value);
+                            }
+
+                            if (contractor && contractor.value) {
+                                params.set('contractor_id', contractor.value);
+                            }
+
+                            window.location.href =
+                                "{{ route('pms.completed-projects') }}" +
+                                '?' + params.toString();
                         }
+                        // Nitish: 15-10-26
                     }
                 });
             }
