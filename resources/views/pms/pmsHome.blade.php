@@ -81,7 +81,7 @@
                         <strong>{{ $dashboard['financial_progress'] }}%</strong></span></div>
             </article>
 
-            <article class="pms-panel pms-panel-wide">
+            {{-- <article class="pms-panel pms-panel-wide">
                 <div class="pms-panel-heading">
                     <div>
                         <h2>Monthly Project Completion</h2>
@@ -90,7 +90,71 @@
                             class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="pms-chart-wrap pms-chart-line"><canvas id="completionChart"></canvas></div>
+            </article> --}}
+
+
+            <article class="pms-panel pms-panel-wide">
+                <div class="pms-panel-heading">
+                    <div>
+                        <h2>Monthly Project Completion</h2>
+                        <p>Projects completed during the last 12 months</p>
+                    </div>
+
+                    <a href="{{ route('project.pms-completion-report') }}">
+                        View completion reports
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <form method="GET" action="{{ route('pms.landing') }}" id="completionFilterForm"
+                    class="completion-filter-form">
+
+                    <div class="completion-filter-field">
+                        <label for="department_id">Department</label>
+
+                        <select name="department_id" id="department_id" class="form-control">
+                            <option value="">All Departments</option>
+
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->id }}"
+                                    {{ (string) $selectedDepartment === (string) $department->id ? 'selected' : '' }}>
+                                    {{ $department->department_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="completion-filter-field">
+                        <label for="contractor_id">Contractor</label>
+
+                        <select name="contractor_id" id="contractor_id" class="form-control">
+                            <option value="">All Contractors</option>
+
+                            @foreach ($contractors as $contractor)
+                                <option value="{{ $contractor->regn_no }}"
+                                    {{ $selectedContractor === $contractor->regn_no ? 'selected' : '' }}>
+                                    {{ $contractor->contractors_name ?: $contractor->regn_no }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="completion-filter-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+
+                        <a href="{{ route('pms.landing') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-rotate-left"></i> Reset
+                        </a>
+                    </div>
+                </form>
+
+                <div class="pms-chart-wrap pms-chart-line">
+                    <canvas id="completionChart"></canvas>
+                </div>
             </article>
+
 
             <article class="pms-panel pms-panel-wide">
                 <div class="pms-panel-heading">
@@ -119,40 +183,226 @@
 @push('scripts')
     <script src="{{ asset('plugins/chart.js/Chart.bundle.min.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             var statusCounts = @json(array_values($dashboard['status_counts']));
             var statusLabels = @json(array_keys($dashboard['status_counts']));
             var monthData = @json($monthlyCompletions);
             var contractorData = @json($contractorProgress);
-            var commonLegend = { position: 'bottom', labels: { boxWidth: 11, padding: 18, fontColor: '#526170' } };
+            var commonLegend = {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 11,
+                    padding: 18,
+                    fontColor: '#526170'
+                }
+            };
 
             new Chart(document.getElementById('projectStatusChart'), {
                 type: 'doughnut',
-                data: { labels: statusLabels, datasets: [{ data: statusCounts, backgroundColor: ['#2f9e67', '#3976c5', '#dc5a5a', '#aeb8c2'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutoutPercentage: 68, legend: commonLegend, tooltips: { callbacks: { label: function (item, data) { var value = data.datasets[0].data[item.index] || 0; var total = statusCounts.reduce(function (sum, current) { return sum + current; }, 0); var percent = total ? Math.round((value / total) * 100) : 0; return ' ' + data.labels[item.index] + ': ' + value + ' (' + percent + '%)'; } } } }
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusCounts,
+                        backgroundColor: ['#2f9e67', '#3976c5', '#dc5a5a', '#aeb8c2'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutoutPercentage: 68,
+                    legend: commonLegend,
+                    tooltips: {
+                        callbacks: {
+                            label: function(item, data) {
+                                var value = data.datasets[0].data[item.index] || 0;
+                                var total = statusCounts.reduce(function(sum, current) {
+                                    return sum + current;
+                                }, 0);
+                                var percent = total ? Math.round((value / total) * 100) : 0;
+                                return ' ' + data.labels[item.index] + ': ' + value + ' (' + percent +
+                                    '%)';
+                            }
+                        }
+                    }
+                }
             });
 
             new Chart(document.getElementById('progressChart'), {
                 type: 'bar',
-                data: { labels: ['Physical Progress', 'Financial Progress'], datasets: [{ data: [{{ $dashboard['physical_progress'] }}, {{ $dashboard['financial_progress'] }}], backgroundColor: ['#3976c5', '#d9902f'], borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, max: 100, callback: function (value) { return value + '%'; } }, gridLines: { color: '#edf1f5' } }], xAxes: [{ gridLines: { display: false } }] }, tooltips: { callbacks: { label: function (item) { return item.yLabel + '%'; } } } }
+                data: {
+                    labels: ['Physical Progress', 'Financial Progress'],
+                    datasets: [{
+                        data: [{{ $dashboard['physical_progress'] }},
+                            {{ $dashboard['financial_progress'] }}
+                        ],
+                        backgroundColor: ['#3976c5', '#d9902f'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                max: 100,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            gridLines: {
+                                color: '#edf1f5'
+                            }
+                        }],
+                        xAxes: [{
+                            gridLines: {
+                                display: false
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function(item) {
+                                return item.yLabel + '%';
+                            }
+                        }
+                    }
+                }
             });
 
-            new Chart(document.getElementById('completionChart'), {
-                type: 'line',
-                data: { labels: monthData.map(function (row) { return row.label; }), datasets: [{ label: 'Completed Projects', data: monthData.map(function (row) { return row.count; }), borderColor: '#3976c5', backgroundColor: 'rgba(57,118,197,.10)', pointBackgroundColor: '#3976c5', pointRadius: 4, borderWidth: 3, fill: true, lineTension: .28 }] },
-                options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 }, gridLines: { color: '#edf1f5' } }], xAxes: [{ gridLines: { display: false } }] } }
-            });
+            // new Chart(document.getElementById('completionChart'), {
+            //     type: 'line',
+            //     data: {
+            //         labels: monthData.map(function(row) {
+            //             return row.label;
+            //         }),
+            //         datasets: [{
+            //             label: 'Completed Projects',
+            //             data: monthData.map(function(row) {
+            //                 return row.count;
+            //             }),
+            //             borderColor: '#3976c5',
+            //             backgroundColor: 'rgba(57,118,197,.10)',
+            //             pointBackgroundColor: '#3976c5',
+            //             pointRadius: 4,
+            //             borderWidth: 3,
+            //             fill: true,
+            //             lineTension: .28
+            //         }]
+            //     },
+            //     options: {
+            //         responsive: true,
+            //         maintainAspectRatio: false,
+            //         legend: {
+            //             display: false
+            //         },
+            //         scales: {
+            //             yAxes: [{
+            //                 ticks: {
+            //                     beginAtZero: true,
+            //                     precision: 0
+            //                 },
+            //                 gridLines: {
+            //                     color: '#edf1f5'
+            //                 }
+            //             }],
+            //             xAxes: [{
+            //                 gridLines: {
+            //                     display: false
+            //                 }
+            //             }]
+            //         }
+            //     }
+            // });
+
+
+            var completionCanvas = document.getElementById('completionChart');
+
+            if (completionCanvas) {
+                new Chart(completionCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: monthData.map(function(row) {
+                            return row.label;
+                        }),
+                        datasets: [{
+                            label: 'Completed Projects',
+                            data: monthData.map(function(row) {
+                                return row.count;
+                            }),
+                            borderColor: '#3976c5',
+                            backgroundColor: 'rgba(57,118,197,.10)',
+                            pointBackgroundColor: '#3976c5',
+                            pointRadius: 4,
+                            borderWidth: 3,
+                            fill: true,
+                            lineTension: 0.28
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: {
+                            display: false
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    precision: 0
+                                },
+                                gridLines: {
+                                    color: '#edf1f5'
+                                }
+                            }],
+                            xAxes: [{
+                                gridLines: {
+                                    display: false
+                                }
+                            }]
+                        },
+                        tooltips: {
+                            callbacks: {
+                                label: function(item) {
+                                    return ' ' + item.yLabel + ' completed projects';
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // When the department changes, clear the previous contractor
+            // and reload so the contractor options match that department.
+            var departmentSelect = document.getElementById('department_id');
+            var contractorSelect = document.getElementById('contractor_id');
+            var completionFilterForm = document.getElementById('completionFilterForm');
+
+            if (departmentSelect && contractorSelect) {
+                departmentSelect.addEventListener('change', function() {
+                    contractorSelect.value = '';
+                });
+            }
+            // ////////////////////////////////
 
             var contractorCanvas = document.getElementById('contractorProgressChart');
             if (contractorCanvas) {
                 new Chart(contractorCanvas, {
                     type: 'horizontalBar',
                     data: {
-                        labels: contractorData.map(function (row) { return row.name; }),
+                        labels: contractorData.map(function(row) {
+                            return row.name;
+                        }),
                         datasets: [{
                             label: 'Physical Progress',
-                            data: contractorData.map(function (row) { return row.progress; }),
+                            data: contractorData.map(function(row) {
+                                return row.progress;
+                            }),
                             backgroundColor: '#3976c5',
                             borderWidth: 0
                         }]
@@ -160,12 +410,40 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        legend: { display: false },
-                        scales: {
-                            xAxes: [{ ticks: { beginAtZero: true, max: 100, callback: function (value) { return value + '%'; } }, gridLines: { color: '#edf1f5' } }],
-                            yAxes: [{ gridLines: { display: false }, ticks: { autoSkip: false } }]
+                        legend: {
+                            display: false
                         },
-                        tooltips: { callbacks: { label: function (item) { var row = contractorData[item.index]; return ' ' + item.xLabel + '% (' + row.projects + ' project' + (row.projects === 1 ? '' : 's') + ')'; } } }
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                gridLines: {
+                                    color: '#edf1f5'
+                                }
+                            }],
+                            yAxes: [{
+                                gridLines: {
+                                    display: false
+                                },
+                                ticks: {
+                                    autoSkip: false
+                                }
+                            }]
+                        },
+                        tooltips: {
+                            callbacks: {
+                                label: function(item) {
+                                    var row = contractorData[item.index];
+                                    return ' ' + item.xLabel + '% (' + row.projects + ' project' + (row
+                                        .projects === 1 ? '' : 's') + ')';
+                                }
+                            }
+                        }
                     }
                 });
             }
