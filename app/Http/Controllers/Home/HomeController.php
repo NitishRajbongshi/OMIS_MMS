@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OfficeDetail;
 use App\Models\User;
 use App\Models\UserMenuDetail;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
@@ -32,11 +33,6 @@ class HomeController extends Controller
             Log::error("message: " . $e->getMessage());
             return view('error');
         }
-    }
-
-    public function completedProjects()
-    {
-        dd('here');
     }
 
     public function portalLanding()
@@ -559,27 +555,20 @@ class HomeController extends Controller
                 ->groupBy('p.project_cd')
                 ->get();
 
-            $monthlyCompletions = collect(range(0, 11))
-                ->map(function ($offset) use (
-                    $monthStart,
-                    $completedProjects
-                ) {
-                    $month = $monthStart->copy()->addMonths($offset);
+            // Nitish 15-10-26
+            $monthlyCompletions = collect(range(0, 11))->map(function ($offset) use ($monthStart, $completedProjects) {
+                $month = $monthStart->copy()->addMonths($offset);
 
-                    $count = $completedProjects->filter(
-                        function ($project) use ($month) {
-                            return \Carbon\Carbon::parse(
-                                $project->completion_date
-                            )->format('Y-m') === $month->format('Y-m');
-                        }
-                    )->count();
-
-                    return [
-                        'label' => $month->format('M Y'),
-                        'count' => $count,
-                    ];
-                })
-                ->values();
+                return [
+                    'month_start' => $month->format('Y-m-01'),
+                    'label' => $month->format('M Y'),
+                    'count' => $completedProjects->filter(function ($project) use ($month) {
+                        return \Carbon\Carbon::parse($project->completion_date)->format('Y-m')
+                            === $month->format('Y-m');
+                    })->count(),
+                ];
+            })->values();
+            // Nitish 15-10-26
 
             return view('pms.pmsHome', compact(
                 'dashboard',
@@ -598,6 +587,104 @@ class HomeController extends Controller
             return view('error');
         }
     }
+
+    // Nitish: 15-10-26
+    public function completedProjects(Request $request)
+    {
+        Log::info('this is called');
+        $validated = $request->validate([
+            'month' => ['required', 'date_format:Y-m-d'],
+            'department_id' => ['nullable', 'integer'],
+            'contractor_id' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $monthStart = Carbon::createFromFormat('Y-m-d', $validated['month'])
+            ->startOfMonth();
+
+        $monthEnd = $monthStart->copy()->addMonth();
+
+        $selectedDepartment = $validated['department_id'] ?? null;
+        $selectedContractor = $validated['contractor_id'] ?? null;
+
+        // Find one completion date per project.
+        $completionQuery = DB::table(
+            'projects.prt_project_report_movements as movement'
+        )
+            ->join(
+                'projects.prt_project_details as p',
+                'p.project_cd',
+                '=',
+                'movement.project_cd'
+            )
+            ->whereNotNull('movement.prj_completion_date')
+            ->select(
+                'p.project_cd',
+                'p.owner_dept_cd',
+                'p.project_awarded_to'
+            )
+            ->selectRaw(
+                'MIN(movement.prj_completion_date) AS completion_date'
+            )
+            ->groupBy(
+                'p.project_cd',
+                'p.owner_dept_cd',
+                'p.project_awarded_to'
+            );
+
+        if ($selectedDepartment) {
+            $completionQuery->where(
+                'p.owner_dept_cd',
+                $selectedDepartment
+            );
+        }
+
+        if ($selectedContractor) {
+            $completionQuery->where(
+                'p.project_awarded_to',
+                $selectedContractor
+            );
+        }
+
+        // Filter the grouped completion date to the selected month.
+        $completionQuery->havingRaw(
+            'MIN(movement.prj_completion_date) >= ?',
+            [$monthStart]
+        )->havingRaw(
+            'MIN(movement.prj_completion_date) < ?',
+            [$monthEnd]
+        );
+
+        $completedProjects = DB::query()
+            ->fromSub($completionQuery, 'completed')
+            ->leftJoin(
+                'public.department_details as d',
+                'd.id',
+                '=',
+                'completed.owner_dept_cd'
+            )
+            ->leftJoin(
+                'projects.prt_contractor_details as c',
+                'c.regn_no',
+                '=',
+                'completed.project_awarded_to'
+            )
+            ->select(
+                'completed.*',
+                'd.department_name',
+                'c.contractors_name'
+            )
+            ->orderByDesc('completed.completion_date')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('pms.completed-projects', compact(
+            'completedProjects',
+            'monthStart',
+            'selectedDepartment',
+            'selectedContractor'
+        ));
+    }
+    // End: Nitish 15-10-26
 
     public function downloadAPK(Request $request)
     {
