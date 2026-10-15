@@ -91,6 +91,13 @@ class InspectionController extends Controller
                 '=',
                 'insp.recmnd_priority'
             )
+            ->leftJoin(
+                'maintenance.mtn_prtc_wl_insp_details as prtc_wl',
+                function ($join) {
+                    $join->on('prtc_wl.insp_id', '=', 'insp.id')
+                        ->where('insp.insp_asset_type', '=', 12);
+                }
+            )
             ->select(
                 'insp.*',
                 'insp_type.inspection_type_descr as insp_type',
@@ -104,7 +111,9 @@ class InspectionController extends Controller
                 'signage_condt.condition_type_descr as signage_condition',
                 'risk_type.risk_type_descr as risk_type',
                 'recm_action.action_type_descr as recm_action_type',
-                'recm_priority.condition_type_descr as recm_priority'
+                'recm_priority.condition_type_descr as recm_priority',
+                'prtc_wl.affected_start_chainage',
+                'prtc_wl.affected_end_chainage'
             );
     }
 
@@ -223,6 +232,15 @@ class InspectionController extends Controller
 
                 unset($data['observations']);
 
+                $affectedStartChainage = $data['affected_start_chainage'] ?? null;
+                $affectedEndChainage = $data['affected_end_chainage'] ?? null;
+
+                // Remove these fields before inserting the main inspection record.
+                unset(
+                    $data['affected_start_chainage'],
+                    $data['affected_end_chainage']
+                );
+
                 $pciReference = null;
                 $hasPciValue =
                     array_key_exists('pci_value', $data)
@@ -317,6 +335,24 @@ class InspectionController extends Controller
                 ]);
 
                 $inspection = MtnInspectionDetail::create($data);
+
+                // Store affected chainage details only for asset type 12.
+                if ((int) $inspection->insp_asset_type === 12) {
+
+                    DB::connection(self::DB_CONNECTION)
+                        ->table('maintenance.mtn_prtc_wl_insp_details')
+                        ->insert([
+                            'insp_id' => $inspection->id,
+                            'affected_start_chainage' => $affectedStartChainage,
+                            'affected_end_chainage' => $affectedEndChainage,
+                        ]);
+
+                    Log::info('PRTC/WL inspection details created', [
+                        'inspection_id' => $inspection->id,
+                        'affected_start_chainage' => $affectedStartChainage,
+                        'affected_end_chainage' => $affectedEndChainage,
+                    ]);
+                }
 
                 Log::info('Inspection record created', [
                     'inspection_id' => $inspection->id,

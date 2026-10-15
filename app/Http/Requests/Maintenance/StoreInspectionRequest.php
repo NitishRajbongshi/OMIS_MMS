@@ -276,6 +276,20 @@ class StoreInspectionRequest extends FormRequest
                 'nullable',
                 'integer',
             ],
+
+            'affected_start_chainage' => [
+                'required_if:insp_asset_type,12',
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'affected_end_chainage' => [
+                'required_if:insp_asset_type,12',
+                'nullable',
+                'numeric',
+                'gte:affected_start_chainage',
+            ],
         ];
     }
 }
