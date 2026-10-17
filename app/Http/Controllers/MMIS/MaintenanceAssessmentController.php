@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+
 class MaintenanceAssessmentController extends Controller
 {
     /**
@@ -102,7 +103,6 @@ class MaintenanceAssessmentController extends Controller
                                 '=',
                                 'ACTIVE'
                             );
-
                     }
                 )
 
@@ -114,7 +114,8 @@ class MaintenanceAssessmentController extends Controller
                 ->whereNull('score.id')
                 ->whereNotNull('inspection.insp_asset_type')
                 ->whereNotNull('inspection.insp_asset_id')
-                ->selectRaw('inspection.insp_asset_type as code,
+                ->selectRaw(
+                    'inspection.insp_asset_type as code,
                     COALESCE(
                         asset_type.sub_assets_descr,
                         inspection.insp_asset_type
@@ -132,7 +133,6 @@ class MaintenanceAssessmentController extends Controller
                 'mmis.maintenance_assessment.index',
                 compact('assetTypes')
             );
-
         } catch (\Throwable $exception) {
 
             Log::error(
@@ -148,12 +148,12 @@ class MaintenanceAssessmentController extends Controller
                     'assetTypes' => collect()
                 ]
             )->with(
-                    'error',
-                    'Maintenance assessment data could not be loaded.'
-                );
+                'error',
+                'Maintenance assessment data could not be loaded.'
+            );
         }
     }
-   
+
     /**
      * Display pending inspections for selected asset type.
      */
@@ -220,7 +220,6 @@ class MaintenanceAssessmentController extends Controller
                                 '=',
                                 'ACTIVE'
                             );
-
                     }
                 )
 
@@ -405,20 +404,92 @@ class MaintenanceAssessmentController extends Controller
              * 4. Get habitation
              * ---------------------------------------------------------
              */
-            // $habitation = DB::table('public.asset_road_habitation_details')
-            //     ->where('rd_system_id', $inspectionDetail->insp_asset_id)
-            //     ->orderByDesc('updated_at')
-            //     ->orderByDesc('habitation_cd')
-            //     ->first();
-            $habitation = DB::table('public.asset_road_habitation_details')
-                        ->where('rd_system_id', $inspectionDetail->insp_asset_id)
-                        ->selectRaw('
+            $assetType = (string) $inspectionDetail->insp_asset_type;
+            $assetCd = $inspectionDetail->insp_asset_id;
+            $roadSystemId = null;
+            $habitation = null;
+            $parentRoad = null;
+            switch ($assetType) {
+                // Road and National Highway: the asset ID is the road ID.
+                case '10':
+                case '8':
+                    $roadSystemId = $assetCd;
+                    break;
+
+                // CD Works
+                case '0':
+                    $roadSystemId = DB::table('public.asset_road_cdwork_details')
+                        ->where('rd_cdwork_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Bridge
+                case '1':
+                    $roadSystemId = DB::table('public.asset_road_bridge_details')
+                        ->where('rd_bridge_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Pavement
+                case '2':
+                    $roadSystemId = DB::table('public.asset_road_pavement_details')
+                        ->where('rd_pavement_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Surface Type
+                case '3':
+                    $roadSystemId = DB::table('public.asset_road_surface_type_details')
+                        ->where('rd_surface_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Habitation
+                case '4':
+                    $roadSystemId = DB::table('public.asset_road_habitation_details')
+                        ->where('habitation_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Pavement Condition Index
+                case '9':
+                    $roadSystemId = DB::table(
+                        'public.asset_road_pavement_condition_indexes'
+                    )
+                        ->where('pci_section_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Distress
+                case '11':
+                    $roadSystemId = DB::table('public.asset_road_distress_details')
+                        ->where('rd_distress_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Protection Wall
+                case '12':
+                    $roadSystemId = DB::table('public.asset_protection_wall_details')
+                        ->where('protection_wall_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+            }
+
+            if (!empty($roadSystemId)) {
+                $habitation = DB::table('public.asset_road_habitation_details')
+                    ->where('rd_system_id', $roadSystemId)
+                    ->selectRaw('
                             AVG(habitation_score) AS habitation_score,
                             COUNT(*) AS total_habitations,
                             COUNT(habitation_score) AS scored_habitations
                         ')
-                        ->first();
+                    ->first();
 
+                $parentRoad = DB::table('public.asset_road_details')
+                    ->select('rd_system_id', 'rd_name')
+                    ->where('rd_system_id', $roadSystemId)
+                    ->first();
+            }
 
             /*
              * ---------------------------------------------------------
@@ -435,7 +506,7 @@ class MaintenanceAssessmentController extends Controller
 
             /*
              * ---------------------------------------------------------
-             * 6. Calculate observation values
+             * 6. Calc observation values
              * ---------------------------------------------------------
              */
             $totalWeight = $observations->sum(fn($item) => (int) $item->obsrv_weightage);
@@ -508,9 +579,7 @@ class MaintenanceAssessmentController extends Controller
             $parameters->each(
                 function ($parameter) use ($parameterValues) {
                     $parameter->current_value =
-                        $parameterValues[
-                            $parameter->parameter_code
-                        ] ?? null;
+                        $parameterValues[$parameter->parameter_code] ?? null;
                 }
             );
 
@@ -532,11 +601,10 @@ class MaintenanceAssessmentController extends Controller
                     'totalWeight',
                     'averageWeight',
                     'unsatisfactoryWeight',
-                    'inspectionCriticality'
+                    'inspectionCriticality',
+                    'parentRoad'
                 )
             );
-
-
         } catch (\Throwable $exception) {
 
             Log::error(
@@ -552,7 +620,7 @@ class MaintenanceAssessmentController extends Controller
 
 
     /**
-     * Calculate Maintenance Assessment Score.
+     * Calc Maintenance Assessment Score.
      *
      * Formula:
      *
@@ -583,17 +651,12 @@ class MaintenanceAssessmentController extends Controller
                 'message' => 'No maintenance parameters received.'
             ], 422);
         }
-
-
         /*
         |--------------------------------------------------------------------------
         | Existing MAS Method
         |--------------------------------------------------------------------------
         */
-
         $masResult = $this->mas_method($parameters);
-
-
         /*
         |--------------------------------------------------------------------------
         | New MPS Method
@@ -734,9 +797,9 @@ class MaintenanceAssessmentController extends Controller
      *
      * Maintenance Priority Score
      *
-     * 1. Calculate Condition Score
-     * 2. Calculate Criticality Score
-     * 3. Calculate MPS
+     * 1. Calc Condition Score
+     * 2. Calc Criticality Score
+     * 3. Calc MPS
      *
      * Condition Score:SUM(Normalized Score × Weightage)/SUM(Condition Weightage)
      *
@@ -1191,9 +1254,7 @@ class MaintenanceAssessmentController extends Controller
                 'criticality_score' => $criticalityScore,
                 'mps' => $mps,
             ]);
-        } 
-        catch (\Throwable $exception) 
-        {
+        } catch (\Throwable $exception) {
             DB::rollBack();
             Log::error(
                 'Maintenance Assessment save failed.',
@@ -1206,6 +1267,378 @@ class MaintenanceAssessmentController extends Controller
                 'success' => false,
                 'message' => 'Unable to save Maintenance Assessment.'
             ], 500);
+        }
+    }
+
+    // Saiful: 17-10-2026
+    public function calculateAndSaveForAsset(string $inspectionCode): array
+    {
+        // Initialize variables for error logging.
+        $assetCd = null;
+        $assetTypeCd = null;
+        try {
+            return DB::connection('pgsql_maintenance')->transaction(function () use ($inspectionCode, &$assetCd, &$assetTypeCd) {
+                /*
+                |--------------------------------------------------------------------------
+                | 1. Get the exact inspection using inspection code
+                |--------------------------------------------------------------------------
+                */
+                $inspection = DB::table('maintenance.mtn_inspection_details as inspection')
+                    ->leftJoin('public.asset_master_road_sub_assets as asset_type', 'asset_type.sub_asset_cd', '=', 'inspection.insp_asset_type')
+                    ->select('inspection.*', 'asset_type.dept_cd as asset_dept_cd')
+                    ->where('inspection.insp_cd', $inspectionCode)
+                    ->first();
+
+                if (!$inspection) {
+                    throw new \RuntimeException("No inspection found for inspection code: {$inspectionCode}");
+                }
+
+                // Get asset information from this exact inspection.
+                $inspectionId = $inspection->id;
+                $assetCd = $inspection->insp_asset_id;
+                $assetTypeCd = (string) $inspection->insp_asset_type;
+
+                /*
+                |--------------------------------------------------------------------------
+                | 2. Prevent duplicate assessment for the same inspection
+                |--------------------------------------------------------------------------
+                */
+                $existingScore = DB::table('maintenance.mtn_inspection_score')
+                    ->where('inspection_id', $inspectionId)
+                    ->where('status', 'ACTIVE')
+                    ->exists();
+
+                if ($existingScore) {
+                    return [
+                        'success' => false,
+                        'message' => 'The latest inspection has already been assessed.',
+                        'inspection_id' => $inspectionId,
+                        'asset_cd' => $assetCd,
+                        'asset_type_cd' => $assetTypeCd,
+                    ];
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 3. Calculate total and average observation weight
+                |--------------------------------------------------------------------------
+                */
+                $observations = DB::table('maintenance.mtn_insp_observation_details')
+                    ->where('insp_id', $inspectionId)
+                    ->get([
+                        'obsrv_weightage',
+                        'grading_cd',
+                    ]);
+
+                $totalWeight = $observations->sum(fn($item) => (float) $item->obsrv_weightage);
+
+                $averageWeight = $observations->isNotEmpty() ? $totalWeight / $observations->count() : 0;
+                $unsatisfactoryWeight = $observations
+                    ->filter(
+                        fn($item) =>
+                        strtoupper((string) $item->grading_cd) === 'U'
+                    )
+                    ->sum(fn($item) => (float) $item->obsrv_weightage);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 4. Resolve the parent road for road sub-assets
+                |--------------------------------------------------------------------------
+                */
+                $roadSystemId = null;
+
+                switch ((string) $assetTypeCd) {
+                    case '10': // Road
+                    case '8':  // National Highway
+                        $roadSystemId = $assetCd;
+                        break;
+
+                    case '0': // CD Work
+                        $roadSystemId = DB::table('public.asset_road_cdwork_details')
+                            ->where('rd_cdwork_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '1': // Bridge
+                        $roadSystemId = DB::table('public.asset_road_bridge_details')
+                            ->where('rd_bridge_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '2': // Pavement
+                        $roadSystemId = DB::table('public.asset_road_pavement_details')
+                            ->where('rd_pavement_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '3': // Surface Type
+                        $roadSystemId = DB::table('public.asset_road_surface_type_details')
+                            ->where('rd_surface_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '4': // Habitation
+                        $roadSystemId = DB::table('public.asset_road_habitation_details')
+                            ->where('habitation_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '9': // PCI
+                        $roadSystemId = DB::table('public.asset_road_pavement_condition_indexes')
+                            ->where('pci_section_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '11': // Distress
+                        $roadSystemId = DB::table('public.asset_road_distress_details')
+                            ->where('rd_distress_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '12': // Protection Wall
+                        $roadSystemId = DB::table('public.asset_protection_wall_details')
+                            ->where('protection_wall_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 5. Get average habitation score for the parent road
+                |--------------------------------------------------------------------------
+                */
+                $habitationScore = 0;
+
+                if (!empty($roadSystemId)) {
+                    $habitationScore = (float) (
+                        DB::table('public.asset_road_habitation_details')
+                        ->where('rd_system_id', $roadSystemId)
+                        ->avg('habitation_score') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 6. Get PCI value
+                |--------------------------------------------------------------------------
+                */
+                $pciValue = 0;
+
+                if (!empty($inspection->pci_section_cd)) {
+                    $pciValue = (float) (
+                        DB::table('public.asset_road_pavement_condition_indexes')
+                        ->where('pci_section_cd', $inspection->pci_section_cd)
+                        ->value('pci_value') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 7. Get asset criticality index
+                |--------------------------------------------------------------------------
+                */
+                $criticalityIndex = (float) (
+                    DB::table('maintenance.master_asset_criticality_indexes')
+                    ->where('asset_type', $assetTypeCd)
+                    ->where('asset_id', $assetCd)
+                    ->orderByDesc('updated_at')
+                    ->orderByDesc('id')
+                    ->value('criticality_index') ?? 0
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | 8. Get road category score from the parent road
+                |--------------------------------------------------------------------------
+                */
+                $roadCategoryScore = 0;
+
+                if (!empty($roadSystemId)) {
+                    $roadCategoryScore = (float) (
+                        DB::table('public.asset_road_details as road')
+                        ->leftJoin('public.asset_master_road_category as category', 'category.rd_catg_cd', '=', 'road.rd_category_cd')
+                        ->where('road.rd_system_id', $roadSystemId)
+                        ->value('category.maintenance_score') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 9. Load dynamic maintenance parameters from the database
+                |--------------------------------------------------------------------------
+                */
+                $parameterRows = DB::table('maintenance.master_set_of_mtn_parameters_dept_wise as parameter_set')
+                    ->join('maintenance.master_mtn_parameter_master as parameter', 'parameter.id', '=', 'parameter_set.parameter_id')
+                    ->leftJoin('maintenance.master_mtn_parameter_range as parameter_range', 'parameter_range.parameter_id', '=', 'parameter.id')
+                    ->leftJoin(
+                        'maintenance.master_each_mtn_parameters_weightage as parameter_weightage',
+                        function ($join) {
+                            $join->on('parameter_weightage.mtn_parameter_set_id', '=', 'parameter_set.id')
+                                ->on('parameter_weightage.parameter_id', '=', 'parameter.id');
+                        }
+                    )
+                    ->where('parameter_set.dept_cd', $inspection->asset_dept_cd)
+                    ->where('parameter_set.asset_type_cd', $assetTypeCd)
+                    ->where('parameter.status', 'ACTIVE')
+                    ->where(function ($query) {
+                        $query->where('parameter_range.status', 'ACTIVE')
+                            ->orWhereNull('parameter_range.status');
+                    })
+                    ->select([
+                        'parameter_set.id as parameter_set_id',
+                        'parameter.id as parameter_id',
+                        'parameter.parameter_code',
+                        'parameter.parameter_name',
+                        'parameter_range.upper_range',
+                        'parameter_weightage.weightage',
+                    ])
+                    ->orderBy('parameter_set.id')
+                    ->get();
+
+                if ($parameterRows->isEmpty()) {
+                    throw new \RuntimeException(
+                        "No active maintenance parameters configured for asset type {$assetTypeCd}."
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 10. Map database values to configured parameter codes
+                |--------------------------------------------------------------------------
+                */
+                $parameterValues = [
+                    'FIELD_OBSERVATION_WEIGHTAGE' => $averageWeight,
+                    'PCI' => $pciValue,
+                    'HABITATION_INDEX' => $habitationScore,
+                    'CRITICALITY_INDEX' => $criticalityIndex,
+                    'ROAD_CONNECTIVITY' => 0,
+                    'ROAD_CATEGORY' => $roadCategoryScore,
+                    'PRIORITY_INDEX' => 0,
+                ];
+
+                $parameters = [];
+
+                foreach ($parameterRows as $row) {
+                    $parameters[] = [
+                        'parameter_id' => $row->parameter_id,
+                        'parameter_set_id' => $row->parameter_set_id,
+                        'parameter_code' => $row->parameter_code,
+                        'parameter_name' => $row->parameter_name,
+                        'value' => (float) ($parameterValues[$row->parameter_code] ?? 0),
+                        'maximum_range' => (float) ($row->upper_range ?? 0),
+                        'weightage' => (float) ($row->weightage ?? 0),
+                    ];
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 11. Calculate MAS and MPS using existing methods
+                |--------------------------------------------------------------------------
+                */
+                $masResult = $this->mas_method($parameters);
+                $mpsResult = $this->mps_method($parameters);
+
+                $mas = $masResult['mas'];
+                $conditionScore = $mpsResult['condition_score'];
+                $criticalityScore = $mpsResult['criticality_score'];
+                $mps = $mpsResult['mps'];
+
+                /*
+                |--------------------------------------------------------------------------
+                | 12. Save score header
+                |--------------------------------------------------------------------------
+                */
+                $now = now();
+                $userId = auth()->id() ?? ($inspection->created_by ?? null);
+
+                $scoreId = DB::table('maintenance.mtn_inspection_score')
+                    ->insertGetId([
+                        'inspection_id' => $inspectionId,
+                        'mas_score' => $mas,
+                        'condition_score' => $conditionScore,
+                        'criticality_score' => $criticalityScore,
+                        'mps_score' => $mps,
+                        'condition_factor' => 0.6000,
+                        'criticality_factor' => 0.4000,
+                        'calculation_version' => '1.0',
+                        'calculated_at' => $now,
+                        'calculated_by' => $userId,
+                        'status' => 'ACTIVE',
+                        'created_at' => $now,
+                        'created_by' => $userId,
+                    ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 13. Save parameter-level score details
+                |--------------------------------------------------------------------------
+                */
+                foreach ($mpsResult['details'] as $detail) {
+                    $submittedParameter = collect($parameters)->firstWhere('parameter_code', $detail['parameter_code']);
+                    DB::table('maintenance.mtn_inspection_score_details')
+                        ->insert([
+                            'inspection_score_id' => $scoreId,
+                            'parameter_set_id' => $submittedParameter['parameter_set_id'] ?? null,
+                            'parameter_id' => $submittedParameter['parameter_id'] ?? null,
+                            'parameter_code' => $detail['parameter_code'],
+                            'parameter_name' => $submittedParameter['parameter_name'] ?? null,
+                            'score_category' => $detail['category'],
+                            'parameter_value' => $detail['value'],
+                            'maximum_range' => $detail['maximum_range'],
+                            'weightage' => $detail['weightage'],
+                            'normalized_score' => $detail['normalized_score'],
+                            'weighted_score' => $detail['weighted_score'],
+                            'created_at' => $now,
+                            'created_by' => $userId,
+                        ]);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 14. Save maintainable asset history
+                |--------------------------------------------------------------------------
+                */
+                $assetInfo = $this->resolveMaintainableAsset($assetTypeCd, $assetCd);
+                $maintainableAssetId = DB::table('projects.prt_maintainable_assets')->insertGetId([
+                    'asset_name' => $assetInfo['asset_name'],
+                    'asset_type_cd' => $assetTypeCd,
+                    'asset_cd' => $assetCd,
+                    'parent_asset_cd' => $assetInfo['parent_asset_cd'],
+                    'flag' => 0,
+                    'inspection_id' => $inspectionId,
+                    'inspection_score_id' => $scoreId,
+                    'created_at' => $now,
+                    'created_by' => $userId,
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Maintenance assessment calculated and saved successfully.',
+                    'asset_cd' => $assetCd,
+                    'asset_type_cd' => $assetTypeCd,
+                    'inspection_id' => $inspectionId,
+                    'inspection_score_id' => $scoreId,
+                    'maintainable_asset_id' => $maintainableAssetId,
+                    'mas' => $mas,
+                    'condition_score' => $conditionScore,
+                    'criticality_score' => $criticalityScore,
+                    'mps' => $mps,
+                    'average_habitation_score' => round($habitationScore, 2),
+                    'total_observation_weight' => $totalWeight,
+                    'average_observation_weight' => round($averageWeight, 2),
+                ];
+            });
+        } catch (\Throwable $exception) {
+            Log::error('Generic maintenance assessment failed.', [
+                'asset_cd' => $assetCd,
+                'asset_type_cd' => $assetTypeCd,
+                'exception' => $exception->getMessage(),
+            ]);
+            return [
+                'success' => false,
+                'message' => 'Unable to calculate and save maintenance assessment.',
+                'error' => $exception->getMessage(),
+            ];
         }
     }
 }

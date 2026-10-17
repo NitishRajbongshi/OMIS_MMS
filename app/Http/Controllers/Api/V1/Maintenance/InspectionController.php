@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Maintenance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\MMIS\MaintenanceAssessmentController;
 use App\Http\Requests\Maintenance\StoreInspectionRequest;
 use App\Models\Maintenance\Inspection\MtnInspectionDetail;
 use App\Models\Maintenance\Inspection\MtnInspObservationDetail;
@@ -213,10 +214,10 @@ class InspectionController extends Controller
         return $pciCode;
     }
 
-    public function store(StoreInspectionRequest $request)
+    public function store(StoreInspectionRequest $request, MaintenanceAssessmentController $assessmentController)
     {
         try {
-            $inspection = DB::connection(self::DB_CONNECTION)->transaction(function () use ($request) {
+            $inspection = DB::connection(self::DB_CONNECTION)->transaction(function () use ($request, $assessmentController) {
                 $data = $request->validated();
                 // Get authenticated user once
                 $userId = $data['created_by'];
@@ -353,6 +354,14 @@ class InspectionController extends Controller
                         'affected_end_chainage' => $affectedEndChainage,
                     ]);
                 }
+
+                $assessmentResult = $assessmentController->calculateAndSaveForAsset(
+                    $inspection->insp_cd
+                );
+                Log::info('Maintenance assessment result', [
+                    'inspection_code' => $inspection->insp_cd,
+                    'result' => $assessmentResult,
+                ]);
 
                 Log::info('Inspection record created', [
                     'inspection_id' => $inspection->id,
