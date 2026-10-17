@@ -55,28 +55,46 @@ $(document).on('change', '.block-select', function () {
 });
 
 
+
 const weightageUrl = '/asset-management/get-population-weightage';
 
 async function updatePopulationWeightage(input) {
+    const modal = input.closest('.modal');
+
+    const output = modal
+        ? modal.querySelector('.edit-population-weightage')
+        : document.querySelector('#population_weightage');
+
+    if (!output) {
+        console.log('Weightage output not found');
+        return;
+    }
+
     const population = input.value;
-    const container = input.closest('.modal-body') || document;
-
-    const output = container.querySelector(
-        input.closest('.modal-body')
-            ? '.edit-population-weightage'
-            : '#population_weightage'
-    );
-
-    if (!output) return;
 
     if (population === '' || Number(population) < 0) {
         output.value = '';
         return;
     }
 
+    const schemeId = modal
+        ? (
+            modal.querySelector('.scheme-select')?.value ||
+            modal.querySelector('input[name="scheme_id"]')?.value
+        )
+        : document.querySelector('#scheme_id')?.value;
+
+    if (!schemeId) {
+        output.value = '';
+        console.log('Scheme ID not found');
+        return;
+    }
+
     try {
         const response = await fetch(
-            weightageUrl + '?population=' + encodeURIComponent(population)
+            weightageUrl +
+            '?population=' + encodeURIComponent(population) +
+            '&scheme_id=' + encodeURIComponent(schemeId)
         );
 
         if (!response.ok) {
@@ -85,8 +103,7 @@ async function updatePopulationWeightage(input) {
 
         const data = await response.json();
 
-        output.value = data.weightage !== null &&
-            data.weightage !== undefined
+        output.value = data.weightage != null
             ? Number(data.weightage).toFixed(2)
             : 'No matching range';
 
@@ -96,10 +113,13 @@ async function updatePopulationWeightage(input) {
     }
 }
 
-// Manual population entry
+$(document).off('input', '.total_population');
+
 $(document).on('input', '.total_population', function () {
+    console.log('Population changed:', this.value);
     updatePopulationWeightage(this);
 });
+
 
 // $("#village").on("change", function () {
 $(document).on('change', '.village-select', function () {
@@ -237,9 +257,8 @@ async function updateFacilityWeightage(selectElement) {
 //Facilities JQuery -- start
 $(document).on('change', '#facility_id, .facility-select', function () {
 
-    const facilityId = $(this).val();
+    const facilityId = String($(this).val() || '');
     const container = this.closest('.modal-body') || document;
-
     const isEdit = !!this.closest('.modal-body');
 
     const subSelect = $(container).find(
@@ -250,17 +269,35 @@ $(document).on('change', '#facility_id, .facility-select', function () {
         isEdit ? '.edit-sub-facility-weightage' : '#sub_facility_weightage'
     );
 
-    // Clear previous sub-facility and its weightage
+    const schemeId = isEdit
+        ? String($(container).find('.scheme-select').val() || '')
+        : String($('#scheme_id').val() || '');
+
+    // Clear previous selection and weightage
     subSelect.val('');
     subWeightage.val('');
 
-    // Filter sub-facilities
-    subSelect.find('option').hide();
-    subSelect.find('option:first').show();
+    // Hide all sub-facilities first
+    subSelect.find('option').each(function () {
 
-    if (facilityId) {
-        subSelect.find('option[data-facility="' + facilityId + '"]').show();
-    }
+        const option = $(this);
+
+        if (!option.val()) {
+            option.prop('hidden', false);
+            return;
+        }
+
+        const optionFacilityId = String(option.attr('data-facility') || '');
+        const optionSchemeId = String(option.attr('data-scheme') || '');
+
+        const matches = facilityId !== '' &&
+            optionFacilityId === facilityId &&
+            optionSchemeId === schemeId;
+
+        option.prop('hidden', !matches);
+    });
+
+    subSelect.trigger('change');
 
     // Update selected facility weightage
     updateFacilityWeightage(this);
@@ -443,24 +480,191 @@ $(document).on('click', '.remove-row', function () {
 
 $(document).on('change', '.facility-select', function () {
 
-    let facilityId = $(this).val();
+    let facilityId = String($(this).val() || '');
 
-    let modal = $(this).closest('.tab-pane');
+    let modal = $(this).closest('.modal');
+
+    let schemeId = String(modal.find('.scheme-select').val() || '');
 
     let subSelect = modal.find('.subfacility-select');
 
-    subSelect.val("");
+    subSelect.val('');
 
-    subSelect.find('option').hide();
+    subSelect.find('option').each(function () {
 
-    subSelect.find('option:first').show();
+        let option = $(this);
 
-    subSelect.find('option[data-facility="' + facilityId + '"]').show();
+        let optionFacilityId = String(option.attr('data-facility') || '');
+        let optionSchemeId = String(option.attr('data-scheme') || '');
 
+        if (!option.val()) {
+            option.prop('hidden', false);
+        } else if (
+            optionFacilityId === facilityId &&
+            optionSchemeId === schemeId
+        ) {
+            option.prop('hidden', false);
+        } else {
+            option.prop('hidden', true);
+        }
+    });
+
+    subSelect.trigger('change');
+
+    modal.find('.edit-sub-facility-weightage').val('');
 });
 
 $(function () {
     $("#habitation_details_table").DataTable({}).buttons().container().appendTo(
         '#habitation_details_table_wrapper .col-md-11:eq(1)');
+});
+
+
+$(document).ready(function () {
+
+    const $scheme = $('#scheme_id');
+    const $facility = $('#facility_id');
+    const $subFacility = $('#sub_facility_id');
+
+    const facilityOptions = $facility.find('option').clone();
+    const subFacilityOptions = $subFacility.find('option').clone();
+
+    $scheme.on('change', function () {
+        const schemeId = String($(this).val() || '');
+
+        $facility.empty().append('<option value="">Choose Facility</option>');
+        $subFacility.empty().append('<option value="">Choose Sub Facility</option>');
+
+        $('#facility_weightage').val('');
+        $('#sub_facility_weightage').val('');
+
+        $('#facilityTable tbody').empty();
+
+        if (!schemeId) {
+            $('#population_weightage').val('');
+            return;
+        }
+
+        $facility.prop('disabled', !schemeId);
+        $subFacility.prop('disabled', true);
+
+        if (!schemeId) return;
+
+        facilityOptions.each(function () {
+            const option = $(this);
+
+            if (option.val() && String(option.data('scheme')) === schemeId) {
+                $facility.append(option.clone());
+            }
+        });
+
+        $('.total_population').each(function () {
+            if (this.value !== '') {
+                updatePopulationWeightage(this);
+            }
+        });
+    });
+
+    $facility.on('change', function () {
+        const facilityId = String($(this).val() || '');
+        const schemeId = String($scheme.val() || '');
+
+        $subFacility.empty().append('<option value="">Choose Sub Facility</option>');
+        $('#facility_weightage').val('');
+        $('#sub_facility_weightage').val('');
+
+        if (!facilityId) {
+            $subFacility.prop('disabled', true);
+            return;
+        }
+
+        const selectedFacility = $(this).find('option:selected');
+        $('#facility_weightage').val(selectedFacility.data('weightage') ?? '');
+
+        subFacilityOptions.each(function () {
+            const option = $(this);
+
+            if (
+                option.val() &&
+                String(option.data('facility')) === facilityId &&
+                String(option.data('scheme')) === schemeId
+            ) {
+                $subFacility.append(option.clone());
+            }
+        });
+
+        $subFacility.prop('disabled', $subFacility.find('option').length <= 1);
+    });
+
+    $subFacility.on('change', function () {
+        const weightage = $(this).find('option:selected').data('weightage');
+        $('#sub_facility_weightage').val(weightage ?? '');
+    });
+
+});
+
+$('#habitationForm').on('submit', function (e) {
+    const form = this;
+    const schemeId = $('#scheme_id').val();
+
+    // 1. Check scheme
+    if (!schemeId) {
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Scheme Required',
+            text: 'Please select a scheme name before saving.'
+        });
+
+        $('#scheme_id').focus();
+        return;
+    }
+
+    // 2. Check mandatory habitation fields
+    const requiredFields = [
+        { selector: '.district-select', name: 'District' },
+        { selector: '.block-select', name: 'Block' },
+        { selector: '.village-select', name: 'Village' },
+        { selector: '.mla-select', name: 'MLA Constituency' },
+        { selector: '.mp-select', name: 'MP Constituency' },
+        { selector: '.total_population', name: 'Population' }
+    ];
+
+    for (const field of requiredFields) {
+        const input = $(form).find(field.selector).first();
+
+        if (input.length && !input.val()) {
+            e.preventDefault();
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Habitation Details Required',
+                text: 'Please enter ' + field.name + '.'
+            }).then(() => input.focus());
+
+            return;
+        }
+    }
+
+    // 3. Warn if no facility details exist
+    const facilityCount = $(form).find('#facilityTable tbody tr').length;
+
+    if (facilityCount === 0) {
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'No Facility Details',
+            text: 'No facility details have been added. Do you want to proceed without them?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Save',
+            cancelButtonText: 'Go Back'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    }
 });
 

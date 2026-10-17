@@ -80,12 +80,12 @@
                     <span class="map-note">Click active markers for blockage details</span>
                 </div>
                 <input id="hidden_distress_dtls" name="hidden_distress_dtls" type="hidden" value="{{ $distressDetails }}" />
-                <div id="map"></div>
-                <!-- <div style="width: 100%; height: 100vh;">
+                <!-- <div id="map"></div> -->
+                <div style="width: 100%; height: 100vh;">
                         <iframe src="http://npwdomisgis.nagaland.gov.in/portal/apps/dashboards/00b560723c184292b876473016ddc57f"
                             width="100%" height="100%" frameborder="0" allowfullscreen>
                         </iframe>
-                    </div> -->
+                    </div>
                 <div id="loader" class="loader">Please wait while road data loads...</div>
                 <div class="modal fade" id="myModal" role="dialog">
                     <div class="modal-dialog">
@@ -197,7 +197,7 @@
 @endpush
 
 @push('scripts')
-    <script>
+    <!-- <script>
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API",
                 c = "google",
@@ -227,7 +227,7 @@
                 key: "AIzaSyBnj1P_w0UVJGnX0vNSPMe5QS__d_E0goM",
                 v: "beta"
             });
-    </script>
+    </script> -->
     <script>
         var distress_dtls_array = @json($distressDetails);
         var all_state_cached_geojson_data = @json($allStateDataSetResult);
@@ -239,9 +239,9 @@
     <link rel="stylesheet" type="text/css" src="{{ asset('css/MapStyle.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script type="module" src="{{ asset('js/dashboard/googleMapCitizenWithLocalDataset.js') }}"></script>
-    <!-- <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css">
         <script src="https://js.arcgis.com/4.34/"></script>
-        <script type="module" src="{{ asset('js/dashboard/arcGISMapCitizen.js') }}"></script> -->
+        <script type="module" src="{{ asset('js/dashboard/arcGISMapCitizen.js') }}"></script>
 
 
 @endpush

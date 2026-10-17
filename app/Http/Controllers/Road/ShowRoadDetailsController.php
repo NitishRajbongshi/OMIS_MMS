@@ -545,10 +545,11 @@ class ShowRoadDetailsController extends Controller
         try {
             $roadID = session('system_id');
             $userid = Auth::user()->id;
-            $habitationDetailsDraft = DB::table('asset_road_habitation_details_draft')
-                ->select('*')
-                ->where('rd_system_id', '=', $roadID)
-                ->where('sent_for_finalize', '=', 'Y')
+            $habitationDetailsDraft = DB::table('asset_road_habitation_details_draft as h')
+                ->leftJoin('asset_master_habitation_score_schemes as s', 'h.scheme_id', '=', 's.scheme_id')
+                ->select('h.*', 's.scheme_name')
+                ->where('h.rd_system_id', '=', $roadID)
+                ->where('h.sent_for_finalize', '=', 'Y')
                 ->get();
 
             $habitationCdsDraft = $habitationDetailsDraft->pluck('habitation_cd');
@@ -566,10 +567,11 @@ class ShowRoadDetailsController extends Controller
                 ->whereIn('hf.habitation_cd', $habitationCdsDraft)
                 ->get()
                 ->groupBy('habitation_cd');
-            $habitationDetailsFinal = DB::table('asset_road_habitation_details')
-                ->select('*')
-                ->where('rd_system_id', '=', $roadID)
-                ->get();
+            $habitationDetailsFinal = DB::table('asset_road_habitation_details as h')
+                    ->leftJoin('asset_master_habitation_score_schemes as s', 'h.scheme_id', '=', 's.scheme_id')
+                    ->select('h.*', 's.scheme_name')
+                    ->where('h.rd_system_id', '=', $roadID)
+                    ->get();
 
             $habitationCds = $habitationDetailsFinal->pluck('habitation_cd');
             $habitationFacilities = DB::table('asset_road_habitation_facility_details as hf')

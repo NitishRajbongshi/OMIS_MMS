@@ -1,4 +1,3 @@
-{{-- Save as: resources/views/mmis/inspection/show.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -41,14 +40,25 @@
                         {{ $inspection->insp_date ? \Carbon\Carbon::parse($inspection->insp_date)->format('d-m-Y') : '-' }}
                     </p>
                 </div>
-                {{-- <div class="col-md-3">
+                <div class="col-md-3">
                     <p class="detail-label">Inspection Type</p>
                     <p class="detail-value">{{ $inspection->insp_type ?: '-' }}</p>
-                </div> --}}
+                </div>
+                {{-- Defects and affected chainage only for asset type 12 (Protection Wall) --}}
+                @if ((string) $inspection->insp_asset_type === '12')
                 <div class="col-md-3">
                     <p class="detail-label">Defects Observed</p>
                     <p class="detail-value">{{ $inspection->is_defects_observed == 'Y' ? 'Yes' : 'No' }}</p>
                 </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Affected Start Chainage</p>
+                    <p class="detail-value">{{ $inspection->affected_start_chainage ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Affected End Chainage</p>
+                    <p class="detail-value">{{ $inspection->affected_end_chainage ?? '-' }}</p>
+                </div>
+                @endif
 
                 <div class="col-md-3">
                     <p class="detail-label">Inspector Name</p>
@@ -71,7 +81,8 @@
                     <p class="detail-label">Road Name</p>
                     <p class="detail-value">{{ $inspection->road_name ?: '-' }}</p>
                 </div>
-                @if($inspection->asset_type === 'Roads')
+                {{-- Start / end section only for asset type 10 (Road) --}}
+                @if ((string) $inspection->insp_asset_type === '10')
                 <div class="col-md-3">
                     <p class="detail-label">Start Section</p>
                     <p class="detail-value">{{ $inspection->start_section ?? '-' }}</p>
@@ -173,6 +184,49 @@
     </div>
     @endif
 
+    {{-- PROTECTION WALL DETAILS (shown only for protection wall inspections) --}}
+    @if ($wall)
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Protection Wall Details</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <p class="detail-label">Protection Wall Code</p>
+                    <p class="detail-value">{{ $wall->protection_wall_cd ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Chainage</p>
+                    <p class="detail-value">{{ $wall->chainage ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Wall Type</p>
+                    <p class="detail-value">{{ $wall->wall_type_cd ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Structure Type</p>
+                    <p class="detail-value">{{ $wall->structure_type_cd ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Bottom Width</p>
+                    <p class="detail-value">{{ $wall->bottom_width ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Top Width</p>
+                    <p class="detail-value">{{ $wall->top_width ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Length</p>
+                    <p class="detail-value">{{ $wall->length ?? '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p class="detail-label">Height</p>
+                    <p class="detail-value">{{ $wall->height ?? '-' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- 2. CONDITIONS --}}
     <div class="card mb-3">
         <div class="card-header fw-bold">Conditions</div>
@@ -182,7 +236,8 @@
                     <p class="detail-label">Overall Condition</p>
                     <p class="detail-value">{{ $inspection->overall_condition ?: '-' }}</p>
                 </div>
-                @if($inspection->asset_type === 'Roads')
+                {{-- Other conditions are shown only for asset type 10 (Road) --}}
+                @if ((string) $inspection->insp_asset_type === '10')
                 <div class="col-md-3">
                     <p class="detail-label">Pavement Condition</p>
                     <p class="detail-value">{{ $inspection->pavement_condition ?: '-' }}</p>
@@ -237,7 +292,8 @@
         </div>
     </div> --}}
 
-    {{-- 4. OBSERVATIONS --}}
+    {{-- 4. OBSERVATIONS (not for asset type 12 = Protection Wall) --}}
+    @if ((string) $inspection->insp_asset_type !== '12')
     <div class="card mb-3">
         <div class="card-header fw-bold">Observations ({{ $observations->count() }})</div>
         <div class="card-body">
@@ -269,9 +325,10 @@
             </table>
         </div>
     </div>
+    @endif
 
-    {{-- 5. PCI DETAILS --}}
-    @if($inspection->asset_type === 'Roads')
+    {{-- 5. PCI DETAILS (only for asset type 10 = Road) --}}
+    @if ((string) $inspection->insp_asset_type === '10')
     <div class="card mb-3">
         <div class="card-header fw-bold">PCI Details</div>
         <div class="card-body">
@@ -294,7 +351,7 @@
                         <p class="detail-value">{{ $pci->chainage ?? '-' }}</p>
                     </div>
 
-                    {{-- <div class="col-md-3">
+                    <div class="col-md-3">
                         <p class="detail-label">Cracking (%)</p>
                         <p class="detail-value">{{ $pci->cracking_percent ?? '-' }}</p>
                     </div>
@@ -322,7 +379,7 @@
                     <div class="col-md-3">
                         <p class="detail-label">Rut Depth</p>
                         <p class="detail-value">{{ $pci->rut_depth ?? '-' }}</p>
-                    </div> --}}
+                    </div>
                     <div class="col-md-3">
                         <p class="detail-label">Motorized Traffic / Day</p>
                         <p class="detail-value">{{ $pci->tot_motorized_traffic_per_day ?? '-' }}</p>

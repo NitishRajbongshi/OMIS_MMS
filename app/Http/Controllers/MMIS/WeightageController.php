@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MMIS;
 use App\Http\Controllers\Controller;
 use Exception;
 use GuzzleHttp\Client;
+use Carbon\Carbon;				  
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,27 @@ class WeightageController extends Controller
             ->get();
 
             return view('mmis.parameter-weightage.index', compact('departments'));
+
+			} catch (Exception $e) {
+
+            Log::error('WeightageController@index: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return view('error');
+        }
+    }
+
+    public function parammaster(Request $request)
+    {
+        try {
+
+           $parameters = DB::table('maintenance.master_mtn_parameter_master')
+            ->select('id', 'parameter_code','parameter_name','description')
+            ->get();
+
+            return view('mmis.parameter-weightage.master', compact('parameters'));
 
         } catch (Exception $e) {
 
@@ -160,6 +182,53 @@ class WeightageController extends Controller
         }
     }
 
+	public function saveParameter(Request $request)
+    {
+        try {
+            $request->validate([
+                'param_name' => 'required|string',
+                'param_code' => 'required|string',
+                'param_desc' => 'required|string',
+            ]);
+
+            $exists = DB::table('maintenance.master_mtn_parameter_master')
+                ->whereRaw('LOWER(parameter_code) = LOWER(?)', [$request->param_code])
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Parameter code already exists.'
+                ], 422);
+            }
+
+            DB::table('maintenance.master_mtn_parameter_master')->insert([
+                'parameter_name' => $request->param_name,
+                'parameter_code' => $request->param_code,
+                'description' => $request->param_desc,
+                'parameter_type' =>'RANGE',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Parameter saved successfully.!'
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('WeightageController@saveParameter: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to save parameter.'
+            ], 500);
+        }
+    }
+
     public function mapping(Request $request)
     {
         try {
@@ -183,6 +252,22 @@ class WeightageController extends Controller
             ]);
 
             return view('error');
+        }
+    }
+
+	public function updateParameter(Request $request)
+    {
+        try {
+            DB::table('maintenance.master_mtn_parameter_master')
+                ->where('id', $request->id)
+                ->update([
+                    'parameter_name' => $request->param_name,
+                    'description' => $request->param_desc,
+                    'updated_at' => Carbon::now()
+                ]);
+            return response()->json(['status' => 'success', 'message' => 'Parameter updated!']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Update failed.']);
         }
     }
 

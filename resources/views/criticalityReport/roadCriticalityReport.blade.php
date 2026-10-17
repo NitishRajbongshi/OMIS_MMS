@@ -109,7 +109,7 @@
                     <form id="wing_road" class="mt-2 mb-1">
                         @csrf
                         <div class="row justify-content-center align-items-start">
-                            <div class="col-sm-12 row">
+                            <div class="col-sm-12 col-md-11 row">
                                 <div class="col-sm-6 col-md-3 d-flex align-items-center">
                                     <div class="me-1">
                                         <label for="zone">Zone</label>
@@ -196,15 +196,11 @@
                                         @endforeach
                                     </select>
                                 </div>
-
-                                <div class="col-sm-6 col-md-3 d-flex align-items-center">
-                                    <div class="me-1">
-                                        <label for="category"></label>
-                                    </div>
-                                    <button type="submit" class="text-md btn btn-md btn-outline-primary">
-                                        View Criticality Indexes
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-1 d-flex justify-content-end">
+                                <button type="submit" class="text-xs btn btn-xs btn-outline-primary">
+                                    View Criticality Indexes
+                                </button>
                             </div>
                         </div>
                     </form>

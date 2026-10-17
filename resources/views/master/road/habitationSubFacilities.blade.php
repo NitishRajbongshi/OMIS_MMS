@@ -22,16 +22,16 @@
             <form id="add_sub_facility_form" method="POST">
                 @csrf
                 <div class="row align-items-end">
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">Parent Facility <span class="text-danger">*</span></label>
                         <select name="facility_id" class="form-control form-control-sm select2" required>
                             <option value="">-- Select Facility --</option>
                             @foreach($facilities as $fac)
-                                <option value="{{ $fac->id }}">{{ $fac->facility_name }}</option>
+                                <option value="{{ $fac->id }}" data-scheme-id="{{ $fac->scheme_id }}">{{ $fac->facility_name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">Sub-Facility Name <span class="text-danger">*</span></label>
                         <input type="text" name="sub_facility_name" class="form-control form-control-sm" placeholder="e.g., Senior Secondary School" required>
                     </div>
@@ -40,14 +40,24 @@
                         <input type="number" name="weightage" class="form-control form-control-sm" placeholder="e.g., 10" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="text-xs">Scheme <span class="text-danger">*</span></label>
+                        <select name="scheme_id_display" class="form-control form-control-sm" disabled>
+                            <option value="">Select Scheme</option>
+                            @foreach($schemes as $scheme)
+                                <option value="{{ $scheme->scheme_id }}">{{ $scheme->scheme_name }}</option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="scheme_id">
+                    </div>
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">Status</label>
-                        <select name="is_published" class="form-select form-select-sm">
+                        <select name="is_published" class="form-control form-control-sm">
                             <option value="Y">Published</option>
                             <option value="N">Draft</option>
                         </select>
                     </div>
                     <div class="col-md-2 mb-2">
-                        <button type="submit" class="btn btn-primary btn-sm btn-block fw-bold shadow-sm">
+                        <button type="submit" class="btn btn-primary btn-sm btn-block font-weight-bold shadow-sm">
                             <i class="fa fa-plus-circle mr-1"></i> SAVE SUB-FACILITY
                         </button>
                     </div>
@@ -64,24 +74,22 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="text-xs font-weight-bold">Select Facility</label>
-
                             <select id="facilityFilter" class="form-control form-control-sm">
-                                <option value="">-- Select Facility --</option>
-
+                                <option value="">-- All Facilities --</option>
                                 @foreach($facilities as $fac)
-                                    <option value="{{ $fac->id }}">
-                                        {{ $fac->facility_name }}
-                                    </option>
+                                    <option value="{{ $fac->id }}">{{ $fac->facility_name }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+
                     <table class="table table-bordered table-sm table-striped w-100" id="subFacilityTable">
                         <thead style="background-color:#e7effc;">
                             <tr>
                                 <th style="width: 8%;">ID</th>
                                 <th>Sub-Facility Name</th>
                                 <th>Facility</th>
+                                <th>Scheme</th>
                                 <th class="text-center">Weightage</th>
                                 <th class="text-center" style="width: 12%;">Status</th>
                                 <th class="text-center" style="width: 100px;">Action</th>
@@ -93,6 +101,7 @@
                                     <td>{{ $sub->id }}</td>
                                     <td class="font-weight-bold">{{ $sub->sub_facility_name }}</td>
                                     <td><span class="text-muted">{{ $sub->facility_name }}</span></td>
+                                    <td>{{ $sub->scheme_name }}</td>
                                     <td class="text-center">{{ $sub->weightage }}</td>
                                     <td class="text-center">
                                         <span class="badge {{ $sub->is_published == 'Y' ? 'badge-success' : 'badge-secondary' }}">
@@ -100,60 +109,76 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <button data-toggle="modal" data-target="#editSubModal{{ $sub->id }}" class="btn btn-sm text-warning">
+                                        <button type="button" data-toggle="modal" data-target="#editSubModal{{ $sub->id }}" class="btn btn-sm text-warning">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                     </td>
                                 </tr>
-
-                                <div class="modal fade" id="editSubModal{{ $sub->id }}" tabindex="-1" data-backdrop="static">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form class="update-sub-form" method="PUT" action="{{ route('habitationSubFacilities.update', $sub->id) }}">
-                                                @csrf
-                                                <input type="hidden" name="id" value="{{ $sub->id }}">
-                                                <div class="modal-header bg-light py-2">
-                                                    <h6 class="modal-title font-weight-bold">Update Sub-Facility</h6>
-                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="form-group">
-                                                        <label class="text-xs">Parent Facility</label>
-                                                        <select name="facility_id" class="form-control form-control-sm" required>
-                                                            @foreach($facilities as $fac)
-                                                                <option value="{{ $fac->id }}" {{ $sub->facility_id == $fac->id ? 'selected' : '' }}>
-                                                                    {{ $fac->facility_name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="text-xs">Sub-Facility Name</label>
-                                                        <input type="text" name="sub_facility_name" class="form-control form-control-sm" value="{{ $sub->sub_facility_name }}" required>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="text-xs">Weightage <span class="text-danger">*</span></label>
-                                                        <input type="number" name="weightage" class="form-control form-control-sm" value="{{ $sub->weightage }}" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="text-xs">Status</label>
-                                                        <select name="is_published" class="form-select form-select-sm">
-                                                            <option value="Y" {{ $sub->is_published == 'Y' ? 'selected' : '' }}>Published</option>
-                                                            <option value="N" {{ $sub->is_published == 'N' ? 'selected' : '' }}>Draft</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer py-1">
-                                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-success btn-sm">Update Changes</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             @endforeach
                         </tbody>
                     </table>
+
+                    {{-- Edit modals live OUTSIDE the table so the HTML stays valid and DataTables is not confused --}}
+                    @foreach ($subFacilities as $sub)
+                        <div class="modal fade" id="editSubModal{{ $sub->id }}" tabindex="-1" data-backdrop="static">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form class="update-sub-form" method="POST" action="{{ route('habitationSubFacilities.update', $sub->id) }}">
+                                        @csrf
+                                        @method('PUT')
+                                        <input type="hidden" name="id" value="{{ $sub->id }}">
+                                        <div class="modal-header bg-light py-2">
+                                            <h6 class="modal-title font-weight-bold">Update Sub-Facility</h6>
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label class="text-xs">Parent Facility</label>
+                                                <select name="facility_id" class="form-control form-control-sm" required>
+                                                    @foreach($facilities as $fac)
+                                                        <option value="{{ $fac->id }}" data-scheme-id="{{ $fac->scheme_id }}" {{ $sub->facility_id == $fac->id ? 'selected' : '' }}>
+                                                            {{ $fac->facility_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="text-xs">Sub-Facility Name</label>
+                                                <input type="text" name="sub_facility_name" class="form-control form-control-sm" value="{{ $sub->sub_facility_name }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="text-xs">Scheme <span class="text-danger">*</span></label>
+                                                <select name="scheme_id_display" class="form-control form-control-sm" disabled>
+                                                    <option value="">Select Scheme</option>
+                                                    @foreach($schemes as $scheme)
+                                                        <option value="{{ $scheme->scheme_id }}" {{ $sub->scheme_id == $scheme->scheme_id ? 'selected' : '' }}>
+                                                            {{ $scheme->scheme_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <input type="hidden" name="scheme_id" value="{{ $sub->scheme_id }}">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="text-xs">Weightage <span class="text-danger">*</span></label>
+                                                <input type="number" name="weightage" class="form-control form-control-sm" value="{{ $sub->weightage }}" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="text-xs">Status</label>
+                                                <select name="is_published" class="form-control form-control-sm">
+                                                    <option value="Y" {{ $sub->is_published == 'Y' ? 'selected' : '' }}>Published</option>
+                                                    <option value="N" {{ $sub->is_published == 'N' ? 'selected' : '' }}>Draft</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-success btn-sm">Update Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -162,82 +187,98 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
 
         var table = $('#subFacilityTable').DataTable({
             responsive: true
         });
 
-        // Facility-wise filter
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        // Copy the selected facility's scheme into the (disabled) display select + hidden input
+        function selectFacilityScheme(facilitySelect) {
+            var form = $(facilitySelect).closest('form');
+            // .attr() avoids jQuery's number conversion that .data() does
+            var schemeId = $(facilitySelect).find(':selected').attr('data-scheme-id') || '';
+            form.find('select[name="scheme_id_display"]').val(String(schemeId));
+            form.find('input[name="scheme_id"]').val(String(schemeId));
+        }
 
+        // Only run on load for the ADD form (starts empty).
+        // Edit modals keep their saved scheme until the facility is actually changed.
+        selectFacilityScheme($('#add_sub_facility_form select[name="facility_id"]')[0]);
+
+        // Works for the add form and every edit modal
+        $(document).on('change', 'select[name="facility_id"]', function () {
+            selectFacilityScheme(this);
+        });
+
+        // Facility-wise filter
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
             if (settings.nTable.id !== 'subFacilityTable') {
                 return true;
             }
 
             var facilityId = $('#facilityFilter').val();
-
-            // No facility selected - show all
             if (facilityId === '') {
                 return true;
             }
 
             var row = table.row(dataIndex).node();
-            var rowFacilityId = $(row).attr('data-facility-id');
-
-            return String(rowFacilityId) === String(facilityId);
+            return String($(row).attr('data-facility-id')) === String(facilityId);
         });
 
-        $('#facilityFilter').on('change', function() {
+        $('#facilityFilter').on('change', function () {
             table.draw();
         });
 
-
         // Add Sub-Facility
-        $('#add_sub_facility_form').on('submit', function(e) {
+        $('#add_sub_facility_form').on('submit', function (e) {
             e.preventDefault();
-
-            handleAjax(
-                $(this),
-                "{{ route('habitationSubFacilities.store') }}",
-                $(this).attr('method')
-            );
+            handleAjax($(this), "{{ route('habitationSubFacilities.store') }}");
         });
 
-
-        // Update Sub-Facility
-        $('.update-sub-form').on('submit', function(e) {
+        // Update Sub-Facility (the form carries _method=PUT, sent as a real POST)
+        $('.update-sub-form').on('submit', function (e) {
             e.preventDefault();
-
-            handleAjax(
-                $(this),
-                $(this).attr('action'),
-                $(this).attr('method')
-            );
+            handleAjax($(this), $(this).attr('action'));
         });
 
-
-        function handleAjax(form, url, method) {
+        function handleAjax(form, url) {
+            var submitBtn = form.find('button[type="submit"]').prop('disabled', true);
 
             $.ajax({
-                type: method,
+                type: 'POST',
                 url: url,
                 data: form.serialize(),
 
-                success: function(res) {
-
+                success: function (res) {
                     Swal.fire({
                         icon: res.status,
                         title: res.status.toUpperCase(),
                         text: res.message,
-                    }).then(function() {
+                    }).then(function () {
                         if (res.status === 'success') {
                             location.reload();
                         } else {
                             form.closest('.modal').modal('hide');
                         }
                     });
+                },
 
+                error: function (xhr) {
+                    var msg = 'Something went wrong';
+
+                    if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Laravel validation errors
+                        msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire({ icon: 'error', title: 'ERROR', text: msg });
+                },
+
+                complete: function () {
+                    submitBtn.prop('disabled', false);
                 }
             });
         }

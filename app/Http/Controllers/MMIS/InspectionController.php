@@ -1,7 +1,5 @@
 <?php
 
-// Save as: app/Http/Controllers/MMIS/InspectionController.php
-
 namespace App\Http\Controllers\MMIS;
 
 use App\Http\Controllers\Controller;
@@ -239,9 +237,14 @@ class InspectionController extends Controller
                 $join->whereRaw("arcd.rd_cdwork_cd::text = i.insp_asset_id::text AND i.insp_asset_type = '0'");
             })
 
-            // Road name: for a bridge or culvert take its road, for a road use the asset id itself
+            // Protection wall (only when the inspection asset type is Protection Wall = 12)
+            ->leftJoin('asset_protection_wall_details as apwd', function ($join) {
+                $join->whereRaw("apwd.protection_wall_cd::text = i.insp_asset_id::text AND i.insp_asset_type = '12'");
+            })
+
+            // Road name: for a bridge, culvert or wall take its road, for a road use the asset id itself
             ->leftJoin('asset_road_details as ard', function ($join) {
-                $join->whereRaw('ard.rd_system_id::text = COALESCE(arbd.rd_system_id::text, arcd.rd_system_id::text, i.insp_asset_id::text)');
+                $join->whereRaw('ard.rd_system_id::text = COALESCE(arbd.rd_system_id::text, arcd.rd_system_id::text, apwd.rd_system_id::text, i.insp_asset_id::text)');
             })
 
             ->where('i.id', $id)
@@ -310,6 +313,14 @@ class InspectionController extends Controller
                 ->first();
         }
 
-        return compact('inspection', 'observations', 'pci', 'bridge', 'culvert');
+        // 6. Protection wall details (only when the inspection is for a Protection Wall, asset type = 12)
+        $wall = null;
+        if ((string) $inspection->insp_asset_type === '12') {
+            $wall = DB::table('public.asset_protection_wall_details')
+                ->whereRaw('protection_wall_cd::text = ?', [$inspection->insp_asset_id])
+                ->first();
+        }
+
+        return compact('inspection', 'observations', 'pci', 'bridge', 'culvert', 'wall');
     }
 }

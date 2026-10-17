@@ -124,7 +124,11 @@
 
         // Build the sub table from the data sent by the server
         function buildTable(res) {
-            var html = '<table class="table table-sm table-bordered mb-0 sub-table">';
+            var html = '';
+            if (res.total > 3) {
+                html += '<div class="text-muted small mb-1">Latest 3 inspections</div>';
+            }
+            html += '<table class="table table-sm table-bordered mb-0 sub-table">';
             html += '<thead class="table-light"><tr>';
             html += '<th>Inspection ID</th><th>Inspection Date</th><th style="width:140px">Actions</th>';
             html += '</tr></thead><tbody>';

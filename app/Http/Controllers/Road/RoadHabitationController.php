@@ -86,6 +86,7 @@ class RoadHabitationController extends Controller
                     'hf.habitation_cd',
                     'f.facility_name',
                     'f.weightage as facility_weightage',
+                    'f.caulculation_type_id',
                     'sf.sub_facility_name',
                     'sf.weightage as sub_facility_weightage'
                 )
@@ -95,14 +96,19 @@ class RoadHabitationController extends Controller
                 ->groupBy('habitation_cd');
 
 
+            $schemes = DB::table('asset_master_habitation_score_schemes')
+                ->select('scheme_id', 'population_unit', 'score_per_unit', 'max_score','scheme_name')
+                ->get();
+
+
             $facilities = DB::table('asset_master_habitation_facilities as f')
                 ->where('f.is_published', 'Y')
-                ->select('f.id', 'f.facility_name')
+                ->select('f.id', 'f.facility_name', 'f.scheme_id', 'f.weightage','f.caulculation_type_id')
                 ->get();
 
             $subFacilities = DB::table('asset_master_habitation_sub_facilities as sf')
                 ->where('sf.is_published', 'Y')
-                ->select('sf.id', 'sf.sub_facility_name', 'sf.facility_id')
+                ->select('sf.id', 'sf.sub_facility_name', 'sf.facility_id', 'sf.scheme_id', 'sf.weightage')
                 ->get();
 
             Log::info(DB::getQueryLog());
@@ -117,7 +123,8 @@ class RoadHabitationController extends Controller
                 'subFacilities',
                 'habitationDetails',
                 'populationWeightages',
-                'habitationFacilities'
+                'habitationFacilities',
+                'schemes'
             ));
         } catch (QueryException $e) {
             Log::error("Database Error: " . $e->getMessage(), [
@@ -146,7 +153,9 @@ class RoadHabitationController extends Controller
         try {
             $system_id = $request->road_system_id;
             $userid = Auth::user()->id;
+
             $request->validate([
+                'scheme_id' => 'required|integer|exists:asset_master_habitation_score_schemes,scheme_id',
                 'district' => 'required',
                 'block' => 'required',
                 'village' => 'required',
@@ -155,54 +164,107 @@ class RoadHabitationController extends Controller
                 'total_population' => 'required',
             ]);
 
+            $schemeId = (int) $request->scheme_id;
+            $population = (float) $request->total_population;
+
             $randomNumber = mt_rand(100, 999);
             $currentTime = time();
             $randomCode = $userid . $currentTime . $randomNumber;
 
-            $populationWeightage = DB::table('asset_master_habitation_population_weightage')
-                ->where('is_published', 'Y')
-                ->where('lower_population', '<=', $request->total_population)
-                ->where(function ($query) use ($request) {
-                    $query->where('higher_population', '>=', $request->total_population)
-                        ->orWhereNull('higher_population');
-                })
-                ->value('weightage') ?? 0;
+            if ($schemeId === 2) {
 
-            // Calculate total facility and sub-facility weightage
-            $totalFacilityWeightage = 0;
+                // Scheme 2: Calculate score using population unit
+                $scheme = DB::table('asset_master_habitation_score_schemes')
+                    ->where('scheme_id', $schemeId)
+                    ->first();
+
+                if (!$scheme || !is_numeric($scheme->population_unit) || $scheme->population_unit <= 0) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('failed', 'Invalid population unit for the selected scheme.')
+                        ->with('rd_system_id', $system_id);
+                }
+
+                $score = ($population / (float) $scheme->population_unit) * (float) $scheme->score_per_unit;
+
+                // Round .5 and above upward
+                $score = (int) round($score, 0, PHP_ROUND_HALF_UP);
+
+                // Apply maximum score
+                $populationWeightage = min($score,(float) $scheme->max_score);
+
+            } else {
+                $populationWeightage = DB::table('asset_master_habitation_population_weightage')
+                    ->where('is_published', 'Y')
+                    ->where('lower_population', '<=', $request->total_population)
+                    ->where(function ($query) use ($request) {
+                        $query->where('higher_population', '>=', $request->total_population)
+                            ->orWhereNull('higher_population');
+                    })
+                    ->value('weightage') ?? 0;
+            }
+
+            // Calculate total sub-facility weightage
             $totalSubFacilityWeightage = 0;
 
             $facilityIds = $request->facility_ids ?? [];
             $subFacilityIds = $request->sub_facility_ids ?? [];
+            $selectedSubFacilities = [];
 
             foreach ($subFacilityIds as $index => $subId) {
 
                 $facilityId = $facilityIds[$index] ?? null;
 
-                if (!$facilityId) {
+                if (!$facilityId || !$subId) {
                     continue;
                 }
 
-                $facilityWeightage = DB::table('asset_master_habitation_facilities')
-                    ->where('id', $facilityId)
-                    ->where('is_published', 'Y')
-                    ->value('weightage') ?? 0;
-
-                $subFacilityWeightage = DB::table('asset_master_habitation_sub_facilities')
-                    ->where('id', $subId)
-                    ->where('facility_id', $facilityId)
-                    ->where('is_published', 'Y')
-                    ->value('weightage') ?? 0;
-
-                $totalFacilityWeightage += $facilityWeightage;
-                $totalSubFacilityWeightage += $subFacilityWeightage;
+                $selectedSubFacilities[$facilityId][] = $subId;
             }
 
-            // Calculate combined weightage score
-            $totalWeightageScore = $populationWeightage
-                + $totalFacilityWeightage
-                + $totalSubFacilityWeightage;
-            Log::info("Total Weightage Score: " . $totalWeightageScore);
+            foreach ($selectedSubFacilities as $facilityId => $subIds) {
+
+                // Get the selected facility and its calculation type
+                $facility = DB::table('asset_master_habitation_facilities')
+                    ->where('id', $facilityId)
+                    ->where('scheme_id', $schemeId)
+                    ->where('is_published', 'Y')
+                    ->first();
+
+                if (!$facility) {
+                    continue;
+                }
+
+                // Get weightages of selected sub-facilities for this facility
+                $subFacilityWeightages = DB::table('asset_master_habitation_sub_facilities')
+                    ->whereIn('id', $subIds)
+                    ->where('facility_id', $facilityId)
+                    ->where('scheme_id', $schemeId)
+                    ->where('is_published', 'Y')
+                    ->pluck('weightage')
+                    ->map(function ($weightage) {
+                        return (float) ($weightage ?? 0);
+                    });
+
+                if ($subFacilityWeightages->isEmpty()) {
+                    continue;
+                }
+
+                if ((int) $facility->caulculation_type_id === 1) {
+
+                    // Type 1: Add all selected sub-facility weightages
+                    $totalSubFacilityWeightage += $subFacilityWeightages->sum();
+
+                } elseif ((int) $facility->caulculation_type_id === 2) {
+
+                    // Type 2: Use only the highest selected sub-facility weightage
+                    $totalSubFacilityWeightage += $subFacilityWeightages->max();
+                }
+            }
+
+            // Final score = population weightage + conditional sub-facility weightage
+            $totalWeightageScore = (float) $populationWeightage + $totalSubFacilityWeightage;
+
             $status = AssetRoadHabitationDetailsDraft::create([
                 'habitation_cd' => $randomCode,
                 'rd_system_id' => $system_id,
@@ -212,6 +274,7 @@ class RoadHabitationController extends Controller
                 'mla_constituency' => $request->mla_constituency_cd,
                 'mp_constituency' => $request->mp_constituency_cd,
                 'total_population' => $request->total_population,
+                'scheme_id' => $schemeId,
                 'habitation_score' => $totalWeightageScore,
                 'created_by' => $userid,
                 'updated_by' => $userid,
@@ -284,46 +347,97 @@ class RoadHabitationController extends Controller
         DB::transaction(function () use ($request) {
             $habitation = AssetRoadHabitationDetailsDraft::findOrFail($request->habitation_cd);
 
-             $populationWeightage = DB::table('asset_master_habitation_population_weightage')
-                ->where('is_published', 'Y')
-                ->where('lower_population', '<=', $request->total_population)
-                ->where(function ($query) use ($request) {
-                    $query->where('higher_population', '>=', $request->total_population)
-                        ->orWhereNull('higher_population');
-                })
-                ->value('weightage') ?? 0;
+            $schemeId = (int) $habitation->scheme_id;
+            $population = (float) $request->total_population;
 
-            $totalFacilityWeightage = 0;
+            if ($schemeId === 2) {
+
+            $scheme = DB::table('asset_master_habitation_score_schemes')
+                ->where('scheme_id', $schemeId)
+                ->first();
+
+            if (!$scheme || !is_numeric($scheme->population_unit) || $scheme->population_unit <= 0) {
+                    throw new \Exception(
+                        'Invalid population unit for the selected scheme.'
+                    );
+                }
+
+                $score = ($population / (float) $scheme->population_unit) * (float) $scheme->score_per_unit;
+
+                $score = (int) round($score, 0, PHP_ROUND_HALF_UP);
+
+                $populationWeightage = min($score,(float) $scheme->max_score);
+
+            } else {
+                $populationWeightage = DB::table('asset_master_habitation_population_weightage')
+                    ->where('is_published', 'Y')
+                    ->where('lower_population', '<=', $request->total_population)
+                    ->where(function ($query) use ($request) {
+                        $query->where('higher_population', '>=', $request->total_population)
+                            ->orWhereNull('higher_population');
+                    })
+                    ->value('weightage') ?? 0;
+            }
+
+
             $totalSubFacilityWeightage = 0;
 
             $facilityIds = $request->facility_ids ?? [];
             $subFacilityIds = $request->sub_facility_ids ?? [];
+            $selectedSubFacilities = [];
 
-            foreach ($subFacilityIds as $key => $subId) {
-                $facilityId = $facilityIds[$key] ?? null;
+            foreach ($subFacilityIds as $index => $subId) {
 
-                if (!$facilityId) {
+                $facilityId = $facilityIds[$index] ?? null;
+
+                if (!$facilityId || !$subId) {
                     continue;
                 }
 
-                $facilityWeightage = DB::table('asset_master_habitation_facilities')
-                    ->where('id', $facilityId)
-                    ->where('is_published', 'Y')
-                    ->value('weightage') ?? 0;
-
-                $subFacilityWeightage = DB::table('asset_master_habitation_sub_facilities')
-                    ->where('id', $subId)
-                    ->where('facility_id', $facilityId)
-                    ->where('is_published', 'Y')
-                    ->value('weightage') ?? 0;
-
-                $totalFacilityWeightage += $facilityWeightage;
-                $totalSubFacilityWeightage += $subFacilityWeightage;
+                $selectedSubFacilities[$facilityId][] = $subId;
             }
 
-            $totalWeightageScore = $populationWeightage
-                + $totalFacilityWeightage
-                + $totalSubFacilityWeightage;
+            foreach ($selectedSubFacilities as $facilityId => $subIds) {
+
+                // Get facility for the selected scheme
+                $facility = DB::table('asset_master_habitation_facilities')
+                    ->where('id', $facilityId)
+                    ->where('scheme_id', $schemeId)
+                    ->where('is_published', 'Y')
+                    ->first();
+
+                if (!$facility) {
+                    continue;
+                }
+
+                // Get selected sub-facility weightages
+                $subFacilityWeightages = DB::table('asset_master_habitation_sub_facilities')
+                    ->whereIn('id', $subIds)
+                    ->where('facility_id', $facilityId)
+                    ->where('scheme_id', $schemeId)
+                    ->where('is_published', 'Y')
+                    ->pluck('weightage')
+                    ->map(function ($weightage) {
+                        return (float) ($weightage ?? 0);
+                    });
+
+                if ($subFacilityWeightages->isEmpty()) {
+                    continue;
+                }
+
+                if ((int) $facility->caulculation_type_id === 1) {
+
+                    // Type 1: Sum selected sub-facility weightages
+                    $totalSubFacilityWeightage += $subFacilityWeightages->sum();
+
+                } elseif ((int) $facility->caulculation_type_id === 2) {
+
+                    // Type 2: Use the maximum selected sub-facility weightage
+                    $totalSubFacilityWeightage += $subFacilityWeightages->max();
+                }
+            }
+
+            $totalWeightageScore = (float) $populationWeightage + $totalSubFacilityWeightage;
 
             $habitation->update([
                 'district_name' => $request->district,
@@ -450,6 +564,15 @@ class RoadHabitationController extends Controller
     public function getWeightage(Request $request)
     {
         $population = $request->query('population');
+        $schemeId = $request->query('scheme_id');
+
+        Log::info('Selected scheme ID', [
+            'scheme_id' => $request->scheme_id
+        ]);
+
+        Log::info('Selected Population', [
+            'population' => $request->population
+        ]);
 
         if (!is_numeric($population) || $population < 0) {
             return response()->json([
@@ -457,7 +580,32 @@ class RoadHabitationController extends Controller
             ]);
         }
 
-        $range = DB::table('public.asset_master_habitation_population_weightage')
+        if ((int) $schemeId === 2) {
+
+            $scheme = DB::table('asset_master_habitation_score_schemes')
+                ->where('scheme_id', $schemeId)
+                ->first();
+
+            if (!$scheme || !is_numeric($scheme->population_unit) || $scheme->population_unit <= 0) {
+                return response()->json([
+                    'weightage' => null
+                ]);
+            }
+
+            $score = ((float) $population / (float) $scheme->population_unit) * (float) $scheme->score_per_unit;
+
+            // Round .5 and above up to the next integer
+            $score = (int) round($score, 0, PHP_ROUND_HALF_UP);
+
+            // Do not exceed the scheme's maximum score
+            $weightage = min($score, (float) $scheme->max_score);
+
+            return response()->json([
+                'weightage' => $weightage
+            ]);
+        }
+
+        $range = DB::table('asset_master_habitation_population_weightage')
             ->where('is_published', 'Y')
             ->where('lower_population', '<=', $population)
             ->where(function ($query) use ($population) {

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\V1\Maintenance\AssetDetails\AssetDetailsController;
 use App\Http\Controllers\Api\V1\Maintenance\bridge\BridgeInspectionController;
 use App\Http\Controllers\Api\V1\Maintenance\InspectionController;
 use App\Http\Controllers\Api\V1\Maintenance\InspectionObservationController;
@@ -40,6 +39,5 @@ Route::prefix('maintenance/v1')->group(function () {
     Route::post('/bridge/inspection-details', [BridgeInspectionController::class, 'store']);
     Route::get('/bridge/inspection-details-all/{id}', [BridgeInspectionController::class, 'show']);
 
-    Route::get('/asset-type/{assetType}/asset-id/{assetId}', [AssetDetailsController::class, 'index'])->name('maintenance.asset-details.index');
     Route::get('/roads/{roadId}/sub-assets/{subAssetCd}', [RoadSubAsetsApiController::class, 'index'])->name('maintenance.roads.sub-assets.index');
 });

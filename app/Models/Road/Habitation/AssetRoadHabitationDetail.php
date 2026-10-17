@@ -31,13 +31,14 @@ class AssetRoadHabitationDetail extends Model
         'mla_constituency',
         'mp_constituency',
         'total_population',
+        'habitation_score',
+        'scheme_id',
         'created_by',
         'updated_by',
         'remarks',
         'created_at_ofis_cd',
         'approved_by',
-        'approved_at',
-        'habitation_score',
+        'approved_at'
     ];
 
     public function facilities()

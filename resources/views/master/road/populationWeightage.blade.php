@@ -32,7 +32,7 @@
                 <div class="row align-items-end">
 
                     <!-- LOWER POPULATION -->
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">
                             Lower Population <span class="text-danger">*</span>
                         </label>
@@ -41,7 +41,7 @@
                     </div>
 
                     <!-- HIGHER POPULATION -->
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
                         <label class="text-xs">
                             Higher Population <span class="text-danger">*</span>
                         </label>
@@ -68,6 +68,20 @@
                                step="0.01"
                                onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
                                required>
+                    </div>
+
+                    <!-- SCHEME -->
+                    <div class="col-md-2 mb-2">
+                        <label class="text-xs">
+                            Scheme <span class="text-danger">*</span>
+                        </label>
+
+                        <select name="scheme_id" class="form-control form-control-sm" required>
+                            <option value="">Select Scheme</option>
+                            @foreach ($schemes as $scheme)
+                                <option value="{{ $scheme->scheme_id }}">{{ $scheme->scheme_name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <!-- STATUS -->
@@ -122,6 +136,10 @@
                                     ID
                                 </th>
 
+                                <th>
+                                    Scheme
+                                </th>
+
                                 <th class="text-center">
                                     Lower Population
                                 </th>
@@ -153,6 +171,10 @@
 
                                     <td>
                                         {{ $population->id }}
+                                    </td>
+
+                                    <td>
+                                        {{ $population->scheme_name }}
                                     </td>
 
                                     <td class="text-center font-weight-bold">
@@ -293,6 +315,26 @@
                                                                value="{{ $population->weightage }}"
                                                                min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
                                                                required>
+
+                                                    </div>
+
+                                                    <!-- SCHEME -->
+
+                                                    <div class="form-group">
+
+                                                        <label class="text-xs">
+                                                            Scheme
+                                                            <span class="text-danger">*</span>
+                                                        </label>
+
+                                                        <select name="scheme_id" class="form-control form-control-sm" required>
+                                                            <option value="">Select Scheme</option>
+                                                            @foreach ($schemes as $scheme)
+                                                                <option value="{{ $scheme->scheme_id }}" {{ $population->scheme_id == $scheme->scheme_id ? 'selected' : '' }}>
+                                                                    {{ $scheme->scheme_name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
 
                                                     </div>
 
