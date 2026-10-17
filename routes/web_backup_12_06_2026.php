@@ -1,940 +1,1644 @@
 <?php
-use App\Http\Controllers\PMS\AssetPlanCntroller;
-use App\Http\Controllers\Master\Projects\FundingAgnecies;
-use App\Http\Controllers\Master\Projects\SchemeController;
-use App\Http\Controllers\Master\Projects\SchemeFundMappingController;
-use App\Http\Controllers\PMS\DraftController;
-use App\Http\Controllers\PMS\FinalizeProjectController;
-use App\Http\Controllers\PMS\PmsController;
-use App\Http\Controllers\PMS\Progress\ProjectProgressController;
-use App\Http\Controllers\Road\LoadDraftData\DraftRoadController;
-use App\Http\Controllers\PMS\Redefine\RedefineAssetsController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MIS\MisController;
-use App\Http\Controllers\WelcomeController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\File\FileController;
-use App\Http\Controllers\Home\HomeController;
-use App\Http\Controllers\Post\PostController;
-use App\Http\Controllers\Road\RoadController;
-use App\Http\Controllers\Role\RoleController;
-use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\UploadFileController;
-use App\Http\Controllers\Level\LevelController;
-use App\Http\Controllers\Road\RoadPCIController;
-use App\Http\Controllers\Office\OfficeController;
-use App\Http\Controllers\MIS\MISDistressController;
-use App\Http\Controllers\Road\RoadBridgeController;
-use App\Http\Controllers\Road\RoadCDWorkController;
-use App\Http\Controllers\MIS\Road\RoadMISController;
-use App\Http\Controllers\Activity\ActivityController;
-use App\Http\Controllers\Building\BuildingController;
-use App\Http\Controllers\Chainage\ChainageController;
-use App\Http\Controllers\Road\RoadPavementController;
-use App\Http\Controllers\Road\RoadHabitationController;
-use App\Http\Controllers\Road\RoadSurfaceTypeController;
-use App\Http\Controllers\Road\ShowRoadDetailsController;
-use App\Http\Controllers\ViewTenderAndNoticesController;
-use App\Http\Controllers\Department\DepartmentController;
-use App\Http\Controllers\Mechanical\MechanicalController;
-use App\Http\Controllers\Road\ModifyRoadAssetsController;
-use App\Http\Controllers\Designation\DesignationController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\RoadChainage\RoadChainageController;
-use App\Http\Controllers\Admin\ChangeStatusOfAssetsController;
-use App\Http\Controllers\Admin\MakerCheckerHandleController;
-use App\Http\Controllers\finalize_data\FinalizedDataController;
-use App\Http\Controllers\DataFinalization\FinalizationController;
-use App\Http\Controllers\HQRoadChainage\HqRoadChainageController;
-use App\Http\Controllers\Dashboard\AssetRoadDistressDetailsController;
-use App\Http\Controllers\Admin\UnlockDataFieldController;
-use App\Http\Controllers\AssetImage\AssetImageController;
-use App\Http\Controllers\Building\BuildingLocationController;
-use App\Http\Controllers\Building\BuildingOccupancyController;
-use App\Http\Controllers\Building\BuildingUnitController;
-use App\Http\Controllers\BUilding\BuildingViewController;
-use App\Http\Controllers\Contractor\ContractorController;
-use App\Http\Controllers\FinalizeHousing\FinalizeHousingController;
-use App\Http\Controllers\FinalizeMechanical\FinalizeMechanicalController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeBridgeController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeCDWorksController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeHabitationController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizePCIController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeProtectionWallController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeRoadsController;
-use App\Http\Controllers\FinalizeRoadsAndBridges\FinalizeSurfaceTypeController;
-use App\Http\Controllers\Housing\HousingController;												   
-use App\Http\Controllers\Master\Administrative\BlockController;
-use App\Http\Controllers\Master\Administrative\CircleController;
-use App\Http\Controllers\Master\Administrative\DistrictController;
-use App\Http\Controllers\Master\Administrative\DivisionController;
-use App\Http\Controllers\Master\Administrative\SubDivisionController;
-use App\Http\Controllers\Master\Administrative\VillageController;
-use App\Http\Controllers\Master\Administrative\ZoneController;
-use App\Http\Controllers\Master\Bridge\AbutmentTypeController;
-use App\Http\Controllers\Master\Bridge\BearingTypeController;
-use App\Http\Controllers\Master\Bridge\BridgeTypeController;
-use App\Http\Controllers\Master\Bridge\DeckTypeController;
-use App\Http\Controllers\Master\Bridge\ExpansionJointController;
-use App\Http\Controllers\Master\Bridge\HeadWallController;
-use App\Http\Controllers\Master\Bridge\PierTypeController;
-use App\Http\Controllers\Master\Bridge\PileTypeController;
-use App\Http\Controllers\Master\Bridge\StreamTypeController;
-use App\Http\Controllers\Master\Building\AccessibilityController;
-use App\Http\Controllers\Master\Building\BuildingAccessController;
-use App\Http\Controllers\Master\Building\BuildingBeamController;
-use App\Http\Controllers\Master\Building\BuildingCategoryController;
-use App\Http\Controllers\Master\Building\BuildingClassController;
-use App\Http\Controllers\Master\Building\BuildingColumnController;
-use App\Http\Controllers\Master\Building\BuildingConditionController;
-use App\Http\Controllers\Master\Building\BuildingFloorController;
-use App\Http\Controllers\Master\Building\BuildingFoundationController;
-use App\Http\Controllers\Master\Building\BuildingTypeController;
-use App\Http\Controllers\Master\Building\BuildingWallTypeController;
-use App\Http\Controllers\Master\Construction\CDWorkTypeController;
-use App\Http\Controllers\Master\Construction\ConstructionTypeController;
-use App\Http\Controllers\Master\Construction\FaceWallTypeController;
-use App\Http\Controllers\Master\Construction\FoundationTypeController;
-use App\Http\Controllers\Master\Construction\MaterialTypeController;
-use App\Http\Controllers\Master\Construction\RetainWallTypeController;
-use App\Http\Controllers\Master\Construction\ToeWallTypeController;
-use App\Http\Controllers\Master\Construction\WingWallTypeController;
-use App\Http\Controllers\Master\Drainage\DrainageSideController;
-use App\Http\Controllers\Master\Drainage\DrainageTypeController;
-use App\Http\Controllers\Master\Drainage\LineDrainageType;
-use App\Http\Controllers\Master\Mechanical\EquipmentConditionController;
-use App\Http\Controllers\Master\Mechanical\EquipmentTypeController;
-use App\Http\Controllers\Master\Mechanical\FuelTypeController;
-use App\Http\Controllers\Master\Mechanical\VehicleConditionController;
-use App\Http\Controllers\Master\Mechanical\VehicleMakerController;
-use App\Http\Controllers\Master\Mechanical\VehicleModelController;
-use App\Http\Controllers\Master\Mechanical\VehicleTypeController;
-use App\Http\Controllers\Master\Pavement\PavementConditionController;
-use App\Http\Controllers\Master\Pavement\PavementTypeController;
-use App\Http\Controllers\Master\Pavement\SurfaceTypeController;
-use App\Http\Controllers\Master\Pavement\TopographyTypeController;
-use App\Http\Controllers\Master\Projects\BOQItemController;
-use App\Http\Controllers\Master\Projects\ContractorCategoryController;
-use App\Http\Controllers\Master\Projects\ContractorDetailsController;
-use App\Http\Controllers\Master\Projects\ItemOfWorkMasterController;
-use App\Http\Controllers\Master\Projects\ItemUnitController;
-use App\Http\Controllers\Master\Projects\OfficeDetailsController;
-use App\Http\Controllers\Master\Projects\ProjectTypeController;
-use App\Http\Controllers\Master\Projects\SubItemOfWorkController;
-use App\Http\Controllers\Master\Projects\WorkplanActivityController;
-use App\Http\Controllers\Master\Road\ChainageStepController;
-use App\Http\Controllers\Master\Road\HabitationFacilitiesController;
-use App\Http\Controllers\Master\Road\HabitationSubFacilityController;
-use App\Http\Controllers\Master\Road\RoadCategoryController;
-use App\Http\Controllers\Master\Road\RoadConditionController;
-use App\Http\Controllers\Master\Road\RoadOwnerController;
-use App\Http\Controllers\Master\Road\RoadSubAssetController;
-use App\Http\Controllers\Mechanical\FinalizEquipmentController;
-use App\Http\Controllers\Mechanical\FinalizVehicleController;
-use App\Http\Controllers\Mechanical\MechanicalCitizenDashboard;
-use App\Http\Controllers\MIS\Housing\HousingMISController;
-use App\Http\Controllers\MIS\Mechanical\MechanicalMISController;
-use App\Http\Controllers\MIS\NationalHighway\NationalHighwayMISController;
-use App\Http\Controllers\User\PasswordController;
-use App\Http\Controllers\MIS\OrganisationalStructureController;
-use App\Http\Controllers\PMS\ProjectManagementController;
-use App\Http\Controllers\PMS\ProjectManagementFinalizeController;
-use App\Http\Controllers\PMS\ProjectManagementmodifyController;
-use App\Http\Controllers\PMS\Progress\ProjectFinancialProgressController;
-use App\Http\Controllers\PMS\Progress\ProjectPhysicalProgressController;
-use App\Http\Controllers\PMS\Progress\VerifyProgressController;
-use App\Http\Controllers\PMS\WorkItem\WorkItemController;
-use App\Http\Controllers\Road\Abstract\CulvertAbstractController;
-use App\Http\Controllers\Road\ProtectionWallController;
-use App\Http\Controllers\ViewWings\ViewHousingController;
-use App\Http\Controllers\ViewWings\ViewMechanicalController;
-use App\Http\Controllers\ViewWings\ViewNationalHighwayController;
-use App\Http\Controllers\ViewWings\ViewRoadAndBridgeController;
-
-// Authentication
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-Route::get('/captcha/image', [AuthenticatedSessionController::class, 'generateCaptcha'])->name('captcha.image');
-Route::post('logout', [AuthenticatedSessionController::class, 'logout'])->name('logout');
-Route::get('/session-expired', function () {
-    return view('sessionExpired');
-})->name('session-expired');
-
-
-// Route for Road Department
-Route::group(['middleware' => ['auth', 'prevent.cache', 'road']], function () {
-    Route::get('/manage-road', [RoadController::class, 'index'])->name('manageRoad');
-});
-
-// Route for PMS Department - Nitish 29-Jan-26
-Route::prefix('project-management')->middleware(['auth', 'prevent.cache'])->group(function () {
-
-    Route::get('/manage-project', [ProjectManagementController::class, 'create'])->name('manage-project');
-    Route::post('/manage-project', [ProjectManagementController::class, 'store']);
-    Route::post('/manage-project/update', [ProjectManagementController::class, 'update'])->name('project.update');
-    // view single project details
-    Route::post('/project-details', [ProjectManagementController::class, 'view'])->name('view.project');
-    #Route::post('/manage-project/update', [ProjectManagementController::class, 'update'])->name('project.update');
-
-    Route::get('/modify-project/{id}', [ProjectManagementController::class, 'index']);
-    // Route::put('/modify-project', [ProjectManagementController::class, 'update'])->name('project.update');
-
-    Route::get('/showFundingAgencies', [ProjectManagementController::class, 'showFundingAgencies'])->name('showFundingAgencies');
-    // dipshikha-start
-    Route::get('/other-details/new-works/{projectId}', [ProjectManagementController::class, 'getOtherDetailsForNewWorks']); //nitish																					
-    Route::get('/get-upgradation-detail/{projectId}', [ProjectManagementController::class, 'getUpgradationDetail']);
-    Route::get('/get-maintenance-detail/{projectId}', [ProjectManagementController::class, 'getMaintenanceDetail']);
-    // end					  
-    Route::get('/project-list', [ProjectManagementFinalizeController::class, 'index'])->name('project.verified.list');
-    Route::get('/finalize-project', [ProjectManagementFinalizeController::class, 'create'])->name('finalize.project');
-    Route::post('/freeze-project-details', [ProjectManagementFinalizeController::class, 'acceptProject'])->name('freeze.project.details');
-    Route::post('/reject-project-details', [ProjectManagementFinalizeController::class, 'rejectProject'])->name('reject.project.details');
-    //By dipshikha 11-05-2026 Start
-    //Project Modificat Routes Start
-    Route::get('/request-project-modification', [ProjectManagementmodifyController::class, 'index'])->name('project.request.list');
-    Route::get('/modification-approved-project', [ProjectManagementmodifyController::class, 'approvedProjects'])->name('modificationapprovedproject.request.list');
-    Route::get('/approved-project-edit/{project_cd}/{request_id}', [ProjectManagementmodifyController::class, 'approvedEdit'])->name('approved.project.edit');
-    Route::get('/project-modification-history/{project_cd}', [ProjectManagementmodifyController::class, 'history'])->name('project.modification.history');
-    Route::post('/request-modification', [ProjectManagementmodifyController::class, 'requestModification'])->name('request.modification');
-    Route::post('/reject-modification', [ProjectManagementmodifyController::class, 'rejectModification'])->name('reject.modification');
-    Route::post('/approve-modification', [ProjectManagementmodifyController::class, 'approveModification'])->name('approve.modification');
-    Route::get('/pending-project-approval', [ProjectManagementmodifyController::class, 'pendingProjects'])->name('pendingproject.request.list');
-    Route::post('/modification-project/update', [ProjectManagementmodifyController::class, 'update'])->name('modificationproject.update');
-    //Project Modificat Routes End
-    //By dipshikha 11-05-2026 Start
-    // master data entry
-    Route::post('/contractor/store', [ContractorController::class, 'store'])->name('contractor.store');
-    //saiful -- 03-2026 -- Start
-    Route::get('/pms-financial-progress', [ProjectFinancialProgressController::class, 'index'])->name('pms.progress.financial');
-    Route::get('/pms-financial-progress/{project_cd}', [ProjectFinancialProgressController::class, 'create'])->name('pms.progress.create.financial');
-    Route::post('/pms-store-financial-progress', [ProjectFinancialProgressController::class, 'store'])->name('pms.progress.store.financial');
-    //saiful -- 03-2026 -- End
-    // Nitish - change to resource routes
-    // item of work entry
-    Route::resource('projects.item-of-work', WorkItemController::class)
-        ->names('pms.work-item')
-        ->only(['index', 'store', 'edit', 'update', 'destroy']);
-    // END
-    //Project Progress Report
-    Route::get('/pms-physical-progress', [ProjectPhysicalProgressController::class, 'index'])->name('project.progress.report');
-    Route::get('/pms-item-wise-progress/{project_cd}', [ProjectPhysicalProgressController::class, 'getProgressDetailsItemWise'])->name('project.progress.itemwise');
-    //saiful 26-05-2026 -- Start
-    Route::get('/get-financial-progress/{project_cd}', [ProjectFinancialProgressController::class, 'getFinancialProgressDetailsProjectWise'])->name('pms.progress.get.financial');
-    //saiful 26-05-2026 -- End
-    //Verify Project Progree
-    Route::get('/pms-verify-progress', [VerifyProgressController::class, 'index'])->name('progress.verify.index');
-    Route::get('/pms-view-progress-submitted/{project_cd}/{progress_cd}', [VerifyProgressController::class, 'getProgressSubmitted'])->name('project.view.progress.submitted');
-    Route::post('/approve-progress', [VerifyProgressController::class, 'approveProgress']);
-
-    Route::get('/get-previous-progress/{project_cd}', [VerifyProgressController::class, 'getPreviousSubmittedProgress'])->name('project.previous.pregress');
-    //saiful -- 23-04-2026 -- Start
-    Route::get('/redefine_asset_project_upgradation', [RedefineAssetsController::class, 'redefineAsset'])->name('project.upgrade.asset.redefine');
-    //saiful -- 23-04-2026 -- End
-    //get Images url
-    Route::get('/view-file/{token}', [VerifyProgressController::class, 'viewExternalFile'])->where('path', '.*');
-});
-
-//Saiful -- Start -- Create Assets From Project
-Route::prefix('asset-management')->middleware('prevent.cache')->group(function () {
-    Route::get('/listAssetPlan', [AssetPlanCntroller::class, 'index'])->name('project.list.assets');
-});
-//Saiful -- End -- Create Assets From Project
-
-Route::group(['middleware' => ['auth', 'prevent.cache']], function () {
-
-    Route::get('uploadTender', [UploadFileController::class, 'uploadTenderViewPage'])->name('uploadTender');
-    Route::post('saveTenderDetails', [UploadFileController::class, 'saveTenderDetails'])->name('saveTenderDetails');
-    Route::get('uploadNotification', [UploadFileController::class, 'uploadNotificationsViewPage'])->name('uploadNotification');
-    Route::post('saveNotificationDetails', [UploadFileController::class, 'saveNotificationDetails'])->name('saveNotificationDetails');
-    //View Tender and Notices for Citizens
-    Route::get('viewTenderAndNotices', [ViewTenderAndNoticesController::class, 'viewTenderAndNoticesByCitizen'])->name('viewTenderAndNotices');
-    Route::get('download_url/{id}', [ViewTenderAndNoticesController::class, 'download_file'])->name('download_url');
-    Route::get('download_notification/{id}', [ViewTenderAndNoticesController::class, 'download_notification_file'])->name('download_notification');
-
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
-    Route::POST('/home', [HomeController::class, 'switchOffice'])->name('office.switch');
-    // New route defined by pulak 07-05-2026
-    Route::get('/projects', [ProjectProgressController::class, 'index'])->name('pms.project.list');
-    Route::get('/projects/progress/{projectCode}', [ProjectProgressController::class, 'show'])->name('pms.progress');
-    Route::post('/pms/progress/submit', [ProjectProgressController::class, 'submit'])->name('pms.progress.submit');
-    Route::get('progress/history', [ProjectProgressController::class, 'history'])->name('pms.progress.history');
-    // End New route defined by pulak 07-05-2026
-
-    // Work Item-PMS : Nitish 25-Jan-26
-    Route::get('/get-items-detail/{id}', [WorkItemController::class, 'getItemsDetail']);
-    Route::get('/get-sub-items/{id}/{project_cd}', [WorkItemController::class, 'getSubItems']);
-    // END
-
-    // Finalization : Nitish 25-Jan-26
-    Route::get('/send-pms-details-finalization', [ProjectManagementController::class, 'sendPMSDetailsFinalization']);
-    // Route::get('/pms/finalize-project', [FinalizeProjectController::class, 'create'])->name('finalize.project');
-    // route by dipshikha
-    Route::get('/get-maintenance-roads-subdivision/{sub_division_cd}', [PmsController::class, 'getMaintenanceRoadsbysubdivision']);
-    Route::get('/get-maintenance-buildings-subdivision/{catCd}/{sub_division_cd}', [PmsController::class, 'getMaintenanceBuildingsbysubdivision']);
-    Route::get('/get-upgradation-buildings-subdivision/{catCd}/{sub_division_cd}', [PmsController::class, 'getUpgrdationBuildingsbysubdivision']);
-    Route::get('/get-buildings-category', [PmsController::class, 'getBuildingsCategory']);
-    Route::get('/get-vehicles/{subDivId}', [PmsController::class, 'getVehicles']);
-    Route::get('/get-maintenance-vehicles/{subDivId}', [PmsController::class, 'getMaintVehicles']);
-    Route::get('/get-equipments/{subDivId}', [PmsController::class, 'getEquipments']);
-    Route::get('/get-maintenance-equipments/{subDivId}', [PmsController::class, 'getMaintEquipments']);
-    Route::get('/get-vehicle-details/{vehicleId}', [PmsController::class, 'getVehicleDetails']);
-    Route::get('/get-equipment-details/{equipmentId}', [PmsController::class, 'getEquipmentDetails']);
-    Route::get('/get-building-details/{building_cd}', [PmsController::class, 'getBuildingDetails']);
-
-    Route::get('/pms', [PmsController::class, 'create'])->name('pms');
-    Route::get('/get-roads/{division_cd}', [PmsController::class, 'getRoads']);
-    Route::get('/get-roads-subdivision/{sub_division_cd}', [PmsController::class, 'getRoadsbysubdivision']); // by dipsikha	
-    Route::get('/get-maintenance-assets-subdivision/{sub_division_cd}', [PmsController::class, 'getMaintenanceAssetsbysubdivision']); // by dipsikha												   
-    Route::get('/get-road-length/{rd_system_id}', [PmsController::class, 'getRoadLength']);
-    Route::post('/pms', [PmsController::class, 'store'])->name('project.store');
-    Route::get('/get-modal-detail/{id}/{type}', [PmsController::class, 'getModalDetails']); //created on 1 Nov 2025 by Pulak at 11:15
-    Route::get('/check-project-name', [PmsController::class, 'checkProjectName'])->name('check.project.name'); //created on 4 Nov 2025 by Pulak at 19:18
-    Route::get('/check-road-name', [PmsController::class, 'checkRoadName'])->name('check.road.name'); //created on 4 Nov 2025 by Pulak at 19:18
-    Route::get('/load-draft/{id}', [DraftController::class, 'loadDraft']);
-    Route::post('/save-draft', [DraftController::class, 'saveDraft']);
-    Route::get('/get-draft-list', [DraftController::class, 'listDrafts']);
-    Route::delete('/delete-draft/{id}', [DraftController::class, 'deleteDraft']);
-    Route::delete('/draft/delete/{project_cd}', [DraftController::class, 'destroy']);
-    Route::get('/get-culverts', [PmsController::class, 'getCulverts']);
-    Route::get('/get-bridges', [PmsController::class, 'getBridges']);
-    Route::get('/get-walls', [PmsController::class, 'getWalls']);
-    Route::get('/get-pavements', [PmsController::class, 'getPavements']);
-    Route::get('/get-maintenance-culverts', [PmsController::class, 'getMaintenanceCulverts']);
-    Route::get('/get-maintenance-bridges', [PmsController::class, 'getMaintenanceBridges']);
-    Route::get('/get-maintenance-walls', [PmsController::class, 'getMaintenanceWalls']);
-    Route::get('/get-maintenance-pavements', [PmsController::class, 'getMaintenancePavements']);
-    Route::get('/verification', [FinalizeProjectController::class, 'verification'])->name('verify.project');
-    Route::post('/project/approve', [FinalizeProjectController::class, 'approve'])->name('project.approve');
-    Route::post('/project/reject', [FinalizeProjectController::class, 'reject'])->name('project.reject');
-    Route::get('/verified-projects', [FinalizeProjectController::class, 'verifiedProjects'])->name('project.verify');
-    Route::get('/track-status', [FinalizeProjectController::class, 'trackStatus'])->name('track');
-    Route::get('/track-status/search', [FinalizeProjectController::class, 'trackStatusSearch'])->name('track.search');
-
-    // Load Draft directly from DB (for edit)
-    Route::get('/project/load-db-draft/{project_cd}/{department}', [DraftController::class, 'loadDbDraft'])->name('project.loadDbDraft');
-    Route::get('/get-upgradation-subassets/{project_cd}', [PmsController::class, 'getUpgradationSubAssets']);
-    Route::get('/get-maintenance-subassets/{project_cd}', [PmsController::class, 'getMaintenanceSubAssets']);
-    // Departmental Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'getDashboard'])->name('dashboard');
-    Route::get('/dashboardNH', [DashboardController::class, 'getDashboardNH'])->name('dashboardNH');
-    Route::get('/dashboard-housing', [DashboardController::class, 'getHousingDashboard'])->name('dashboard.housing');
-    Route::get('/dashboard-mechanical', [DashboardController::class, 'getEquipDashboard'])->name('dashboard.equipment');
-
-    // Read Local File
-    Route::get('/read-file', [FileController::class, 'index']);
-    Route::get('/read-local-file', [FileController::class, 'getLocalFile']);
-    //download files
-    Route::get('/uploaded_docs/{path}', [FileController::class, 'download'])->where('path', '.*');
-
-    // Download APK
-    Route::get('/apk', [HomeController::class, 'downloadAPK'])->name('apkDownload')->middleware('signed');
-    // Create Secret Code
-    Route::get('/secret-code', [HomeController::class, 'createSecretCode'])->name('secretCode')->middleware('signed');
-    Route::post('/store-secret-code', [HomeController::class, 'storeSecretCode']);
-
-    // get distress details
-    Route::get('/distress-details/{id}', [AssetRoadDistressDetailsController::class, 'getDistressDetails']);
-    Route::get('/distress-images/{id}', [AssetRoadDistressDetailsController::class, 'getDistressImages']);
-
-    //users
-    Route::get('/manage-user', [UserController::class, 'index'])->name('manageUser');
-    Route::get('/create-user', [UserController::class, 'create'])->name('createUser');
-    Route::post('/create-user', [UserController::class, 'store']);
-    Route::post('/update-user', [UserController::class, 'update'])->name('updateUser');
-    Route::get('/mis-user', [UserController::class, 'mis'])->name('userMIS');
-    Route::post('/assignUserRole', [UserController::class, 'assignUserRole'])->name('assignUserRole');
-
-    Route::post('activeUser', [UserController::class, 'activeUser'])->name('activeUser');
-    Route::get('user-menu-access', [UserController::class, 'getMenuAccess']);
-    Route::post('edit-user-menu-access', [UserController::class, 'editMenuAccess']);
-    Route::get('/view-user', [UserController::class, 'view'])->name('viewUsers');
-    Route::get('/user-movement', [UserController::class, 'getUserMovement'])->name('userMovement')->middleware('signed');
-    Route::get('/user-movement-temporary', [UserController::class, 'getTemporaryUserMovement'])->name('userMovementTemp')->middleware('signed');
-    Route::get('/user-history', [UserController::class, 'getUserListByDesignation'])->name('userHistory')->middleware('signed');
-    Route::get('/user-period', [UserController::class, 'getUserByTimePeriod'])->name('user.period');
-
-    // Manage Users additional Info
-    Route::get('/manage-user-additional-office/{id}', [UserController::class, 'additionalOfficeInfo'])->name('manageAddOffice');
-    Route::get('/manage-additional-office', [UserController::class, 'manageAdditionalOffice'])->name('manageUserAddOffice');
-    Route::post('/manage-additional-office', [UserController::class, 'storeAdditionalOffice']);
-    Route::get('/change-add-office-status', [UserController::class, 'changeAdditionalOfficeStatus']);
-
-    // New Routes defined by Pulak on 04-02-2026
-    // Master Dashboard
-    // Administrative
-    Route::resource('districts', DistrictController::class)->only(['index', 'store', 'update']);
-    Route::resource('block', BlockController::class)->only(['index', 'store', 'update']);
-    Route::resource('circle', CircleController::class)->only(['index', 'store', 'update']);
-    Route::resource('division', DivisionController::class)->only(['index', 'store', 'update']);
-    Route::resource('subdivision', SubDivisionController::class)->only(['index', 'store', 'update']);
-    Route::resource('village', VillageController::class)->only(['index', 'store', 'update']);
-    Route::resource('zone', ZoneController::class)->only(['index', 'store', 'update']);
-    Route::get('get-division-hierarchy/{div_cd}', [SubDivisionController::class, 'getDivisionHierarchy'])->name('getDivisionHierarchy');
-
-    // Road
-    Route::resource('roadCategory', RoadCategoryController::class)->only(['index', 'store', 'update']);
-    Route::resource('chainageStep', ChainageStepController::class)->only(['index', 'store', 'update']);
-    Route::resource('habitationFacilities', HabitationFacilitiesController::class)->only(['index', 'store', 'update']);
-    Route::resource('habitationSubFacilities', HabitationSubFacilityController::class)->only(['index', 'store', 'update']);
-    Route::resource('roadCondition', RoadConditionController::class)->only(['index', 'store', 'update']);
-    Route::resource('roadOwner', RoadOwnerController::class)->only(['index', 'store', 'update']);
-    Route::resource('roadSubAsset', RoadSubAssetController::class)->only(['index', 'store', 'update']);
-
-    //Project
-    Route::resource('contractorCategory', ContractorCategoryController::class)->only(['index', 'store', 'update']);
-    Route::resource('contractorDetails', ContractorDetailsController::class)->only(['index', 'store', 'update']);
-    Route::resource('itemOfWorkMaster', ItemOfWorkMasterController::class)->only(['index', 'store', 'update']);
-    Route::resource('itemUnit', ItemUnitController::class)->only(['index', 'store', 'update']);
-    Route::resource('officeDetails', OfficeDetailsController::class)->only(['index', 'store', 'update']);
-    Route::resource('projectType', ProjectTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('subItemOfWork', SubItemOfWorkController::class)->only(['index', 'store', 'update']);
-    Route::resource('workplanActivity', WorkplanActivityController::class)->only(['index', 'store', 'update']);
-    Route::resource('boqItem', BOQItemController::class)->only(['index', 'store', 'update']);
-    Route::resource('scheme', SchemeController::class)->only(['index', 'store', 'update']);
-    Route::resource('fundingAgnecies', FundingAgnecies::class)->only(['index', 'store', 'update']);
-    Route::resource('mapping', SchemeFundMappingController::class)->only(['index', 'store', 'update']);
-    // Buildings 
-    Route::resource('buildingAccessibility', AccessibilityController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingAccessType', BuildingAccessController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingBeamType', BuildingBeamController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingCategory', BuildingCategoryController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingClass', BuildingClassController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingColumnType', BuildingColumnController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingFloorType', BuildingFloorController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingFoundationType', BuildingFoundationController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingWallType', BuildingWallTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingTypes', BuildingTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('buildingCondition', BuildingConditionController::class)->only(['index', 'store', 'update']);
-
-    // Bridges
-    Route::resource('abutmentType', AbutmentTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('bearingType', BearingTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('bridgeType', BridgeTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('deckType', DeckTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('expansionJointType', ExpansionJointController::class)->only(['index', 'store', 'update']);
-    Route::resource('headWall', HeadWallController::class)->only(['index', 'store', 'update']);
-    Route::resource('pierType', PierTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('pileType', PileTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('streamType', StreamTypeController::class)->only(['index', 'store', 'update']);
-
-    // Drainage
-
-    Route::resource('drainageType', DrainageTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('lineDrainageType', LineDrainageType::class)->only(['index', 'store', 'update']);
-    Route::resource('drainageSide', DrainageSideController::class)->only(['index', 'store', 'update']);
-
-    // Mechanical 
-
-    Route::resource('vehicleType', VehicleTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('vehicleMaker', VehicleMakerController::class)->only(['index', 'store', 'update']);
-    Route::resource('vehicleCondition', VehicleConditionController::class)->only(['index', 'store', 'update']);
-    Route::resource('vehicleModels', VehicleModelController::class)->only(['index', 'store', 'update']);
-    Route::resource('equipmentType', EquipmentTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('equipmentCondition', EquipmentConditionController::class)->only(['index', 'store', 'update']);
-    Route::resource('fuelType', FuelTypeController::class)->only(['index', 'store', 'update']);
-
-    // Construction 
-    Route::resource('cdWorkType', CDWorkTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('constructionType', ConstructionTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('faceWallType', FaceWallTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('foundationType', FoundationTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('materialType', MaterialTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('retainWallType', RetainWallTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('toeWallType', ToeWallTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('wingWallType', WingWallTypeController::class)->only(['index', 'store', 'update']);
-
-    // Pavements 
-    Route::resource('pavementCondition', PavementConditionController::class)->only(['index', 'store', 'update']);
-    Route::resource('pavementType', PavementTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('surfaceType', SurfaceTypeController::class)->only(['index', 'store', 'update']);
-    Route::resource('topographyType', TopographyTypeController::class)->only(['index', 'store', 'update']);
-    // Routes end by Pulak 										
-    //department
-    Route::get('add-department', [DepartmentController::class, 'GetAddDepartment'])->name('GetAddDepartment');
-    Route::post('adddepartment', [DepartmentController::class, 'AddDepartment'])->name('AddDepartment');
-    Route::get('department-list', [DepartmentController::class, 'departmentList'])->name('departmentList');
-    Route::get('datatable-department-list', [DepartmentController::class, 'DatatableDepartmentList'])->name('DatatableDepartmentList');
-    Route::post('updateDepartment', [DepartmentController::class, 'updateDepartment'])->name('updateDepartment');
-    Route::get("deletedepartment/{id}", [DepartmentController::class, 'deleteDepartment'])->name('deleteDepartment');
-
-    //designation
-    Route::get('/manage-designation', [DesignationController::class, 'index'])->name('manageDesignation');
-    Route::post('/manage-designation', [DesignationController::class, 'store']);
-    Route::post('/update-Designation', [DesignationController::class, 'update'])->name('updateDesignation');
-    Route::get("/delete-designation/{id}", [DesignationController::class, 'destroy'])->name('deleteDesignation');
-    Route::get('/designation-history', [DesignationController::class, 'getDesignationHistory'])->name('designationUserHistory')->middleware('signed');
-
-    //office
-    Route::get('/manage-office', [OfficeController::class, 'index'])->name('manageOffice');
-    Route::post('/manage-office', [OfficeController::class, 'store']);
-    Route::post('/update-office', [OfficeController::class, 'update'])->name('updateOffice');
-    Route::get("/delete-office/{id}", [OfficeController::class, 'destroy'])->name('deleteOffice');
-    Route::get('/getOfficeList', [OfficeController::class, 'listOfOffice'])->name('getOffices');
-    Route::get('/getZoneList', [OfficeController::class, 'getZoneList'])->name('getZones');
-    Route::get('/getCircleList', [OfficeController::class, 'getCircleList'])->name('getCircles');
-    Route::get('/getDivisionList', [OfficeController::class, 'getDivisionList'])->name('getDivisions');
-    Route::get('/getSubDivisionList', [OfficeController::class, 'getSubDivisionList'])->name('getSubDivisions');
-    Route::get('getDist', [OfficeController::class, 'getDist'])->name('getDist');
-    Route::get('getSubDist', [OfficeController::class, 'getSubDist'])->name('getSubDist');
-    Route::get('getBlock', [OfficeController::class, 'getBlock'])->name('getBlock');
-    Route::get('getVillage', [OfficeController::class, 'getVillage'])->name('getVillage');
-    Route::get('getOfficeOnchange', [OfficeController::class, 'getOfficeOnchange'])->name('getOfficeOnchange');
-    Route::get('/get-parent-offices/{officeTypeCd}', [OfficeController::class, 'getParentOffices']);
-
-    //posts
-    Route::get('/manage-post', [PostController::class, 'index'])->name('managePost');
-    Route::post('/manage-post', [PostController::class, 'store']);
-    Route::post('/update-post', [PostController::class, 'update'])->name('updatePost');
-    Route::get("/delete-post/{id}", [PostController::class, 'destroy'])->name('deletePost');
-
-    //role
-    Route::get('add-role', [RoleController::class, 'GetAddRole'])->name('GetAddRole');
-    Route::post('addrole', [RoleController::class, 'AddRole'])->name('AddRole');
-    Route::get('role-list', [RoleController::class, 'roleList'])->name('roleList');
-    Route::get('datatable-role-list', [RoleController::class, 'DatatableRoleList'])->name('DatatableRoleList');
-    Route::get('add-role/{rname}', [RoleController::class, 'checkRoleName'])->name('checkRoleName');
-    Route::post('updateRole', [RoleController::class, 'updateRole'])->name('updateRole');
-
-    //profile
-    Route::get('view-profile', [UserController::class, 'getProfile'])->name('getProfile');
-    Route::get('edit-profile', [UserController::class, 'EditProfile'])->name('editProfile');
-    Route::post('/reset-password', [PasswordController::class, 'resetPassword'])->name('resetPassword');
-    Route::get('/forgot-password', [PasswordController::class, 'forgotPassword'])->name('forgotPassword')->middleware('signed');
-    Route::post('/forgot-password', [PasswordController::class, 'storeNewPassword']);
-
-    // Housing
-    Route::get('/manage-housing', [BuildingController::class, 'index'])->name('manageHousing');
-    Route::get('/add-housing', [BuildingController::class, 'create'])->name('addHousing');
-    Route::get('/get-housing/{id}', [BuildingController::class, 'search'])->name('searchHousing');
-    Route::post('/add-housing', [BuildingController::class, 'store']);
-    Route::delete('/housing/delete', [BuildingController::class, 'destroy'])->name('destroy.housing');
-    // New routes for view all non partial finalized housing data: Nitish
-    Route::get('manage-housing/view', [BuildingViewController::class, 'index'])->name('building.view.index');
-    Route::get('manage-housing/{buildingId}', [BuildingController::class, 'show'])->name('building.view.show');
-    // END																	 
-    Route::post('/create-additional-housing-data', [BuildingController::class, 'createAdditionalData'])->name('addHousing.additional');
-    Route::post('/store-additional-housing-data', [BuildingController::class, 'storeAdditionalData'])->name('storeHousing.additional');
-
-    // Create Location for Housing Module
-    Route::resource('building-location', BuildingLocationController::class);
-    Route::resource('building.building-unit', BuildingUnitController::class)->names('building.unit');
-    Route::resource('building.building-unit.building-occupancy', BuildingOccupancyController::class)
-        ->names('building.occupancy');
-    Route::get('building/finalize', [BuildingController::class, 'finalizeBuilding'])->name('finalizeBuilding');
-    Route::post('update-building', [BuildingController::class, 'updateBuilding'])->name('updateBuilding');
-    Route::post('freeze-building', [BuildingController::class, 'freezeBuilding'])->name('freezeBuilding');
-    Route::get('/buildingType', [BuildingController::class, 'getBuildingType']);
-    Route::get('/buildingLocation', [BuildingController::class, 'getBuildingLocation']);
-    Route::get('/abstract', [BuildingController::class, 'getGeneralAbstract'])->name('abstract');
-    Route::get('/housing-coordinates', [BuildingController::class, 'getHousingCoordinates'])->name('getHousingCoordinates');
-    Route::get('/housing-coordinates/{id}', [BuildingController::class, 'getHousingCoordinatesById']);
-    Route::post('/editDraftBuildingData', [BuildingController::class, 'editDraftBuildingData'])->name('editDraftBuildingData');
-
-    //Roads
-    Route::get('/add-road', [RoadController::class, 'create'])->name('road.add-road');
-    Route::post('/add-road', [RoadController::class, 'store']);
-    Route::post('/edit-road', [RoadController::class, 'update'])->name('update.road');
-    Route::delete('/road/delete', [RoadController::class, 'destroy'])->name('destroy.road');
-    Route::get('/get-coordinates', [RoadController::class, 'calculateLatLngByChainage']);
-
-    Route::get('modify-road', [RoadController::class, 'GetModifyRoad'])->name('GetModifyRoad');
-    Route::post('updateRNo', [RoadController::class, 'updateRNo'])->name('updateRNo');
-    Route::post('updateRName', [RoadController::class, 'updateRName'])->name('updateRName');
-    Route::post('updateRLTotal', [RoadController::class, 'updateRLTotal'])->name('updateRLTotal');
-    Route::post('updatechF', [RoadController::class, 'updatechF'])->name('updatechF');
-    Route::post('updatechT', [RoadController::class, 'updatechT'])->name('updatechT');
-    Route::post('updateRSLocationFrom', [RoadController::class, 'updateRSLocationFrom'])->name('updateRSLocationFrom');
-    Route::post('updateRSLocationTo', [RoadController::class, 'updateRSLocationTo'])->name('updateRSLocationTo');
-    Route::post('updateRcat', [RoadController::class, 'updateRcat'])->name('updateRcat');
-    Route::post('updateDistNo', [RoadController::class, 'updateDistNo'])->name('updateDistNo');
-    Route::post('updateDivision', [RoadController::class, 'updateDivision'])->name('updateDivision');
-    Route::post('updateRdClass', [RoadController::class, 'updateRdClass'])->name('updateRdClass');
-    Route::post('updateDate', [RoadController::class, 'updateDate'])->name('updateDate');
-    Route::post('sendModifyReq', [RoadController::class, 'sendModifyReq'])->name('sendModifyReq');
-    Route::post('finalApproveByAdmin', [RoadController::class, 'finalApproveByAdmin'])->name('finalApproveByAdmin');
-
-    Route::get('/get-lat-lng/{id}', [RoadController::class, 'getRoadLatLng'])->middleware(['auth']);
-    Route::get('/abstract-road-and-bridge', [RoadController::class, 'getRoadAbstract'])->name('abstract.r&b');
-    Route::get('/abstract-road-and-bridge-division', [RoadController::class, 'getRoadAbstractByDivision'])->name('abstract.R&BDivison');
-    // Route::get('/get-road-by-division/{id}', [RoadController::class, 'getRoadByDivision'])->middleware(['auth']);
-    Route::get('/getRoadsAssetsAbstractDetails/{rd_id}', [RoadController::class, 'getRoadsAssetsAbstractDetails'])->middleware(['auth'])->name('getRoadsAssetsAbstractDetails');
-
-    // Handle maker checker module
-    Route::get('/handle-maker-checker-workflow', [MakerCheckerHandleController::class, 'index'])->name('handleMakerChecker');
-    Route::post('/update-maker-checker-workflow', [MakerCheckerHandleController::class, 'update'])->name('updateMakerChecker');
-
-
-    // Road Abstract - get sub-assets details
-    Route::get('/getCDWorkDetailsOfARoad/{rd_id}', [CulvertAbstractController::class, 'getCulvertDetails'])->name('getCDWorkDetailsOfARoad');
-
-
-    // chainage
-    Route::get('/chainage/{id}', [ChainageController::class, 'index']);
-    Route::get('/get-chainage', [ChainageController::class, 'show'])->name('roadChainage');
-
-    // culvert
-    // modified by Pulak 30-04-26
-    Route::get('/manage-cdWorks/{id}', [RoadCDWorkController::class, 'index'])->name('manageCDWorks');
-    Route::get('/edit-cdworks/{id}', [RoadCDWorkController::class, 'edit'])->name('editCDWorks');
-    Route::get('/create-cdworks', [RoadCDWorkController::class, 'create'])->name('createCDWorks');
-    Route::post('/create-cdworks', [RoadCDWorkController::class, 'store']);
-    Route::get('/get-cd-work-details/{id}', [RoadCDWorkController::class, 'getCDWorkDetails']);
-    Route::put('/update-cdworks/{id}', [RoadCDWorkController::class, 'update'])->name('updateCDWorks');
-    Route::post('/delete-culvert-file', [DraftRoadController::class, 'deleteCulvertFile']);
-    Route::get('/load-culvert-files/{culvert_id}', [DraftRoadController::class, 'loadCulvertFiles']);
-    // modified by Pulak 30-04-26
-    Route::get('/get-wing-wall-detail/{id}', [RoadCDWorkController::class, 'getWingWallDetails'])->name('getWingWallDetails');
-    Route::get('/get-wing-wall-detail-finalized/{id}', [RoadCDWorkController::class, 'getFinalizedWingWallDetails']);
-    Route::get('/get-head-wall-detail/{id}', [RoadCDWorkController::class, 'getHeadWallDetails'])->name('getHeadWallDetails');
-    Route::get('/get-head-wall-detail-finalized/{id}', [RoadCDWorkController::class, 'getFinalizedHeadWallDetails']);
-    Route::get('/get-culvert-lat-lng/{id}', [RoadCDWorkController::class, 'getLatLng']);
-    Route::get('/get-culvert-details/{id}', [RoadCDWorkController::class, 'getCulvertDetails']);
-
-    // Pavement
-    Route::get('/manage-pavement/{id}', [RoadPavementController::class, 'index'])->name('managePavement');
-    Route::get('/create-pavement', [RoadPavementController::class, 'create'])->name('createPavement');
-    Route::post('/create-pavement', [RoadPavementController::class, 'store']);
-    // Pavement Subsection
-    Route::get('/manage-pavement-subsection/{id}/{asset}', [RoadPavementController::class, 'pavementSubsection'])->name('pavement.subsection');
-    Route::get('/create-pavement-shoulder', [RoadPavementController::class, 'createShoulder'])->name('pavement.create.shoulder');
-    Route::post('/create-pavement-shoulder', [RoadPavementController::class, 'storeShoulder']);
-    Route::get('/create-pavement-drainage', [RoadPavementController::class, 'createDrainage'])->name('pavement.create.drainage');
-    Route::post('/create-pavement-drainage', [RoadPavementController::class, 'storeDrainage']);
-    Route::get('/create-pavement-landslide', [RoadPavementController::class, 'createLandSlide'])->name('pavement.create.landslide');
-    Route::post('/create-pavement-landslide', [RoadPavementController::class, 'storeLandSlide']);
-
-    // Bridge
-    //modified by Pulak 29/04/2026							  
-    Route::get('/add-cd-bridge-details/{id}', [RoadBridgeController::class, 'index'])->name('road.cd-bridge-details');
-    Route::get('/edit-cd-bridge-details/{id}', [RoadBridgeController::class, 'show']);
-    Route::get('/add-bridge-details', [RoadBridgeController::class, 'create'])->name('bridge.store');
-    Route::post('/add-bridge-details', [RoadBridgeController::class, 'store']);
-    Route::get('/get-bridge-details/{id}', [RoadBridgeController::class, 'edit']);
-    Route::get('/load-bridge-files/{brdigeId}', [DraftRoadController::class, 'loadBridgeFiles']); //modified by pulak 02-05-26
-    Route::post('/delete-bridge-file', [DraftRoadController::class, 'deleteBridgeFile']); //modified by pulak 02-05-26
-    // modification end by Pulak 29/04/2026																							 
-    Route::put('/update-bridge-details/{id}', [RoadBridgeController::class, 'update'])->name('bridge.update');
-    Route::get('/get-bridge-wing-wall-detail/{id}', [RoadBridgeController::class, 'bridgeWingWallDetails']);
-    Route::get('/get-bridge-wing-wall-detail-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgeWingWallDetails']);
-    Route::get('/get-bridge-head-wall-detail/{id}', [RoadBridgeController::class, 'bridgeHeadWallDetails']);
-    Route::get('/get-bridge-head-wall-detail-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgeHeadWallDetails']);
-    Route::get('/get-abutment-wall-detail/{id}', [RoadBridgeController::class, 'bridgeAbutmentWallDetails']);
-    Route::get('/get-abutment-wall-detail-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgeAbutmentWallDetails']);
-    Route::get('/get-retain-wall-detail/{id}', [RoadBridgeController::class, 'bridgeRetainWallDetails']);
-    Route::get('/get-retain-wall-detail-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgeRetainWallDetails']);
-    Route::get('/get-span-details/{id}', [RoadBridgeController::class, 'bridgeSpanDetails']);
-    Route::get('/get-span-details-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgeSpanDetails']);
-    Route::get('/get-pier-details/{id}', [RoadBridgeController::class, 'bridgePierDetails']);
-    Route::get('/get-pier-details-finalized/{id}', [RoadBridgeController::class, 'finalizedBridgePierDetails']);
-    Route::get('/get-bridge-lat-lng/{id}', [RoadBridgeController::class, 'getLatLng']);
-
-    // surfaceType 
-    Route::get('/manage-surface-type/{id}', [RoadSurfaceTypeController::class, 'index'])->middleware(['auth']);
-    Route::get('/add-surface-type', [RoadSurfaceTypeController::class, 'create'])->middleware(['auth'])->name('road.add-surface-type');
-    Route::post('/store-surface-type', [RoadSurfaceTypeController::class, 'store'])->middleware(['auth'])->name('road.store-surface-type');
-    Route::post('/update-surface-type-detail', [RoadSurfaceTypeController::class, 'update'])->middleware(['auth'])->name('updateSurfaceTypeDetails');
-
-    // PCI 
-    Route::get('/road/add-pci/{id}', [RoadPCIController::class, 'index'])->middleware(['auth'])->name('road.pci');
-    Route::get('/add-pci-details', [RoadPCIController::class, 'addPCIValue'])->middleware(['auth'])->name('road.add-pci');
-    Route::post('/store-pci-details', [RoadPCIController::class, 'storePCIValue'])->middleware(['auth'])->name('road.store-pci');
-    Route::post('/update-pci-detail', [RoadPCIController::class, 'updatePCIValue'])->middleware(['auth'])->name('updatePCIDetails');
-
-    // habitation
-    Route::get('/road/add-habitation/{id}', [RoadHabitationController::class, 'index'])->middleware(['auth'])->name('road.habitation');
-    Route::get('/add-habitation', [RoadHabitationController::class, 'addHabitation'])->middleware(['auth'])->name('road.add-habitation');
-    Route::post('/add-habitation', [RoadHabitationController::class, 'storeHabitation'])->middleware(['auth']);
-    // Saiful -- 03-2026 -- Start
-    Route::post('/destroy-habitation', [RoadHabitationController::class, 'destroyHabitation'])->middleware(['auth'])->name('road.destroy-habitation');
-    Route::post('/edit-habitation', [RoadHabitationController::class, 'editHabitation'])->middleware(['auth'])->name('road.edit-habitation');
-    // Saiful -- 03-2026 -- End
-    Route::get('/village/{id}', [RoadHabitationController::class, 'getVillage'])->name('villageList');
-    Route::get('/block/{id}', [RoadHabitationController::class, 'getBlock'])->name('blockList');
-    Route::get('/habitation-population/{id}', [RoadHabitationController::class, 'getPopulation'])->middleware(['auth']);
-
-    // protection wall
-    Route::get('/add-protection-wall/{id}', [ProtectionWallController::class, 'index'])->name('road.protection.wall');
-    Route::get('/add-protection-wall', [ProtectionWallController::class, 'create'])->name('road.store.protection');
-    Route::post('/add-protection-wall', [ProtectionWallController::class, 'store']);
-    Route::get('/get-protection-wall/{id}', [ProtectionWallController::class, 'getProtectionWall']); //modified by pulak 02-05-26
-    Route::get('/edit-protection-wall/{id}', [ProtectionWallController::class, 'edit'])->name('editProtectionWall');//modified by pulak 02-05-26
-    Route::put('/update-protection-wall/{id}', [ProtectionWallController::class, 'update'])->name('updateProtectionWall');//modified by pulak 02-05-26
-    Route::get('/load-protection-wall-files/{id}', [DraftRoadController::class, 'loadProtectionWallFiles']); //modified by pulak 02-05-26
-    Route::post('/delete-protection-wall-file', [DraftRoadController::class, 'deleteProtectionWallFile']); //modified by pulak 02-05-26
-    // Start - Show Road & its SubAsset Details
-    Route::get('/road/show/{id}', [ShowRoadDetailsController::class, 'showRoadDetails'])->name('showRoad');
-    Route::get('/show-roads', [ShowRoadDetailsController::class, 'showAllRoadDetails'])->name('showAllRoadModule');
-    Route::get('/road/show-cd-works/{id}', [ShowRoadDetailsController::class, 'getCDWorkDetails']);
-    Route::get('/show-cdworks-details', [ShowRoadDetailsController::class, 'showCDWorkDetails'])->name('showCDWorkDetails');
-    Route::get('/road/show-bridge-data/{id}', [ShowRoadDetailsController::class, 'getBridgeDetails']);
-    Route::get('/show-bridge-details', [ShowRoadDetailsController::class, 'showBridgeDetails'])->name('showBridgeDetails');
-    Route::get('/road/show-surface-type-data/{id}', [ShowRoadDetailsController::class, 'getSurfaceTypeDetails']);
-    Route::get('/show-surface-type-details', [ShowRoadDetailsController::class, 'showSurfaceTypeDetails'])->name('showSurfaceTypeDetails');
-    Route::get('/road/show-pavement-data/{id}', [ShowRoadDetailsController::class, 'getPavementDetails']);
-    Route::get('/show-pavement-details', [ShowRoadDetailsController::class, 'showPavementDetails'])->name('showPavementDetails');
-    Route::get('/road/show-pci-data/{id}', [ShowRoadDetailsController::class, 'getPCIDetails']);
-    Route::get('/show-pci-details', [ShowRoadDetailsController::class, 'showPCIDetails'])->name('showPCIDetails');
-    Route::get('/road/show-protection-wall-data/{id}', [ShowRoadDetailsController::class, 'getProtectionWallDetails']);
-    Route::get('/show-protection-wall-details', [ShowRoadDetailsController::class, 'showProtectionWallDetails'])->name('showProtectionWallDetails');
-    Route::get('/road/show-habitation-data/{id}', [ShowRoadDetailsController::class, 'getHabitationDetails']);
-    Route::get('/show-habitation-details', [ShowRoadDetailsController::class, 'showHabitationDetails'])->name('showHabitationDetails');
-    // End
-
-    // Road Chainage
-    Route::get('/chainage', [RoadChainageController::class, 'index'])->middleware(['auth'])->name('chainage');
-    Route::post('/chainage', [RoadChainageController::class, 'store'])->middleware(['auth']);
-    Route::get('/chainage/get-road/{id}', [RoadChainageController::class, 'show'])->middleware(['auth']);
-    Route::get('/chainage/show-road', [RoadChainageController::class, 'showRoad'])->middleware(['auth']);
-    Route::get('/chainage/get-chainage/{id}', [RoadChainageController::class, 'getRoadChainageDetails'])->middleware(['auth']);
-    Route::get('/chainage/get-nh-chainage/{road_id}/{id}', [RoadChainageController::class, 'getNHChainageDetails'])->middleware(['auth']);
-    Route::get('/chainage/get-detail/{id}', [RoadChainageController::class, 'show'])->middleware(['auth']);
-    Route::get('/end-chainage/{id}', [RoadChainageController::class, 'getEndChainage'])->middleware(['auth']);
-    Route::get('/nh-end-chainage/{id}', [RoadChainageController::class, 'getNHEndChainage'])->middleware(['auth']);
-
-    // HQ level chainage
-    Route::get('/assign-chainage', [HqRoadChainageController::class, 'index'])->middleware('auth')->name('HqChainage');
-    Route::post('/assign-chainage', [HqRoadChainageController::class, 'store'])->middleware('auth');
-    Route::get('/get-road-by-id/{id}', [HqRoadChainageController::class, 'getRoadById']);
-
-    Route::get('/get-circle/{id}', [LevelController::class, 'getCircleByZone'])->middleware(['auth']);
-    Route::get('/get-division/{id}', [LevelController::class, 'getdivisionByCircle'])->middleware(['auth']);
-    Route::get('/get-sub-division/{id}', [LevelController::class, 'getSubDivisionByDivision'])->middleware(['auth']);
-
-    // Start- Send asset for finalization
-    Route::get('/send-road-details-finalization', [FinalizationController::class, 'finalizeRoad']);
-    Route::get('/send-culvert-details-finalization', [FinalizationController::class, 'finalizeCDWork']);
-    Route::get('/send-bridge-details-finalization', [FinalizationController::class, 'finalizeBridge']);
-    Route::get('/send-protection-wall-details-finalization', [FinalizationController::class, 'finalizeProtectionWall']);
-    Route::get('/send-pci-details-finalization', [FinalizationController::class, 'finalizePCI']);
-    Route::get('/send-surface-type-details-finalization', [FinalizationController::class, 'finalizeSurfaceType']);
-    Route::get('/send-habitation-details-finalization', [FinalizationController::class, 'finalizeHabitation']);
-    Route::get('/send-building-details-finalization', [FinalizationController::class, 'finalizeBuilding']);
-    Route::get('/send-vehicle-details-finalization', [FinalizVehicleController::class, 'finalizeSingleData']);
-    Route::get('/send-equipment-details-finalization', [FinalizEquipmentController::class, 'finalizeSingleData']);
-    // End
-
-    // Start - Store Data Finalization
-    // Road 
-    Route::get('/finalize-road-details', [FinalizeRoadsController::class, 'index'])->name('finalize.road');
-    Route::post('/finalize-road-details', [FinalizeRoadsController::class, 'store']);
-    Route::get('/freeze-road-details/{id}', [FinalizedDataController::class, 'freezeSingleRoadData']);
-    Route::get('/reject-road-details/{id}/{reason}', [FinalizedDataController::class, 'rejectSingleRoadData']);
-    // CD Works
-    Route::get('/finalize-road-asset/{id}', [FinalizeCDWorksController::class, 'load']);
-    Route::get('/finalize-cdworks-details', [FinalizeCDWorksController::class, 'index'])->name('finalize.road.cdworks');
-    Route::post('/finalize-cdworks-details', [FinalizeCDWorksController::class, 'store']);
-    Route::get('/accept-cdworks-details/{id}', [FinalizeCDWorksController::class, 'acceptSingleCDWorksData']);
-    Route::get('/reject-cdworks-details/{id}/{reason}', [FinalizeCDWorksController::class, 'rejectSingleCDWorksData']);
-    // Bridges
-    Route::get('/finalize-bridge-details', [FinalizeBridgeController::class, 'index'])->name('finalize.road.bridges');
-    Route::post('/finalize-bridge-details', [FinalizeBridgeController::class, 'store']);
-    Route::get('/accept-bridge-details/{id}', [FinalizeBridgeController::class, 'acceptSingleBridgeData']);
-    Route::get('/reject-bridge-details/{id}/{reason}', [FinalizeBridgeController::class, 'rejectSingleBridgeData']);
-    // PCI
-    Route::get('/finalize-pci-details', [FinalizePCIController::class, 'index'])->name('finalize.road.pci');
-    Route::post('/finalize-pci-details', [FinalizePCIController::class, 'store']);
-    Route::get('/accept-pci-details/{id}', [FinalizePCIController::class, 'acceptSinglePCIData']);
-    Route::get('/reject-pci-details/{id}/{reason}', [FinalizePCIController::class, 'rejectSinglePCIData']);
-    // Protection Wall
-    Route::get('/finalize-protection-wall-details', [FinalizeProtectionWallController::class, 'index'])->name('finalize.road.protectionWall');
-    Route::post('/finalize-protection-wall-details', [FinalizeProtectionWallController::class, 'store']);
-    Route::get('/accept-protection-wall-details/{id}', [FinalizeProtectionWallController::class, 'acceptSingleProtectionWallData']);
-    Route::get('/reject-protection-wall-details/{id}/{reason}', [FinalizeProtectionWallController::class, 'rejectSingleProtectionWallData']);
-    // Surface Type
-    Route::get('/finalize-surface-type-details', [FinalizeSurfaceTypeController::class, 'index'])->name('finalize.road.surface.types');
-    Route::post('/finalize-surface-type-details', [FinalizeSurfaceTypeController::class, 'store']);
-    Route::get('/accept-surface-type-details/{id}', [FinalizeSurfaceTypeController::class, 'acceptSingleSurfaceTypeData']);
-    Route::get('/reject-surface-type-details/{id}/{reason}', [FinalizeSurfaceTypeController::class, 'rejectSingleSurfaceTypeData']);
-    // pavement
-
-    // Habitation
-    Route::get('/finalize-habitation-details', [FinalizeHabitationController::class, 'index'])->name('finalize.road.habitation');
-    Route::post('/finalize-habitation-details', [FinalizeHabitationController::class, 'store']);
-    Route::get('/accept-habitation-details/{id}', [FinalizeHabitationController::class, 'acceptSingleHabitationData']);
-    Route::get('/reject-habitation-details/{id}/{reason}', [FinalizeHabitationController::class, 'rejectSingleHabitationData']);
-    // Housing
-    Route::get('/finalize-housing-draft-data', [FinalizeHousingController::class, 'index'])->name('housing.finalize');
-    Route::get('/freeze-building-details/{id}', [FinalizeHousingController::class, 'acceptHousing']);
-    Route::get('/reject-building-details/{id}/{reason}', [FinalizeHousingController::class, 'rejectHousing']);
-    // End
-
-    // Mechanical
-    // equipment
-    Route::get('/manage-mechanical', [MechanicalController::class, 'index'])->name('mechanical');
-    Route::get('/add-equipment', [MechanicalController::class, 'addEquipment'])->name('addEquipment');
-    Route::post('/add-equipment', [MechanicalController::class, 'storeEquipment']);
-    Route::post('/freeze-equipment', [MechanicalController::class, 'freezeEquipment'])->name('freezeEquipment');
-    Route::post('/edit-equipment', [MechanicalController::class, 'updateEquipment'])->name('editEquipment');
-    Route::delete('/delete-equipment', [MechanicalController::class, 'destroyEquipment'])->name('deleteEquipment');
-    Route::get('/equipment-abstract', [MechanicalController::class, 'equipmentAbstract'])->name('equipmentAbstract');
-    Route::get('/equipment-abstract', [MechanicalController::class, 'equipmentAbstract'])->name('equipmentAbstract');
-    // vehicle
-    Route::get('/manage-vehicle', [MechanicalController::class, 'viewVehicle'])->name('vehicle');
-    Route::get('/add-vehicle', [MechanicalController::class, 'addVehicle'])->name('addVehicle');
-    Route::post('/add-vehicle', [MechanicalController::class, 'storeVehicle']);
-    Route::post('/edit-vehicle', [MechanicalController::class, 'editVehicle'])->name('editVehicle');
-    Route::post('/editDraftVehicleData', [MechanicalController::class, 'editDraftVehicleData'])->name('editDraftVehicleData');
-    Route::delete('/delete-vehicle', [MechanicalController::class, 'destroyVehicle'])->name('deleteVehicle');
-    Route::post('/freeze-vehicle', [MechanicalController::class, 'freezeVehicle'])->name('freezeVehicle');
-    Route::get('/vehicle-abstract', [MechanicalController::class, 'vehicleAbstract'])->name('vehicleAbstract');
-    //show mechanical data in citizen dashboard
-    Route::get('/get-mechanical-equipment-data', [MechanicalCitizenDashboard::class, 'showEquipment'])->name('citizen.equipment');
-    Route::get('/get-mechanical-vehicle-data', [MechanicalCitizenDashboard::class, 'showVehicle'])->name('citizen.vehicle');
-
-    // finalize mechanical data
-    Route::get('/finalize-vehicle-draft-data', [FinalizeMechanicalController::class, 'finalizeVehicle'])->name('vehicle.finalize');
-    Route::get('/freeze-vehicle-details/{id}', [FinalizeMechanicalController::class, 'acceptVehicle']);
-    Route::get('/reject-vehicle-details/{id}/{reason}', [FinalizeMechanicalController::class, 'rejectVehicle']);
-    Route::get('/finalize-equipment-draft-data', [FinalizeMechanicalController::class, 'finalizeEquipment'])->name('equipment.finalize');
-    Route::get('/freeze-equipment-details/{id}', [FinalizeMechanicalController::class, 'acceptEquipment']);
-    Route::get('/reject-equipment-details/{id}/{reason}', [FinalizeMechanicalController::class, 'rejectEquipment']);
-
-    // National Highway
-    // Route::get('/national-highway', [NationalHighwayController::class, 'index'])->name('nationalHighway');
-    Route::get('/national-highway', [RoadController::class, 'index'])->name('nationalHighway');
-
-    // Route::get('/add-national-highway', [NationalHighwayController::class, 'addHighway'])->name('addNationalHighway');
-    // Route::post('/add-national-highway', [NationalHighwayController::class, 'store']);
-
-    //activity
-    Route::get('view-activity', [ActivityController::class, 'GetActivity'])->name('GetActivity');
-    Route::get('login-log', [ActivityController::class, 'getLoginLog'])->name('getLoginLog');
-    Route::get('getUserOnchange', [ActivityController::class, 'getUserOnchange'])->name('getUserOnchange');
-
-
-
-    //Modify Finasiled Road Assets
-    Route::get('listRoadsToRequestModification', [ModifyRoadAssetsController::class, 'GetAllRoads'])->name('GetAllRoads');
-    Route::get('handleDataModifyReqOnARoad/{id}/{sub_asset_name}', [ModifyRoadAssetsController::class, 'handleDataModifyReqOnARoad'])->name('handleDataModifyReqOnARoad');
-    Route::get('listFinalisedCDWorksForRoad', [ModifyRoadAssetsController::class, 'listFinalisedCDWorksForRoad'])->name('GetAllCDWorksForRoad');
-    Route::post('reqEditRoadAssets', [ModifyRoadAssetsController::class, 'reqEditRoadAssets'])->name('reqEditRoadAssets');
-    Route::post('sendModifyReq', [RoadController::class, 'sendModifyReq'])->name('sendModifyReq');
-    Route::get('modify-road', [ModifyRoadAssetsController::class, 'GetModifyRoad'])->name('GetModifyRoad'); //
-    Route::post('finalApproveByAdmin', [ModifyRoadAssetsController::class, 'finalApproveByAdmin'])->name('finalApproveByAdmin');
-
-    //MIS -- Distress
-    Route::get('misDistressDetails', [MISDistressController::class, 'getAllActiveRoadDistresses'])->name('getDistressDetails');
-    Route::post('filterRoadDistresses', [MISDistressController::class, 'filterRoadDistresses'])->name('filterRoadDistresses');
-    Route::get('misOfficesWithoutOfficer', [UserController::class, 'misOfficesWithoutOfficer'])->name('misOfficesWithoutOfficer');
-    //Distressed Data Update
-    Route::get('/list-distress-details', [MISDistressController::class, 'listActiveRoadDistressesToUpdate'])->name('list.distress');
-    Route::post('/list-distress-details', [MISDistressController::class, 'updateDistress']);
-
-
-    // /{cd}/{dscr}
-    //Chnage Status url
-    Route::get('listOfAssetToChangeStatus', [ChangeStatusOfAssetsController::class, 'listOfAssetToChangeStatus'])->name('listOfAssetToChangeStatus');
-    Route::post('updateAssetStatus', [ChangeStatusOfAssetsController::class, 'updateAssetStatus'])->name('updateAssetStatus');
-
-
-    //unlock datafield by admin
-    Route::get('unlockPage', [UnlockDataFieldController::class, 'loadInitialUnlockPage'])->name('unlockPage');
-    Route::post('/list_roads_n_bridges_to_unlock', [UnlockDataFieldController::class, 'filterRoadAndBridgesToUnlock'])->name('list_roads_n_bridges_to_unlock');
-    Route::post('viewAssetToUnlock', [UnlockDataFieldController::class, 'viewAssetToUnlock'])->name('viewAssetToUnlock');
-    Route::post('saveunlockdata', [UnlockDataFieldController::class, 'saveunlockdata'])->name('saveunlockdata');
-
-    //Update Unlocked Data By End User
-    Route::get('loadUnlockedData', [UnlockDataFieldController::class, 'loadUnlockedDataToUpdate'])->name('loadUnlockedDataToUpdate');
-    Route::post('editUnlockedAssetData', [UnlockDataFieldController::class, 'editUnlockedAssetData'])->name('editUnlockedAssetData');
-    Route::post('saveUnlockedAssetDetails', [UnlockDataFieldController::class, 'saveUnlockedAssetDetails'])->name('saveUnlockedAssetDetails');
-
-    //MIS-Organisational Structure
-    Route::get('/org-structure', [OrganisationalStructureController::class, 'getENCTreeData'])->name('org-structure');
-    Route::get('/getHQTreeData', [OrganisationalStructureController::class, 'getHQTreeData'])->name('getHQTreeData');
-    Route::get('/getZOtreeData', [OrganisationalStructureController::class, 'getZOtreeData'])->name('getZOtreeData');
-    Route::get('/getCOtreeData', [OrganisationalStructureController::class, 'getCOtreeData'])->name('getCOtreeData');
-    Route::get('/getDOtreeData', [OrganisationalStructureController::class, 'getDOtreeData'])->name('getDOtreeData');
-    Route::get('/getSDOtreeData', [OrganisationalStructureController::class, 'getSDOtreeData'])->name('getSDOtreeData');
-    Route::get('/getCEUserDataAndSEOffficeData', [OrganisationalStructureController::class, 'getCEUserDataAndSEOffficeData'])->name('getCEUserDataAndSEOffficeData');
-
-    Route::get('/getAdditionalOfficeChargeDetails', [OrganisationalStructureController::class, 'getAdditionalOfficeChargeDetails'])->name('getAdditionalOfficeChargeDetails');
-
-    Route::post('/moveApprovedRoadToDraftRoad', [FinalizedDataController::class, 'moveApprovedRoadToDraftRoad'])->name('moveApprovedRoadToDraftRoad');
-    Route::get('/shortMsg', [UploadFileController::class, 'loadShortMsgPage'])->name('loadShortMsgPage');
-    Route::post('/submitShortMsg', [UploadFileController::class, 'submitShortMsg'])->name('submitShortMsg');
-
-    // Start - view different departments and its related details by higher level user
-    // Road
-    Route::get('/view-roads', [ViewRoadAndBridgeController::class, 'showRoadDetails'])->name('viewRoadWings');
-    Route::get('/view-cdworks', [ViewRoadAndBridgeController::class, 'showCdWorkDetails'])->name('viewCDWorks');
-    Route::get('/view-bridges', [ViewRoadAndBridgeController::class, 'showBridgeDetails'])->name('viewBridge');
-    Route::get('/view-pci', [ViewRoadAndBridgeController::class, 'showPCIDetails'])->name('viewPCI');
-    Route::get('/view-protection-wall', [ViewRoadAndBridgeController::class, 'showProtectionWallDetails'])->name('viewProtectionWall');
-    Route::get('/view-surface-types', [ViewRoadAndBridgeController::class, 'showSurfaceTypeDetails'])->name('viewSurfaceType');
-    Route::get('/view-habitation', [ViewRoadAndBridgeController::class, 'showHabitationDetails'])->name('viewHabitation');
-    // NH
-    Route::get('/view-national-highway', [ViewNationalHighwayController::class, 'showNationalHighway'])->name('viewNHWings');
-    Route::get('/view-national-highway-cdworks', [ViewNationalHighwayController::class, 'showNHCdWork'])->name('viewNHCDWorks');
-    Route::get('/view-national-highway-bridges', [ViewNationalHighwayController::class, 'showNHBridge'])->name('viewNHBridge');
-    Route::get('/view-national-highway-pci', [ViewNationalHighwayController::class, 'showNHPCI'])->name('viewNHPCI');
-    Route::get('/view-national-highway-protection-wall', [ViewNationalHighwayController::class, 'showNHProtectionWallDetails'])->name('viewNHProtectionWall');
-    Route::get('/view-national-highway-surface-types', [ViewNationalHighwayController::class, 'showNHSurfaceType'])->name('viewNHSurfaceType');
-    Route::get('/view-national-highway-habitation', [ViewNationalHighwayController::class, 'showNHHabitation'])->name('viewNHHabitation');
-    // Building
-    Route::get('/view-building', [ViewHousingController::class, 'showBuilding'])->name('viewBuildingWings');
-    // Mechanical
-    Route::get('/view-vehicle', [ViewMechanicalController::class, 'showVehicle'])->name('viewVehicleWings');
-    Route::get('/view-equipment', [ViewMechanicalController::class, 'showEquipment'])->name('viewEquipmentWings');
-    // End
-
-    // Show Images for assets and subassets
-    Route::get('/view-culvert-images/{id}/{type}', [AssetImageController::class, 'culvertImages'])->name('image.culvert');
-
-    // Start - MIS for all wing according to user search input
-    // MIS-Road
-    Route::get('/mis-road', [RoadMISController::class, 'searchRoad'])->name('searchRoad');
-    Route::get('/mis-road-cdworks', [RoadMISController::class, 'searchCdWorks'])->name('searchCdWorks');
-    Route::get('/mis-road-bridge', [RoadMISController::class, 'searchBridge'])->name('searchBridge');
-    Route::get('/mis-road-pci', [RoadMISController::class, 'searchPCI'])->name('searchPCI');
-    Route::get('/mis-road-protection-wall', [RoadMISController::class, 'searchProtectionWall'])->name('searchProtectionWall');
-    Route::get('/mis-road-surfaceType', [RoadMISController::class, 'searchSurfaceType'])->name('searchSurfaceType');
-    Route::get('/mis-road-habitation', [RoadMISController::class, 'searchHabitation'])->name('searchHabitation');
-    Route::get('/get-road-by-district/{id}', [MisController::class, 'filterRoadByDistrict'])->name('filterRoadByDistrict');
-    Route::get('/get-road-by-zone/{id}', [MisController::class, 'filterRoadByZone'])->name('filterRoadByZone');
-    Route::get('/get-road-by-circle/{id}', [MisController::class, 'filterRoadByCircle'])->name('filterRoadByCircle');
-    Route::get('/get-road-by-division/{id}', [MisController::class, 'filterRoadByDivision'])->name('filterRoadByDivision');
-    Route::get('/road-by-division-name', [MisController::class, 'filterRoadByDivisionName'])->name('filterRoadByDivisionName');
-    Route::get('/road-by-division-and-chainage', [MisController::class, 'filterRoadByDivisionNameUsingChainage']);
-    Route::get('/nh-by-division-name', [MisController::class, 'filterNHByDivisionName'])->name('filterNHByDivisionName');
-    Route::get('/get-road-by-subdivision/{id}', [MisController::class, 'filterRoadBySubDivision'])->name('filterRoadBySubDivision');
-    // MIS-NH
-    Route::get('/mis-nh', [NationalHighwayMISController::class, 'searchNH'])->name('searchNH');
-    Route::get('/mis-nh-cdworks', [NationalHighwayMISController::class, 'searchNHCdWorks'])->name('searchNHCdWorks');
-    Route::get('/mis-nh-bridge', [NationalHighwayMISController::class, 'searchNHBridge'])->name('searchNHBridge');
-    Route::get('/mis-nh-pci', [NationalHighwayMISController::class, 'searchNHPCI'])->name('searchNHPCI');
-    Route::get('/mis-nh-protection-wall', [NationalHighwayMISController::class, 'searchNHProtectionWall'])->name('searchNHProtectionWall');
-    Route::get('/mis-nh-surfaceType', [NationalHighwayMISController::class, 'searchNHSurfaceType'])->name('searchNHSurfaceType');
-    Route::get('/mis-nh-habitation', [NationalHighwayMISController::class, 'searchNHHabitation'])->name('searchNHHabitation');
-    // MIS-Building
-    Route::get('/mis-building', [HousingMISController::class, 'searchBuilding'])->name('searchBuilding');
-    // MIS-mechanicals
-    Route::get('/mis-mechanical-equipment', [MechanicalMISController::class, 'searchEquipment'])->name('searchEquipment');
-    Route::get('/mis-mechanical-vehicle', [MechanicalMISController::class, 'searchVehicle'])->name('searchVehicle');
-    // END
-
-
-    //Delete Road From Map -- Start
-    Route::get('/select-road-frm-map-to-delete', [DashboardController::class, 'viewRoadsInMapToDelete'])->name('viewRoadsInMapToDelete');
-    Route::get('/delete-road-frm-map', [RoadController::class, 'deleteRoadFromMap'])->name('deleteRoadFromMap');
-    //Delete Road From Map -- End
-
-    Route::get('/asset-images', [MisController::class, 'getAssetImages']);
-});
-
-
-
-//No Auth Middleware group for below routes as these are public routes and can be accessed without login
-Route::group(['middleware' => ['prevent.cache']], function () {
-    Route::get('checkUserActive', [UserController::class, 'checkUserActive'])->name('checkUserActive');
-    Route::get("/", [WelcomeController::class, 'getWelcomeDashBoard'])->name('getWelcomeDashBoard');
-    Route::get('/privacy_policy', [WelcomeController::class, 'getPrivacyPolicy'])->name('getPrivacyPolicy');
-    Route::get("getRoadByCatg/{cd}", [WelcomeController::class, 'roadByCatg'])->name('citizen.getRoadByCatg');
-    Route::get("loadRoadByCatg", [WelcomeController::class, 'loadRoadByCatg'])->name('loadRoadByCatg');
-    Route::get("getNHRoadByCatg", [WelcomeController::class, 'roadNHByCatg'])->name('getNHRoadByCatg');
-    Route::get("getHousingByClass/{cd}", [WelcomeController::class, 'housingByClass'])->name('getHousingByClass');
-    Route::get('/getAllStatesRoadsGeoJsonData', [WelcomeController::class, 'getAllStatesRoadsGeoJsonData'])->name('getAllStatesRoadsGeoJsonData');
-    Route::get('/getAllSHNHMDRRoadsGeoJsonData', [WelcomeController::class, 'getAllSHNHMDRRoadsGeoJsonData'])->name('getAllSHNHMDRRoadsGeoJsonData');
-    Route::get('/getAllStatesRoadsGeoJsonDataWithLazyLoading', [WelcomeController::class, 'getAllStatesRoadsGeoJsonDataWithLazyLoading'])->name('getAllStatesRoadsGeoJsonDataWithLazyLoading');
-    Route::get('/getDivisionsRoadsGeoJsonData/{division_cd}', [WelcomeController::class, 'getDivisionsRoadsGeoJsonData'])->name('getDivisionsRoadsGeoJsonData');
-    Route::get('/getDraftedRoadsWithDivisionRoads/{road_id}', [WelcomeController::class, 'getDraftedRoadsWithDivisionRoads'])->name('getDraftedRoadsWithDivisionRoads');
-});
+
+namespace App\Http\Controllers\MMIS;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class MaintenanceAssessmentController extends Controller
+{
+    /**
+     * Maintenance Assessment landing page.
+     */
+    // public function index()
+    // {
+    //     try {
+    //         /*
+    //         * ============================================================
+    //         * Latest inspection for each asset
+    //         * ============================================================
+    //         */
+
+    //         $latestInspectionIds = DB::table('maintenance.mtn_inspection_details')
+    //             // ->selectRaw('DISTINCT ON (insp_asset_id) id')
+    //             ->selectRaw(
+    //                 'DISTINCT ON (insp_asset_type, insp_asset_id) id'
+    //             )
+    //             ->whereNotNull('insp_asset_type')
+    //             ->whereNotNull('insp_asset_id')
+    //             ->orderBy('insp_asset_type')
+    //             ->orderBy('insp_asset_id')
+    //             ->orderByDesc('insp_date')
+    //             ->orderByDesc('id');
+    //         /*
+    //         * ============================================================
+    //         * Count ONLY assets whose latest inspection
+    //         * has NOT been assessed.
+    //         * ============================================================
+    //         */    
+    //         $assetTypes = DB::table('maintenance.mtn_inspection_details as inspection')
+    //         ->leftJoin('public.asset_master_road_sub_assets as asset_type','asset_type.sub_asset_cd','=','inspection.insp_asset_type')
+    //         ->leftJoin('maintenance.mtn_inspection_score as score',
+    //             function ($join) {
+    //                 $join->on('score.inspection_id','=','inspection.id')
+    //                 ->where('score.status','=','ACTIVE');
+    //             }
+    //         )
+    //         ->whereIn('inspection.id',$latestInspectionIds)
+    //         ->whereNull('score.id')
+    //         ->selectRaw(
+    //             'inspection.insp_asset_type as code,
+    //              COALESCE(
+    //                 asset_type.sub_assets_descr,
+    //                 inspection.insp_asset_type
+    //              ) as description,
+    //              COUNT(DISTINCT inspection.insp_asset_id) as asset_count'
+    //         )
+    //         ->whereNotNull('inspection.insp_asset_type')
+    //         ->whereNotNull('inspection.insp_asset_id')
+    //         ->groupBy('inspection.insp_asset_type','asset_type.sub_assets_descr')
+    //         ->orderBy('description')
+    //         ->get();
+    //         return view('mmis.maintenance_assessment.index',compact('assetTypes'));
+    //     } catch (\Throwable $exception) {
+
+    //         Log::error(
+    //             'Maintenance assessment types could not be loaded.',
+    //             [
+    //                 'exception' => $exception->getMessage()
+    //             ]
+    //         );
+
+    //         return view(
+    //             'mmis.maintenance_assessment.index',
+    //             [
+    //                 'assetTypes' => collect()
+    //             ]
+    //         )->with(
+    //                 'error',
+    //                 'Maintenance assessment data could not be loaded.'
+    //             );
+    //     }
+    // }
+
+    public function index()
+    {
+        try {
+
+            $assetTypes = DB::table('maintenance.mtn_inspection_details as inspection')
+                ->leftJoin(
+                    'maintenance.mtn_inspection_score as score',
+                    function ($join) {
+
+                        $join->on(
+                            'score.inspection_id',
+                            '=',
+                            'inspection.id'
+                        )
+                            ->where(
+                                'score.status',
+                                '=',
+                                'ACTIVE'
+                            );
+                    }
+                )
+
+                ->leftJoin('public.asset_master_road_sub_assets as asset_type', 'asset_type.sub_asset_cd', '=', 'inspection.insp_asset_type')
+                /*
+                 * Only inspections which have NOT
+                 * been assessed yet.
+                 */
+                ->whereNull('score.id')
+                ->whereNotNull('inspection.insp_asset_type')
+                ->whereNotNull('inspection.insp_asset_id')
+                ->selectRaw(
+                    'inspection.insp_asset_type as code,
+                    COALESCE(
+                        asset_type.sub_assets_descr,
+                        inspection.insp_asset_type
+                    ) as description,
+
+                    COUNT(*) as asset_count'
+                )
+                ->groupBy(
+                    'inspection.insp_asset_type',
+                    'asset_type.sub_assets_descr'
+                )
+                ->orderBy('description')
+                ->get();
+            return view(
+                'mmis.maintenance_assessment.index',
+                compact('assetTypes')
+            );
+        } catch (\Throwable $exception) {
+
+            Log::error(
+                'Maintenance assessment types could not be loaded.',
+                [
+                    'exception' => $exception->getMessage()
+                ]
+            );
+
+            return view(
+                'mmis.maintenance_assessment.index',
+                [
+                    'assetTypes' => collect()
+                ]
+            )->with(
+                'error',
+                'Maintenance assessment data could not be loaded.'
+            );
+        }
+    }
+
+    /**
+     * Display pending inspections for selected asset type.
+     */
+    public function assets(string $assetType)
+    {
+        try {
+
+            /*
+             * ============================================================
+             * Asset Type
+             * ============================================================
+             */
+            $assetTypeDetail = DB::table(
+                'public.asset_master_road_sub_assets'
+            )
+                ->select(
+                    'sub_asset_cd as code',
+                    'sub_assets_descr as description'
+                )
+                ->where(
+                    'sub_asset_cd',
+                    $assetType
+                )
+                ->first();
+
+
+            /*
+             * ============================================================
+             * Get ALL PENDING INSPECTIONS
+             *
+             * IMPORTANT:
+             * Do NOT use DISTINCT ON() here.
+             *
+             * One asset can have multiple inspections:
+             *
+             * PHMR0001
+             *   INSP-2026-0001 -> completed
+             *   INSP-2026-0004 -> pending
+             *   INSP-2026-0008 -> pending
+             *
+             * These are separate assessment records.
+             * ============================================================
+             */
+            $assets = DB::table(
+                'maintenance.mtn_inspection_details as inspection'
+            )
+
+                /*
+                 * --------------------------------------------------------
+                 * Join assessment score
+                 * --------------------------------------------------------
+                 */
+                ->leftJoin(
+                    'maintenance.mtn_inspection_score as score',
+                    function ($join) {
+
+                        $join->on(
+                            'score.inspection_id',
+                            '=',
+                            'inspection.id'
+                        )
+                            ->where(
+                                'score.status',
+                                '=',
+                                'ACTIVE'
+                            );
+                    }
+                )
+
+                /*
+                 * --------------------------------------------------------
+                 * Selected Asset Type
+                 * --------------------------------------------------------
+                 */
+                ->where(
+                    'inspection.insp_asset_type',
+                    $assetType
+                )
+
+                /*
+                 * --------------------------------------------------------
+                 * ONLY PENDING INSPECTIONS
+                 *
+                 * If an inspection already has an assessment score,
+                 * it will NOT appear here.
+                 * --------------------------------------------------------
+                 */
+                ->whereNull(
+                    'score.id'
+                )
+
+                ->whereNotNull(
+                    'inspection.insp_asset_id'
+                )
+
+                ->whereNotNull(
+                    'inspection.insp_cd'
+                )
+
+                /*
+                 * --------------------------------------------------------
+                 * Select inspection information
+                 * --------------------------------------------------------
+                 */
+                ->select([
+                    'inspection.id as inspection_id',
+
+                    'inspection.insp_cd',
+
+                    'inspection.insp_asset_id',
+
+                    'inspection.insp_asset_type',
+
+                    'inspection.insp_asset_location',
+
+                    'inspection.insp_date',
+
+                    'inspection.start_section',
+
+                    'inspection.end_section',
+
+                    'inspection.cndtn_overall',
+
+                ])
+
+                /*
+                 * Most recent inspection first
+                 */
+                ->orderBy(
+                    'inspection.insp_date',
+                    'asc'
+                )
+
+                ->orderByDesc(
+                    'inspection.id'
+                )
+
+                ->get();
+
+
+            /*
+             * ============================================================
+             * 404 only if asset type itself doesn't exist
+             * ============================================================
+             */
+            if (!$assetTypeDetail) {
+                abort(404);
+            }
+
+
+            $assetTypeName = $assetTypeDetail->description ?? $assetType;
+            return view('mmis.maintenance_assessment.assets', compact('assets', 'assetType', 'assetTypeName'));
+        } catch (\Throwable $exception) {
+
+            Log::error(
+                'Maintenance assessment asset list could not be loaded.',
+                [
+                    'asset_type' => $assetType,
+                    'exception' => $exception->getMessage(),
+                ]
+            );
+
+            return redirect()->route('mmis.maintenance-assessment.index')
+                ->with('error', 'Inspections for the selected asset type could not be loaded.');
+        }
+    }
+
+
+    /**
+     * Display Maintenance Assessment details.
+     */
+    public function show(int $inspection)
+    {
+        try {
+
+            /*
+             * ---------------------------------------------------------
+             * 1. Get inspection details
+             * ---------------------------------------------------------
+             */
+            // $inspectionDetail = DB::table('maintenance.mtn_inspection_details as inspection')
+            //     ->leftJoin('public.asset_master_road_sub_assets as asset_type','asset_type.sub_asset_cd','=','inspection.insp_asset_type')
+            //     ->select('inspection.*','asset_type.sub_assets_descr as asset_type_name','asset_type.dept_cd as asset_dept_cd')
+            //     ->where('inspection.id',$inspection)
+            //     ->first();
+            $inspectionDetail = DB::table('maintenance.mtn_inspection_details as inspection')
+                ->leftJoin('public.asset_master_road_sub_assets as asset_type', 'asset_type.sub_asset_cd', '=', 'inspection.insp_asset_type')
+                ->leftJoin('public.asset_road_details as road', 'road.rd_system_id', '=', 'inspection.insp_asset_id')
+                ->leftJoin('public.asset_master_road_category as road_category', 'road_category.rd_catg_cd', '=', 'road.rd_category_cd')
+                ->select(
+                    'inspection.*',
+                    'asset_type.sub_assets_descr as asset_type_name',
+                    'asset_type.dept_cd as asset_dept_cd',
+                    'road.rd_category_cd',
+                    'road_category.rd_catg_descr',
+                    'road_category.maintenance_score as road_category_score'
+                )
+                ->where('inspection.id', $inspection)
+                ->first();
+            abort_unless($inspectionDetail, 404);
+
+            // ============================================================
+            // CHECK WHETHER ASSESSMENT IS ALREADY COMPLETED
+            // ============================================================
+            $existingScore = DB::table('maintenance.mtn_inspection_score')
+                ->where('inspection_id', $inspectionDetail->id)
+                ->where('status', 'ACTIVE')
+                ->first();
+
+            if ($existingScore) {
+                return redirect()->route('mmis.maintenance-assessment.assets', $inspectionDetail->insp_asset_type)
+                    ->with('info', 'Maintenance assessment for this asset has already been completed.');
+            }
+            /*
+             * ---------------------------------------------------------
+             * 2. Get inspection observations
+             * ---------------------------------------------------------
+             */
+            $observations = DB::table('maintenance.mtn_insp_observation_details as observation')
+                ->where('observation.insp_id', $inspectionDetail->id)
+                ->select([
+                    'observation.activity_cd',
+                    'observation.obsrv_desc',
+                    'observation.grading_cd',
+                    'observation.obsrv_weightage',
+                    'observation.parameter_id',
+                ])
+                ->orderBy('observation.id')
+                ->get();
+
+
+            /*
+             * ---------------------------------------------------------
+             * 3. Get PCI
+             * ---------------------------------------------------------
+             */
+            $pci = null;
+
+            if (!empty($inspectionDetail->pci_section_cd)) {
+                $pci = DB::table('public.asset_road_pavement_condition_indexes')
+                    ->where('pci_section_cd', $inspectionDetail->pci_section_cd)
+                    ->first();
+            }
+
+
+            /*
+             * ---------------------------------------------------------
+             * 4. Get habitation
+             * ---------------------------------------------------------
+             */
+            $assetType = (string) $inspectionDetail->insp_asset_type;
+            $assetCd = $inspectionDetail->insp_asset_id;
+            $roadSystemId = null;
+            $habitation = null;
+            $parentRoad = null;
+            switch ($assetType) {
+                // Road and National Highway: the asset ID is the road ID.
+                case '10':
+                case '8':
+                    $roadSystemId = $assetCd;
+                    break;
+
+                // CD Works
+                case '0':
+                    $roadSystemId = DB::table('public.asset_road_cdwork_details')
+                        ->where('rd_cdwork_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Bridge
+                case '1':
+                    $roadSystemId = DB::table('public.asset_road_bridge_details')
+                        ->where('rd_bridge_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Pavement
+                case '2':
+                    $roadSystemId = DB::table('public.asset_road_pavement_details')
+                        ->where('rd_pavement_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Surface Type
+                case '3':
+                    $roadSystemId = DB::table('public.asset_road_surface_type_details')
+                        ->where('rd_surface_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Habitation
+                case '4':
+                    $roadSystemId = DB::table('public.asset_road_habitation_details')
+                        ->where('habitation_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Pavement Condition Index
+                case '9':
+                    $roadSystemId = DB::table(
+                        'public.asset_road_pavement_condition_indexes'
+                    )
+                        ->where('pci_section_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Distress
+                case '11':
+                    $roadSystemId = DB::table('public.asset_road_distress_details')
+                        ->where('rd_distress_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+
+                // Protection Wall
+                case '12':
+                    $roadSystemId = DB::table('public.asset_protection_wall_details')
+                        ->where('protection_wall_cd', $assetCd)
+                        ->value('rd_system_id');
+                    break;
+            }
+
+            if (!empty($roadSystemId)) {
+                $habitation = DB::table('public.asset_road_habitation_details')
+                    ->where('rd_system_id', $roadSystemId)
+                    ->selectRaw('
+                            AVG(habitation_score) AS habitation_score,
+                            COUNT(*) AS total_habitations,
+                            COUNT(habitation_score) AS scored_habitations
+                        ')
+                    ->first();
+
+                $parentRoad = DB::table('public.asset_road_details')
+                    ->select('rd_system_id', 'rd_name')
+                    ->where('rd_system_id', $roadSystemId)
+                    ->first();
+            }
+
+            /*
+             * ---------------------------------------------------------
+             * 5. Get Asset Criticality
+             * ---------------------------------------------------------
+             */
+            $criticality = DB::table('maintenance.master_asset_criticality_indexes')
+                ->where('asset_type', $inspectionDetail->insp_asset_type)
+                ->where('asset_id', $inspectionDetail->insp_asset_id)
+                ->orderByDesc('updated_at')
+                ->orderByDesc('id')
+                ->first();
+
+
+            /*
+             * ---------------------------------------------------------
+             * 6. Calc observation values
+             * ---------------------------------------------------------
+             */
+            $totalWeight = $observations->sum(fn($item) => (int) $item->obsrv_weightage);
+            $averageWeight = $observations->isNotEmpty() ? round($totalWeight / $observations->count(), 2) : null;
+            $unsatisfactoryWeight = $observations
+                ->filter(fn($item) => strtoupper((string) $item->grading_cd) === 'U')
+                ->sum(fn($item) => (int) $item->obsrv_weightage);
+            $inspectionCriticality = $totalWeight > 0 ? round(($unsatisfactoryWeight / $totalWeight) * 100, 2) : null;
+            $departmentCd = $inspectionDetail->asset_dept_cd;
+            $parameters = collect();
+
+
+            if (!empty($departmentCd)) {
+                $parameters = DB::table('maintenance.master_set_of_mtn_parameters_dept_wise as parameter_set')
+                    ->join('maintenance.master_mtn_parameter_master as parameter', 'parameter.id', '=', 'parameter_set.parameter_id')
+                    ->leftJoin('maintenance.master_mtn_parameter_range as parameter_range', 'parameter_range.parameter_id', '=', 'parameter.id')
+                    ->leftJoin(
+                        'maintenance.master_each_mtn_parameters_weightage as parameter_weightage',
+                        function ($join) {
+                            $join->on('parameter_weightage.mtn_parameter_set_id', '=', 'parameter_set.id')
+                                ->on('parameter_weightage.parameter_id', '=', 'parameter.id');
+                        }
+                    )
+                    ->where('parameter_set.dept_cd', $departmentCd)
+                    ->where('parameter_set.asset_type_cd', $inspectionDetail->insp_asset_type)
+                    ->where('parameter.status', 'ACTIVE')
+                    ->where(function ($query) {
+                        $query->where('parameter_range.status', 'ACTIVE')
+                            ->orWhereNull('parameter_range.status');
+                    })
+                    ->select([
+                        'parameter_set.id as parameter_set_id',
+                        'parameter.id as parameter_id',
+                        'parameter.parameter_code',
+                        'parameter.parameter_name',
+                        'parameter.parameter_type',
+                        'parameter.description',
+                        'parameter_range.lower_range',
+                        'parameter_range.upper_range',
+                        'parameter_weightage.weightage',
+                    ])
+                    ->orderBy('parameter_set.id')->get();
+            }
+            /*
+             * ---------------------------------------------------------
+             * 9. Current values for known parameters
+             * ---------------------------------------------------------
+             *
+             * The PARAMETER SET remains completely dynamic.
+             *
+             * These values are only the currently available
+             * assessment inputs.
+             *
+             */
+            $parameterValues = [
+                'FIELD_OBSERVATION_WEIGHTAGE' => $averageWeight,
+                'PCI' => $pci->pci_value ?? null,
+                'HABITATION_INDEX' => $habitation->habitation_score ?? null,
+                'CRITICALITY_INDEX' => $criticality->criticality_index ?? null,
+                'ROAD_CONNECTIVITY' => null,
+                'ROAD_CATEGORY' => $inspectionDetail->road_category_score ?? null,
+                'PRIORITY_INDEX' => null,
+            ];
+
+
+            /*
+             * Add current value to each dynamically
+             * configured parameter.
+             */
+            $parameters->each(
+                function ($parameter) use ($parameterValues) {
+                    $parameter->current_value =
+                        $parameterValues[$parameter->parameter_code] ?? null;
+                }
+            );
+
+
+            /*
+             * ---------------------------------------------------------
+             * 10. Return View
+             * ---------------------------------------------------------
+             */
+            return view(
+                'mmis.maintenance_assessment.show',
+                compact(
+                    'inspectionDetail',
+                    'observations',
+                    'pci',
+                    'habitation',
+                    'criticality',
+                    'parameters',
+                    'totalWeight',
+                    'averageWeight',
+                    'unsatisfactoryWeight',
+                    'inspectionCriticality',
+                    'parentRoad'
+                )
+            );
+        } catch (\Throwable $exception) {
+
+            Log::error(
+                'Maintenance assessment could not be loaded.',
+                [
+                    'inspection_id' => $inspection,
+                    'exception' => $exception->getMessage(),
+                ]
+            );
+            return redirect()->route('mmis.maintenance-assessment.index')->with('error', 'The selected assessment could not be loaded.');
+        }
+    }
+
+
+    /**
+     * Calc Maintenance Assessment Score.
+     *
+     * Formula:
+     *
+     * Normalized Score =
+     *      (Parameter Value / Maximum Range) * 100
+     *
+     * Weighted Score =
+     *      Normalized Score * Weightage
+     *
+     * Total Maintenance Assessment Score =
+     *      SUM(Weighted Score) / 100
+     */
+
+    /**
+     * Main calculation function
+     *
+     * Calls both:
+     * 1. MAS method
+     * 2. MPS method
+     */
+    public function calculate(Request $request)
+    {
+        $parameters = $request->input('parameters', []);
+
+        if (empty($parameters) || !is_array($parameters)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No maintenance parameters received.'
+            ], 422);
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | Existing MAS Method
+        |--------------------------------------------------------------------------
+        */
+        $masResult = $this->mas_method($parameters);
+        /*
+        |--------------------------------------------------------------------------
+        | New MPS Method
+        |--------------------------------------------------------------------------
+        */
+
+        $mpsResult = $this->mps_method($parameters);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return Result
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+            'success' => true,
+            /*
+             * Existing MAS
+             */
+            'total_score' => $masResult['mas'],
+            'mas' => $masResult['mas'],
+            'mas_calculation_details' => $masResult['details'],
+
+            /*
+             * New MPS
+             */
+            'condition_score' => $mpsResult['condition_score'],
+            'criticality_score' => $mpsResult['criticality_score'],
+            'mps' => $mpsResult['mps'],
+
+            /*
+             * Optional details
+             */
+            'mas_details' => $masResult['details'],
+            'mps_details' => $mpsResult['details'],
+            'mps_calculation_details' => $mpsResult['details'],
+        ]);
+    }
+
+
+    /**
+     * =========================================================================
+     * MAS (Maintenance Assessment Score) METHOD
+     * =========================================================================
+     * Formula:
+     *
+     * Normalized Score = (Value / Maximum Range) * 100
+     *
+     * Weighted Score = Normalized Score * Weightage
+     *
+     * MAS = SUM(Weighted Score) / 100
+     *
+     */
+    private function mas_method(array $parameters)
+    {
+        $masWeightedTotal = 0;
+        $details = [];
+        foreach ($parameters as $parameter) {
+            $parameterCode = $parameter['parameter_code'] ?? null;
+            $value = array_key_exists('value', $parameter) ? (float) $parameter['value'] : null;
+            $maximumRange = array_key_exists('maximum_range', $parameter) ? (float) $parameter['maximum_range'] : null;
+            $weightage = array_key_exists('weightage', $parameter) ? (float) $parameter['weightage'] : null;
+            /*
+            |--------------------------------------------------------------------------
+            | Skip invalid parameter
+            |--------------------------------------------------------------------------
+            */
+
+            if (empty($parameterCode) || $value === null || $maximumRange === null || $weightage === null) {
+                continue;
+            }
+
+
+            if ($maximumRange <= 0) {
+                continue;
+            }
+            $normalizedScore = ($value / $maximumRange) * 100;
+            /*
+            |--------------------------------------------------------------------------
+            | Keep between 0 and 100
+            |--------------------------------------------------------------------------
+            */
+
+            $normalizedScore = max(0, min(100, $normalizedScore));
+            /*
+            |--------------------------------------------------------------------------
+            | Weighted Score
+            |--------------------------------------------------------------------------
+            */
+
+            $weightedScore = $normalizedScore * $weightage;
+            /*
+            |--------------------------------------------------------------------------
+            | Add to MAS total
+            |--------------------------------------------------------------------------
+            */
+
+            $masWeightedTotal += $weightedScore;
+            /*
+            |--------------------------------------------------------------------------
+            | Details
+            |--------------------------------------------------------------------------
+            */
+
+            $details[] = [
+                'parameter_code' => $parameterCode,
+                'value' => $value,
+                'maximum_range' => $maximumRange,
+                'weightage' => $weightage,
+                'normalized_score' => round($normalizedScore, 4),
+                'weighted_score' => round($weightedScore, 4),
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Final MAS
+        |--------------------------------------------------------------------------
+        */
+
+        $mas = $masWeightedTotal / 100;
+
+
+        return [
+            'mas' => round($mas, 2),
+
+            'details' => $details,
+        ];
+    }
+
+
+    /**
+     * =========================================================================
+     * MPS (Maintenance Priority Score) METHOD
+     * =========================================================================
+     *
+     * Maintenance Priority Score
+     *
+     * 1. Calc Condition Score
+     * 2. Calc Criticality Score
+     * 3. Calc MPS
+     *
+     * Condition Score:SUM(Normalized Score × Weightage)/SUM(Condition Weightage)
+     *
+     * Criticality Score: SUM(Normalized Score × Weightage)/SUM(Criticality Weightage)
+     *
+     * MPS: 60% × (100 - Condition Score) + 40% × Criticality Score
+     *
+     */
+    private function mps_method(array $parameters)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Parameters belonging to CONDITION
+        |--------------------------------------------------------------------------
+        */
+
+        $conditionParameters = [
+            'PCI',
+            'FIELD_OBSERVATION_WEIGHTAGE',
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Parameters belonging to CRITICALITY
+        |--------------------------------------------------------------------------
+        */
+
+        $criticalityParameters = [
+            'CRITICALITY_INDEX',
+            'ROAD_CATEGORY',
+            'HABITATION_INDEX',
+            'ROAD_CONNECTIVITY',
+            'PRIORITY_INDEX',
+        ];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Variables
+        |--------------------------------------------------------------------------
+        */
+
+        $conditionWeightedTotal = 0;
+        $conditionWeightTotal = 0;
+
+        $criticalityWeightedTotal = 0;
+        $criticalityWeightTotal = 0;
+
+        $details = [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Process parameters
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($parameters as $parameter) {
+
+            $parameterCode = $parameter['parameter_code'] ?? null;
+
+            $value = array_key_exists('value', $parameter) ? (float) $parameter['value'] : null;
+
+            $maximumRange = array_key_exists('maximum_range', $parameter) ? (float) $parameter['maximum_range'] : null;
+
+            $weightage = array_key_exists('weightage', $parameter) ? (float) $parameter['weightage'] : null;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Skip invalid parameter
+            |--------------------------------------------------------------------------
+            */
+
+            if (empty($parameterCode) || $value === null || $maximumRange === null || $weightage === null) {
+                continue;
+            }
+
+
+            if ($maximumRange <= 0) {
+                continue;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Normalize
+            |--------------------------------------------------------------------------
+            */
+
+            $normalizedScore = ($value / $maximumRange) * 100;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Keep between 0 and 100
+            |--------------------------------------------------------------------------
+            */
+
+            $normalizedScore = max(0, min(100, $normalizedScore));
+
+            /*
+            |--------------------------------------------------------------------------
+            | Weighted Score
+            |--------------------------------------------------------------------------
+            */
+
+            $weightedScore = $normalizedScore * $weightage;
+
+            /*
+            |--------------------------------------------------------------------------
+            | CONDITION
+            |--------------------------------------------------------------------------
+            */
+
+            if (in_array($parameterCode, $conditionParameters, true)) {
+                $conditionWeightedTotal += $weightedScore;
+                $conditionWeightTotal += $weightage;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CRITICALITY
+            |--------------------------------------------------------------------------
+            */
+
+            if (in_array($parameterCode, $criticalityParameters, true)) {
+                $criticalityWeightedTotal += $weightedScore;
+                $criticalityWeightTotal += $weightage;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Details
+            |--------------------------------------------------------------------------
+            */
+
+            $category = 'OTHER';
+
+            if (in_array($parameterCode, $conditionParameters, true)) {
+                $category = 'CONDITION';
+            } elseif (in_array($parameterCode, $criticalityParameters, true)) {
+                $category = 'CRITICALITY';
+            }
+
+
+            $details[] = [
+                'parameter_code' => $parameterCode,
+                'category' => $category,
+                'value' => $value,
+                'maximum_range' => $maximumRange,
+                'weightage' => $weightage,
+                'normalized_score' => round($normalizedScore, 4),
+                'weighted_score' => round($weightedScore, 4),
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CONDITION SCORE
+        |--------------------------------------------------------------------------
+        */
+
+        $conditionScore = null;
+
+        if ($conditionWeightTotal > 0) {
+            $conditionScore = $conditionWeightedTotal / $conditionWeightTotal;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CRITICALITY SCORE
+        |--------------------------------------------------------------------------
+        */
+
+        $criticalityScore = null;
+
+        if ($criticalityWeightTotal > 0) {
+            $criticalityScore = $criticalityWeightedTotal / $criticalityWeightTotal;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MPS
+        |--------------------------------------------------------------------------
+        */
+
+        $mps = null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MPS Weights
+        |--------------------------------------------------------------------------
+        */
+
+        $conditionFactor = 0.60;
+        $criticalityFactor = 0.40;
+
+        if ($conditionScore !== null && $criticalityScore !== null) {
+
+            /*
+             * Poor condition = higher maintenance priority
+             *
+             * Therefore:
+             *
+             * Condition Priority = 100 - Condition Score
+             */
+            $conditionPriority = 100 - $conditionScore;
+            $mps = ($conditionFactor * $conditionPriority) + ($criticalityFactor * $criticalityScore);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return MPS result
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+            'condition_score' => $conditionScore !== null ? round($conditionScore, 2) : null,
+            'criticality_score' => $criticalityScore !== null ? round($criticalityScore, 2) : null,
+            'mps' => $mps !== null ? round($mps, 2) : null,
+            'details' => $details,
+        ];
+    }
+
+
+    /**
+     * Resolve the physical maintainable asset information
+     * from the inspection asset type and asset code.
+     *
+     * Returns:
+     * [
+     *     'asset_name'      => string,
+     *     'parent_asset_cd' => string|null
+     * ]
+     */
+    private function resolveMaintainableAsset($assetType, $assetCd)
+    {
+        $assetName = null;
+        $parentAssetCd = null;
+
+        switch ((string) $assetType) {
+            case '10':
+                $asset = DB::table('public.asset_road_details')->where('rd_system_id', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $asset->rd_name ?? $assetCd;
+                    $parentAssetCd = null;
+                }
+                break;
+            case '0':
+                $asset = DB::table('public.asset_road_cdwork_details')->where('rd_cdwork_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $asset->asset_name ?? $assetCd;
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+            case '1':
+
+                $asset = DB::table('public.asset_road_bridge_details')->where('rd_bridge_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->bridge_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+            case '2':
+                $asset = DB::table('public.asset_road_pavement_details')
+                    ->where('rd_pavement_cd', $assetCd)
+                    ->first();
+
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->asset_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+            case '3':
+                $asset = DB::table('public.asset_road_surface_type_details')->where('rd_surface_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->asset_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+
+                break;
+            case '4':
+                $asset = DB::table('public.asset_road_habitation_details')
+                    ->where('habitation_cd', $assetCd)->first();
+
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->village_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+
+            case '8':
+                $asset = DB::table('public.asset_road_details')->where('rd_system_id', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->rd_name ?? null);
+                    $parentAssetCd = null;
+                }
+                break;
+            /*
+            |--------------------------------------------------------------------------
+            | 9 - PCI
+            |--------------------------------------------------------------------------
+            */
+            case '9':
+
+                $asset = DB::table('public.asset_road_pavement_condition_indexes')->where('pci_section_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->asset_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+            case '11':
+                $asset = DB::table('public.asset_road_distress_details')->where('rd_distress_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->distress_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+            case '12':
+                $asset = DB::table('public.asset_protection_wall_details')->where('protection_wall_cd', $assetCd)->first();
+                if ($asset) {
+                    $assetName = $assetCd . ' - ' . ($asset->wall_name ?? null);
+                    $parentAssetCd = $asset->rd_system_id ?? null;
+                }
+                break;
+        }
+        if (empty($assetName)) {
+            throw new \RuntimeException(
+                "Unable to resolve maintainable asset. Asset Type: {$assetType}, Asset Code: {$assetCd}"
+            );
+        }
+        return [
+            'asset_name' => $assetName,
+            'parent_asset_cd' => $parentAssetCd,
+        ];
+    }
+    public function saveAssessment(Request $request)
+    {
+        $request->validate([
+            'inspection_id' => ['required', 'integer'],
+            'parameters' => ['required', 'array', 'min:1'],
+            'parameters.*.parameter_id' => ['required', 'integer'],
+            'parameters.*.parameter_set_id' => ['required', 'integer'],
+            'parameters.*.parameter_code' => ['required', 'string'],
+            'parameters.*.value' => ['required', 'numeric'],
+            'parameters.*.maximum_range' => ['required', 'numeric', 'gt:0'],
+            'parameters.*.weightage' => ['required', 'numeric', 'gte:0'],
+        ]);
+        $inspectionId = $request->input('inspection_id');
+        $parameters = $request->input('parameters', []);
+        try {
+            DB::beginTransaction();
+            $inspectionDetail = DB::table('maintenance.mtn_inspection_details')->where('id', $inspectionId)->first();
+            $existingScore = DB::table('maintenance.mtn_inspection_score')->where('inspection_id', $inspectionId)->first();
+            if ($existingScore) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Maintenance assessment for this inspection has already been completed.'
+                ], 409);
+            }
+            $masResult = $this->mas_method($parameters);
+            $mpsResult = $this->mps_method($parameters);
+            $mas = $masResult['mas'];
+            $conditionScore = $mpsResult['condition_score'];
+            $criticalityScore = $mpsResult['criticality_score'];
+            $mps = $mpsResult['mps'];
+            $scoreId = DB::table('maintenance.mtn_inspection_score')
+                ->insertGetId([
+                    'inspection_id' => $inspectionId,
+                    'mas_score' => $mas,
+                    'condition_score' => $conditionScore,
+                    'criticality_score' => $criticalityScore,
+                    'mps_score' => $mps,
+                    'condition_factor' => 0.6000,
+                    'criticality_factor' => 0.4000,
+                    'calculation_version' => '1.0',
+                    'calculated_at' => now(),
+                    'calculated_by' => auth()->id(),
+                    'status' => 'ACTIVE',
+                    'created_at' => now(),
+                    'created_by' => auth()->id(),
+                ]);
+            foreach ($mpsResult['details'] as $detail) {
+                $submittedParameter = collect($parameters)->firstWhere('parameter_code', $detail['parameter_code']);
+                DB::table('maintenance.mtn_inspection_score_details')
+                    ->insert([
+                        'inspection_score_id' => $scoreId,
+                        'parameter_set_id' => $submittedParameter['parameter_set_id'] ?? null,
+                        'parameter_id' => $submittedParameter['parameter_id'] ?? null,
+                        'parameter_code' => $detail['parameter_code'],
+                        'parameter_name' => $submittedParameter['parameter_name'] ?? null,
+                        'score_category' => $detail['category'],
+                        'parameter_value' => $detail['value'],
+                        'maximum_range' => $detail['maximum_range'],
+                        'weightage' => $detail['weightage'],
+                        'normalized_score' => $detail['normalized_score'],
+                        'weighted_score' => $detail['weighted_score'],
+                        'created_at' => now(),
+                        'created_by' => auth()->id(),
+                    ]);
+            }
+            $assetType = $inspectionDetail->insp_asset_type;
+            $assetCd = $inspectionDetail->insp_asset_id;
+            $assetInfo = $this->resolveMaintainableAsset($assetType, $assetCd);
+            /*
+            |--------------------------------------------------------------------------
+            | Insert Maintainable Asset History Record
+            |--------------------------------------------------------------------------
+            |
+            | IMPORTANT:
+            |
+            | Same physical asset CAN appear multiple times.
+            |
+            | Example:
+            |
+            | RD001 / inspection 101
+            | RD001 / inspection 205
+            | RD001 / inspection 310
+            |
+            | Therefore there is NO unique constraint on:
+            |
+            | asset_type_cd + asset_cd
+            |
+            |--------------------------------------------------------------------------
+            */
+            $maintainableAssetId = DB::table('projects.prt_maintainable_assets')
+                ->insertGetId([
+                    'asset_name' => $assetInfo['asset_name'],
+                    'asset_type_cd' => $assetType,
+                    'asset_cd' => $assetCd,
+                    'parent_asset_cd' => $assetInfo['parent_asset_cd'],
+                    'flag' => 0,
+                    'inspection_id' => $inspectionId,
+                    'inspection_score_id' => $scoreId,
+                    'created_at' => now(),
+                    'created_by' => auth()->id(),
+                ]);
+            // ============================================================
+            // Commit
+            // ============================================================
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Maintenance Assessment saved successfully.',
+                'score_id' => $scoreId,
+                'mas' => $mas,
+                'condition_score' => $conditionScore,
+                'criticality_score' => $criticalityScore,
+                'mps' => $mps,
+            ]);
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            Log::error(
+                'Maintenance Assessment save failed.',
+                [
+                    'inspection_id' => $inspectionId,
+                    'exception' => $exception->getMessage(),
+                ]
+            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to save Maintenance Assessment.'
+            ], 500);
+        }
+    }
+
+    // Saiful: 17-10-2026
+    public function calculateAndSaveForAsset(string $inspectionCode): array
+    {
+        // Initialize variables for error logging.
+        $assetCd = null;
+        $assetTypeCd = null;
+        try {
+            return DB::connection('pgsql_maintenance')->transaction(function () use ($inspectionCode, &$assetCd, &$assetTypeCd) {
+                /*
+                |--------------------------------------------------------------------------
+                | 1. Get the exact inspection using inspection code
+                |--------------------------------------------------------------------------
+                */
+                $inspection = DB::table('maintenance.mtn_inspection_details as inspection')
+                    ->leftJoin('public.asset_master_road_sub_assets as asset_type', 'asset_type.sub_asset_cd', '=', 'inspection.insp_asset_type')
+                    ->select('inspection.*', 'asset_type.dept_cd as asset_dept_cd')
+                    ->where('inspection.insp_cd', $inspectionCode)
+                    ->first();
+
+                if (!$inspection) {
+                    throw new \RuntimeException("No inspection found for inspection code: {$inspectionCode}");
+                }
+
+                // Get asset information from this exact inspection.
+                $inspectionId = $inspection->id;
+                $assetCd = $inspection->insp_asset_id;
+                $assetTypeCd = (string) $inspection->insp_asset_type;
+
+                /*
+                |--------------------------------------------------------------------------
+                | 2. Prevent duplicate assessment for the same inspection
+                |--------------------------------------------------------------------------
+                */
+                $existingScore = DB::table('maintenance.mtn_inspection_score')
+                    ->where('inspection_id', $inspectionId)
+                    ->where('status', 'ACTIVE')
+                    ->exists();
+
+                if ($existingScore) {
+                    return [
+                        'success' => false,
+                        'message' => 'The latest inspection has already been assessed.',
+                        'inspection_id' => $inspectionId,
+                        'asset_cd' => $assetCd,
+                        'asset_type_cd' => $assetTypeCd,
+                    ];
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 3. Calculate total and average observation weight
+                |--------------------------------------------------------------------------
+                */
+                $observations = DB::table('maintenance.mtn_insp_observation_details')
+                    ->where('insp_id', $inspectionId)
+                    ->get([
+                        'obsrv_weightage',
+                        'grading_cd',
+                    ]);
+
+                $totalWeight = $observations->sum(fn($item) => (float) $item->obsrv_weightage);
+
+                $averageWeight = $observations->isNotEmpty() ? $totalWeight / $observations->count() : 0;
+                $unsatisfactoryWeight = $observations
+                    ->filter(
+                        fn($item) =>
+                        strtoupper((string) $item->grading_cd) === 'U'
+                    )
+                    ->sum(fn($item) => (float) $item->obsrv_weightage);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 4. Resolve the parent road for road sub-assets
+                |--------------------------------------------------------------------------
+                */
+                $roadSystemId = null;
+
+                switch ((string) $assetTypeCd) {
+                    case '10': // Road
+                    case '8':  // National Highway
+                        $roadSystemId = $assetCd;
+                        break;
+
+                    case '0': // CD Work
+                        $roadSystemId = DB::table('public.asset_road_cdwork_details')
+                            ->where('rd_cdwork_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '1': // Bridge
+                        $roadSystemId = DB::table('public.asset_road_bridge_details')
+                            ->where('rd_bridge_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '2': // Pavement
+                        $roadSystemId = DB::table('public.asset_road_pavement_details')
+                            ->where('rd_pavement_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '3': // Surface Type
+                        $roadSystemId = DB::table('public.asset_road_surface_type_details')
+                            ->where('rd_surface_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '4': // Habitation
+                        $roadSystemId = DB::table('public.asset_road_habitation_details')
+                            ->where('habitation_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '9': // PCI
+                        $roadSystemId = DB::table('public.asset_road_pavement_condition_indexes')
+                            ->where('pci_section_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '11': // Distress
+                        $roadSystemId = DB::table('public.asset_road_distress_details')
+                            ->where('rd_distress_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+
+                    case '12': // Protection Wall
+                        $roadSystemId = DB::table('public.asset_protection_wall_details')
+                            ->where('protection_wall_cd', $assetCd)
+                            ->value('rd_system_id');
+                        break;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 5. Get average habitation score for the parent road
+                |--------------------------------------------------------------------------
+                */
+                $habitationScore = 0;
+
+                if (!empty($roadSystemId)) {
+                    $habitationScore = (float) (
+                        DB::table('public.asset_road_habitation_details')
+                        ->where('rd_system_id', $roadSystemId)
+                        ->avg('habitation_score') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 6. Get PCI value
+                |--------------------------------------------------------------------------
+                */
+                $pciValue = 0;
+
+                if (!empty($inspection->pci_section_cd)) {
+                    $pciValue = (float) (
+                        DB::table('public.asset_road_pavement_condition_indexes')
+                        ->where('pci_section_cd', $inspection->pci_section_cd)
+                        ->value('pci_value') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 7. Get asset criticality index
+                |--------------------------------------------------------------------------
+                */
+                $criticalityIndex = (float) (
+                    DB::table('maintenance.master_asset_criticality_indexes')
+                    ->where('asset_type', $assetTypeCd)
+                    ->where('asset_id', $assetCd)
+                    ->orderByDesc('updated_at')
+                    ->orderByDesc('id')
+                    ->value('criticality_index') ?? 0
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | 8. Get road category score from the parent road
+                |--------------------------------------------------------------------------
+                */
+                $roadCategoryScore = 0;
+
+                if (!empty($roadSystemId)) {
+                    $roadCategoryScore = (float) (
+                        DB::table('public.asset_road_details as road')
+                        ->leftJoin('public.asset_master_road_category as category', 'category.rd_catg_cd', '=', 'road.rd_category_cd')
+                        ->where('road.rd_system_id', $roadSystemId)
+                        ->value('category.maintenance_score') ?? 0
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 9. Load dynamic maintenance parameters from the database
+                |--------------------------------------------------------------------------
+                */
+                $parameterRows = DB::table('maintenance.master_set_of_mtn_parameters_dept_wise as parameter_set')
+                    ->join('maintenance.master_mtn_parameter_master as parameter', 'parameter.id', '=', 'parameter_set.parameter_id')
+                    ->leftJoin('maintenance.master_mtn_parameter_range as parameter_range', 'parameter_range.parameter_id', '=', 'parameter.id')
+                    ->leftJoin(
+                        'maintenance.master_each_mtn_parameters_weightage as parameter_weightage',
+                        function ($join) {
+                            $join->on('parameter_weightage.mtn_parameter_set_id', '=', 'parameter_set.id')
+                                ->on('parameter_weightage.parameter_id', '=', 'parameter.id');
+                        }
+                    )
+                    ->where('parameter_set.dept_cd', $inspection->asset_dept_cd)
+                    ->where('parameter_set.asset_type_cd', $assetTypeCd)
+                    ->where('parameter.status', 'ACTIVE')
+                    ->where(function ($query) {
+                        $query->where('parameter_range.status', 'ACTIVE')
+                            ->orWhereNull('parameter_range.status');
+                    })
+                    ->select([
+                        'parameter_set.id as parameter_set_id',
+                        'parameter.id as parameter_id',
+                        'parameter.parameter_code',
+                        'parameter.parameter_name',
+                        'parameter_range.upper_range',
+                        'parameter_weightage.weightage',
+                    ])
+                    ->orderBy('parameter_set.id')
+                    ->get();
+
+                if ($parameterRows->isEmpty()) {
+                    throw new \RuntimeException(
+                        "No active maintenance parameters configured for asset type {$assetTypeCd}."
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 10. Map database values to configured parameter codes
+                |--------------------------------------------------------------------------
+                */
+                $parameterValues = [
+                    'FIELD_OBSERVATION_WEIGHTAGE' => $averageWeight,
+                    'PCI' => $pciValue,
+                    'HABITATION_INDEX' => $habitationScore,
+                    'CRITICALITY_INDEX' => $criticalityIndex,
+                    'ROAD_CONNECTIVITY' => 0,
+                    'ROAD_CATEGORY' => $roadCategoryScore,
+                    'PRIORITY_INDEX' => 0,
+                ];
+
+                $parameters = [];
+
+                foreach ($parameterRows as $row) {
+                    $parameters[] = [
+                        'parameter_id' => $row->parameter_id,
+                        'parameter_set_id' => $row->parameter_set_id,
+                        'parameter_code' => $row->parameter_code,
+                        'parameter_name' => $row->parameter_name,
+                        'value' => (float) ($parameterValues[$row->parameter_code] ?? 0),
+                        'maximum_range' => (float) ($row->upper_range ?? 0),
+                        'weightage' => (float) ($row->weightage ?? 0),
+                    ];
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 11. Calculate MAS and MPS using existing methods
+                |--------------------------------------------------------------------------
+                */
+                $masResult = $this->mas_method($parameters);
+                $mpsResult = $this->mps_method($parameters);
+
+                $mas = $masResult['mas'];
+                $conditionScore = $mpsResult['condition_score'];
+                $criticalityScore = $mpsResult['criticality_score'];
+                $mps = $mpsResult['mps'];
+
+                /*
+                |--------------------------------------------------------------------------
+                | 12. Save score header
+                |--------------------------------------------------------------------------
+                */
+                $now = now();
+                $userId = auth()->id() ?? ($inspection->created_by ?? null);
+
+                $scoreId = DB::table('maintenance.mtn_inspection_score')
+                    ->insertGetId([
+                        'inspection_id' => $inspectionId,
+                        'mas_score' => $mas,
+                        'condition_score' => $conditionScore,
+                        'criticality_score' => $criticalityScore,
+                        'mps_score' => $mps,
+                        'condition_factor' => 0.6000,
+                        'criticality_factor' => 0.4000,
+                        'calculation_version' => '1.0',
+                        'calculated_at' => $now,
+                        'calculated_by' => $userId,
+                        'status' => 'ACTIVE',
+                        'created_at' => $now,
+                        'created_by' => $userId,
+                    ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | 13. Save parameter-level score details
+                |--------------------------------------------------------------------------
+                */
+                foreach ($mpsResult['details'] as $detail) {
+                    $submittedParameter = collect($parameters)->firstWhere('parameter_code', $detail['parameter_code']);
+                    DB::table('maintenance.mtn_inspection_score_details')
+                        ->insert([
+                            'inspection_score_id' => $scoreId,
+                            'parameter_set_id' => $submittedParameter['parameter_set_id'] ?? null,
+                            'parameter_id' => $submittedParameter['parameter_id'] ?? null,
+                            'parameter_code' => $detail['parameter_code'],
+                            'parameter_name' => $submittedParameter['parameter_name'] ?? null,
+                            'score_category' => $detail['category'],
+                            'parameter_value' => $detail['value'],
+                            'maximum_range' => $detail['maximum_range'],
+                            'weightage' => $detail['weightage'],
+                            'normalized_score' => $detail['normalized_score'],
+                            'weighted_score' => $detail['weighted_score'],
+                            'created_at' => $now,
+                            'created_by' => $userId,
+                        ]);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 14. Save maintainable asset history
+                |--------------------------------------------------------------------------
+                */
+                $assetInfo = $this->resolveMaintainableAsset($assetTypeCd, $assetCd);
+                $maintainableAssetId = DB::table('projects.prt_maintainable_assets')->insertGetId([
+                    'asset_name' => $assetInfo['asset_name'],
+                    'asset_type_cd' => $assetTypeCd,
+                    'asset_cd' => $assetCd,
+                    'parent_asset_cd' => $assetInfo['parent_asset_cd'],
+                    'flag' => 0,
+                    'inspection_id' => $inspectionId,
+                    'inspection_score_id' => $scoreId,
+                    'created_at' => $now,
+                    'created_by' => $userId,
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Maintenance assessment calculated and saved successfully.',
+                    'asset_cd' => $assetCd,
+                    'asset_type_cd' => $assetTypeCd,
+                    'inspection_id' => $inspectionId,
+                    'inspection_score_id' => $scoreId,
+                    'maintainable_asset_id' => $maintainableAssetId,
+                    'mas' => $mas,
+                    'condition_score' => $conditionScore,
+                    'criticality_score' => $criticalityScore,
+                    'mps' => $mps,
+                    'average_habitation_score' => round($habitationScore, 2),
+                    'total_observation_weight' => $totalWeight,
+                    'average_observation_weight' => round($averageWeight, 2),
+                ];
+            });
+        } catch (\Throwable $exception) {
+            Log::error('Generic maintenance assessment failed.', [
+                'asset_cd' => $assetCd,
+                'asset_type_cd' => $assetTypeCd,
+                'exception' => $exception->getMessage(),
+            ]);
+            return [
+                'success' => false,
+                'message' => 'Unable to calculate and save maintenance assessment.',
+                'error' => $exception->getMessage(),
+            ];
+        }
+    }
+}
