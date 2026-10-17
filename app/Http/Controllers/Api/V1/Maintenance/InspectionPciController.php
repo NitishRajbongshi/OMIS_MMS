@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Maintenance;
 
 use App\Http\Controllers\Controller;
-use App\Models\Road\PCI\AssetRoadPavementConditionIndexesDraft;
+use App\Models\Road\PCI\AssetRoadPavementConditionIndex;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -25,7 +23,7 @@ class InspectionPciController extends Controller
                 ], 422);
             }
 
-            $inspectionExists = AssetRoadPavementConditionIndexesDraft::where('pci_section_cd', $pci_section_cd)
+            $inspectionExists = AssetRoadPavementConditionIndex::where('pci_section_cd', $pci_section_cd)
                 ->exists();
 
             if (!$inspectionExists) {
@@ -38,7 +36,7 @@ class InspectionPciController extends Controller
                 ], 404);
             }
 
-            $pciDetails = AssetRoadPavementConditionIndexesDraft::where('pci_section_cd', $pci_section_cd)
+            $pciDetails = AssetRoadPavementConditionIndex::where('pci_section_cd', $pci_section_cd)
                 ->orderBy('pci_section_cd')
                 ->get();
 
