@@ -43,6 +43,7 @@
                         <th class="text-center">Population Count</th>
                         <th class="text-center">Facilities</th>
                         <th class="text-center">Habitation Remarks</th>
+						<th class="text-center">Habitation Score Scheme</th>													
                         <th class="text-center">Habitation Weightage</th>
                     </thead>
 
@@ -131,6 +132,9 @@
                                     {{ $habitationDetail->remarks }}
                                 </td>
                                 <td>
+									{{ $habitationDetail->scheme_name }}
+                                </td>
+                                <td>									
                                     {{ $habitationDetail->habitation_score }}
                                 </td>
                             </tr>
@@ -159,6 +163,7 @@
                         <th class="text-center">Population Count</th>
                         <th class="text-center">Facilities</th>
                         <th class="text-center">Habitation Remarks</th>
+						<th class="text-center">Habitation Score Scheme</th>													
                         <th class="text-center">Habitation Weightage</th>
                     </thead>
 
@@ -245,6 +250,9 @@
                                 </td>
                                 <td>
                                     {{ $habitationDetail->remarks }}
+                                </td>
+                                <td>
+									{{ $habitationDetail->scheme_name }}
                                 </td>
                                 <td>
                                     {{ $habitationDetail->habitation_score }}

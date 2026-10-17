@@ -32,6 +32,8 @@ class AssetRoadHabitationDetailsDraft extends Model
         'mla_constituency',
         'mp_constituency',
         'total_population',
+        'habitation_score',
+        'scheme_id',
         'created_by',
         'updated_by',
         'remarks',
@@ -40,8 +42,7 @@ class AssetRoadHabitationDetailsDraft extends Model
         'is_rejected',
         'reason_of_rejection',
         'date_of_rejection',
-        'rejected_by',
-        'habitation_score',
+        'rejected_by'
     ];
 
     public function facilities()

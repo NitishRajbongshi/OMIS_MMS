@@ -3368,4 +3368,58 @@ class ProjectManagementController extends Controller
             return response()->view('errors.generic', [], 500);
         }
     }
+
+
+
+    public function getMaintenanceAssetDetails($id)
+    {
+        $asset = DB::table('projects.prt_maintainable_assets as asset')
+            ->join(
+                'maintenance.mtn_inspection_details as inspection',
+                'inspection.id',
+                '=',
+                'asset.inspection_id'
+            )
+            ->leftJoin(
+                'maintenance.mtn_inspection_score as score',
+                'score.id',
+                '=',
+                'asset.inspection_score_id'
+            )
+            ->leftJoin(
+                'public.asset_master_road_sub_assets as asset_type',
+                'asset_type.sub_asset_cd',
+                '=',
+                'asset.asset_type_cd'
+            )
+            ->where('asset.asset_cd', $id)
+            ->select([
+                'asset.id as maintainable_asset_id',
+                'asset.asset_cd',
+                'asset.asset_name',
+                'asset.asset_type_cd',
+                'asset.inspection_id',
+                'asset.inspection_score_id',
+                'inspection.insp_cd',
+                'inspection.insp_date',
+                'asset_type.sub_assets_descr as asset_type_name',
+                'score.mas_score',
+                'score.mps_score',
+                'score.condition_score',
+                'score.criticality_score',
+            ])
+            ->first();
+
+        if (!$asset) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maintenance asset details not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $asset,
+        ]);
+    }
 }

@@ -69,27 +69,16 @@ class CriticalityIndexController extends Controller
             ]);
         }
 
-        $assetExists = DB::table($config['table'])
-            ->where($config['id_field'],$assetId)
-            ->exists();
-
+        $assetExists = DB::table($config['table'])->where($config['id_field'],$assetId)->exists();
         if (!$assetExists) {
             throw ValidationException::withMessages([
                 'asset_id' => 'Selected asset does not exist.',
             ]);
         }
 
-        $alreadyExists = DB::table(
-            'maintenance.master_asset_criticality_indexes'
-        )
-            ->where(
-                'asset_type',
-                $assetType
-            )
-            ->where(
-                'asset_id',
-                $assetId
-            )
+        $alreadyExists = DB::table('maintenance.master_asset_criticality_indexes')
+            ->where('asset_type',$assetType)
+            ->where('asset_id',$assetId)
             ->exists();
 
         if ($alreadyExists) {
@@ -119,11 +108,7 @@ class CriticalityIndexController extends Controller
     public function update(UpdateCriticalityIndexRequest $request, int $id)
     {
         $criticalityIndex = $request->input('criticality_index');
-        $record = DB::table(
-            'maintenance.master_asset_criticality_indexes'
-        )
-            ->where('id', $id)
-            ->first();
+        $record = DB::table('maintenance.master_asset_criticality_indexes')->where('id', $id)->first();
 
         if (!$record) {
             return response()->json([
@@ -132,28 +117,11 @@ class CriticalityIndexController extends Controller
             ], 404);
         }
         $parameter = DB::table('maintenance.master_mtn_parameter_master as p')
-            ->join(
-                'maintenance.master_mtn_parameter_range as r',
-                'r.parameter_id',
-                '=',
-                'p.id'
-            )
-            ->where(
-                'p.parameter_code',
-                'CRITICALITY_INDEX'
-            )
-            ->where(
-                'p.parameter_type',
-                'RANGE'
-            )
-            ->where(
-                'p.status',
-                'ACTIVE'
-            )
-            ->where(
-                'r.status',
-                'ACTIVE'
-            )
+            ->join('maintenance.master_mtn_parameter_range as r','r.parameter_id','=','p.id')
+            ->where('p.parameter_code','CRITICALITY_INDEX')
+            ->where('p.parameter_type','RANGE')
+            ->where('p.status','ACTIVE')
+            ->where('r.status','ACTIVE')
             ->select([
                 'p.id',
                 'p.parameter_code',
@@ -170,21 +138,15 @@ class CriticalityIndexController extends Controller
                 'Criticality Index parameter configuration not found.',
             ], 422);
         }
-        if (
-            $criticalityIndex < $parameter->lower_range ||
-            $criticalityIndex > $parameter->upper_range
-        ) {
+        if ($criticalityIndex < $parameter->lower_range || $criticalityIndex > $parameter->upper_range) 
+        {
             throw ValidationException::withMessages([
                 'criticality_index' =>
-                "Criticality Index must be between " .
-                    "{$parameter->lower_range} and " .
-                    "{$parameter->upper_range}.",
+                "Criticality Index must be between " . "{$parameter->lower_range} and " . "{$parameter->upper_range}.",
             ]);
         }
 
-        DB::table(
-            'maintenance.master_asset_criticality_indexes'
-        )
+        DB::table('maintenance.master_asset_criticality_indexes')
             ->where('id', $id)
             ->update([
                 'criticality_index' => $criticalityIndex,
@@ -214,33 +176,20 @@ class CriticalityIndexController extends Controller
             ->leftJoin(
                 'maintenance.master_asset_criticality_indexes as ci',
                 function ($join) use ($assetType, $config) {
-                    $join->on(
-                        'ci.asset_id',
-                        '=',
-                        'a.' . $config['id_field']
-                    )->where(
-                        'ci.asset_type',
-                        '=',
-                        (string) $assetType
-                    );
+                    $join->on('ci.asset_id','=','a.' . $config['id_field']
+                    )->where('ci.asset_type','=',(string) $assetType);
                 }
             )
             ->whereNull('ci.id')
             ->select([
-                DB::raw(
-                    'a.' . $config['id_field'] . ' as asset_id'
-                ),
-                DB::raw(
-                    'a.' . $config['name_field'] . ' as asset_name'
-                ),
+                DB::raw('a.' . $config['id_field'] . ' as asset_id'),
+                DB::raw('a.' . $config['name_field'] . ' as asset_name'),
             ])
             ->orderBy('a.' . $config['id_field'])
             ->get();
 
         $assets = $assets->map(function ($asset) use ($config) {
-
             $label = $config['display_format'] ?? '{id} — {name}';
-
             $label = str_replace(
                 ['{id}', '{name}'],
                 [$asset->asset_id, $asset->asset_name],
@@ -262,15 +211,8 @@ class CriticalityIndexController extends Controller
 
     public function parameter()
     {
-        $parameter = DB::table(
-            'maintenance.master_mtn_parameter_master as p'
-        )
-            ->join(
-                'maintenance.master_mtn_parameter_range as r',
-                'r.parameter_id',
-                '=',
-                'p.id'
-            )
+        $parameter = DB::table('maintenance.master_mtn_parameter_master as p')
+            ->join('maintenance.master_mtn_parameter_range as r','r.parameter_id','=','p.id')
             ->where('p.parameter_code', 'CRITICALITY_INDEX')
             ->where('p.parameter_type', 'RANGE')
             ->where('p.status', 'ACTIVE')
@@ -306,7 +248,6 @@ class CriticalityIndexController extends Controller
     {
         $assetType = $request->input('asset_type');
         $search = trim($request->input('search', ''));
-
         $perPage = min(
             max((int) $request->input('per_page', 10), 1),
             100

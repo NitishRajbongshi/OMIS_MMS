@@ -11,26 +11,33 @@ class PopulationWeightageController extends Controller
 {
     public function index()
     {
-        $populationWeightages = DB::table('public.asset_master_habitation_population_weightage')
-            ->orderBy('lower_population')
+        $populationWeightages = DB::table('public.asset_master_habitation_population_weightage as population')
+            ->leftJoin('public.asset_master_habitation_score_schemes as schemes', 'population.scheme_id', '=', 'schemes.scheme_id')
+            ->select('population.*', 'schemes.scheme_name')
+            ->orderBy('population.scheme_id')
+            ->orderBy('population.lower_population')
+            ->get();
+        $schemes = DB::table('public.asset_master_habitation_score_schemes')
+            ->orderBy('scheme_name')
             ->get();
 
-        return view('master.road.populationWeightage', compact('populationWeightages'));
+        return view('master.road.populationWeightage', compact('populationWeightages', 'schemes'));
     }
 
     public function store(Request $request)
     {
-        try {
-            $request->validate([
-                'lower_population' => 'required|integer|min:0',
-                'higher_population' => 'nullable|integer|min:0',
-                'weightage' => 'required|numeric|min:0|max:100',
-                'is_published' => 'required|in:Y,N',
-            ]);
+        $validated = $request->validate([
+            'lower_population' => 'required|integer|min:0',
+            'higher_population' => 'nullable|integer|min:0',
+            'weightage' => 'required|numeric|min:0|max:100',
+            'is_published' => 'required|in:Y,N',
+            'scheme_id' => 'required|exists:asset_master_habitation_score_schemes,scheme_id',
+        ]);
 
-            $lower = (int) $request->lower_population;
-            $higher = $request->higher_population !== null
-                ? (int) $request->higher_population
+        try {
+            $lower = (int) $validated['lower_population'];
+            $higher = $validated['higher_population'] !== null
+                ? (int) $validated['higher_population']
                 : null;
 
             // Higher value must be greater than lower value
@@ -43,6 +50,7 @@ class PopulationWeightageController extends Controller
 
             // Get the last saved range
             $lastRange = DB::table('public.asset_master_habitation_population_weightage')
+                ->where('scheme_id', $validated['scheme_id'])
                 ->orderByDesc('higher_population')
                 ->first();
 
@@ -79,8 +87,9 @@ class PopulationWeightageController extends Controller
             DB::table('public.asset_master_habitation_population_weightage')->insert([
                 'lower_population' => $lower,
                 'higher_population' => $higher,
-                'weightage' => $request->weightage,
-                'is_published' => $request->is_published,
+                'weightage' => $validated['weightage'],
+                'is_published' => $validated['is_published'],
+                'scheme_id' => $validated['scheme_id'],
                 'created_at' => Carbon::now()
             ]);
 
@@ -99,17 +108,18 @@ class PopulationWeightageController extends Controller
 
     public function update(Request $request, $id)
     {
-        try {
-            $request->validate([
-                'lower_population' => 'required|integer|min:0',
-                'higher_population' => 'nullable|integer|min:0',
-                'weightage' => 'required|numeric|min:0|max:100',
-                'is_published' => 'required|in:Y,N',
-            ]);
+        $validated = $request->validate([
+            'lower_population' => 'required|integer|min:0',
+            'higher_population' => 'nullable|integer|min:0',
+            'weightage' => 'required|numeric|min:0|max:100',
+            'is_published' => 'required|in:Y,N',
+            'scheme_id' => 'required|exists:asset_master_habitation_score_schemes,scheme_id',
+        ]);
 
-            $lower = (int) $request->lower_population;
-            $higher = $request->higher_population !== null
-                ? (int) $request->higher_population
+        try {
+            $lower = (int) $validated['lower_population'];
+            $higher = $validated['higher_population'] !== null
+                ? (int) $validated['higher_population']
                 : null;
 
             // Higher value must be greater than lower value
@@ -124,6 +134,7 @@ class PopulationWeightageController extends Controller
 
             // Get all other ranges, excluding the current record
             $ranges = DB::table($table)
+                ->where('scheme_id', $validated['scheme_id'])
                 ->where('id', '!=', $id)
                 ->orderBy('lower_population')
                 ->get();
@@ -199,8 +210,9 @@ class PopulationWeightageController extends Controller
                 ->update([
                     'lower_population' => $lower,
                     'higher_population' => $higher,
-                    'weightage' => $request->weightage,
-                    'is_published' => $request->is_published,
+                    'weightage' => $validated['weightage'],
+                    'is_published' => $validated['is_published'],
+                    'scheme_id' => $validated['scheme_id'],
                     'updated_at' => Carbon::now()
                 ]);
 

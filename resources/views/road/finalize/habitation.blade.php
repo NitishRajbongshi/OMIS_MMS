@@ -52,6 +52,7 @@
                         <th class="text-center">MP Constituency</th>
                         <th class="text-center">Population Count</th>
                         <th class="text-center">Habitation Remarks</th>
+						<th class="text-center">Habitation Score Scheme</th>													
                         <th class="text-center">Habitation Weightage</th>
                         <th class="text-center">Facilities</th>
                         <th class="text-center">Action</th>
@@ -86,6 +87,9 @@
                                     {{ $habitationDetail->remarks }}
                                 </td>
                                 <td>
+									{{ $habitationDetail->scheme_name }}
+                                </td>
+                                <td>									 
                                     {{ $habitationDetail->habitation_score }}
                                 </td>
                                 <td>

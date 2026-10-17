@@ -474,7 +474,7 @@ class HomeController extends Controller
                 ->orderBy('precedence_order')
                 ->orderBy('department_name')
                 ->get();
-
+            Log::info("departments: ". $departments);
             // Contractor dropdown: only contractors with projects
             // in the selected department, or all contractors if
             // no department has been selected.

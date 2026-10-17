@@ -144,18 +144,8 @@ class RoadSubAssetService
                 'asset_master_protection_wall_type.wall_type_descr',
                 'asset_master_protection_wall_structure_type.structure_type_descr',
             )
-            ->leftJoin(
-                'asset_master_protection_wall_type',
-                'asset_protection_wall_details.wall_type_cd',
-                '=',
-                'asset_master_protection_wall_type.wall_type_cd'
-            )
-            ->leftJoin(
-                'asset_master_protection_wall_structure_type',
-                'asset_protection_wall_details.structure_type_cd',
-                '=',
-                'asset_master_protection_wall_structure_type.structure_type_cd'
-            )
+            ->leftJoin('asset_master_protection_wall_type', 'asset_protection_wall_details.wall_type_cd', '=', 'asset_master_protection_wall_type.wall_type_cd')
+            ->leftJoin('asset_master_protection_wall_structure_type', 'asset_protection_wall_details.structure_type_cd', '=', 'asset_master_protection_wall_structure_type.structure_type_cd')
             ->where('asset_protection_wall_details.rd_system_id', $roadId)
             ->orderBy('asset_protection_wall_details.updated_at', 'desc')
             ->get();

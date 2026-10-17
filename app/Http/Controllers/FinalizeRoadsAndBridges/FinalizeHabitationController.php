@@ -63,8 +63,10 @@ class FinalizeHabitationController extends Controller
                         'asset_master_block.block_name as block',
                         'asset_master_village.village_name as village',
                         'asset_master_mla_const.const_descr as mla',
-                        'asset_master_mp_const.const_desc as mp'
+                        'asset_master_mp_const.const_desc as mp',
+                        's.scheme_name'
                     )
+                    ->leftJoin('asset_master_habitation_score_schemes as s', 'asset_road_habitation_details_draft.scheme_id', '=', 's.scheme_id')									 
                     ->leftJoin('asset_master_lgd_district', 'asset_road_habitation_details_draft.district_name', '=', 'asset_master_lgd_district.dist_code')
                     ->leftJoin('asset_master_block', 'asset_road_habitation_details_draft.block_name', '=', 'asset_master_block.block_cd')
                     ->leftJoin('asset_master_village', 'asset_road_habitation_details_draft.village_name', '=', 'asset_master_village.village_code')

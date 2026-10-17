@@ -138,20 +138,14 @@ class CertificateController extends Controller
                 if (DB::table('prt_project_completion_certificate_details')->where('project_cd', $projectId)->exists()) {
                     throw new \RuntimeException('A completion certificate has already been issued for this project.');
                 }
-
-                $contractorName = DB::table('prt_contractor_details')
-                    ->where('regn_no', $project->project_awarded_to)
-                    ->value('contractors_name');
-
+                $contractorName = DB::table('prt_contractor_details')->where('regn_no', $project->project_awarded_to)->value('contractors_name');
                 $configCertPath = config('customconfigpath.CERTIFICATE_DOCS_PATH');
                 $folderPath = rtrim($configCertPath, '/') . '/' . now()->year;
                 $uniqueFileName = "{$projectId}_{$certificateNumber}.pdf";
                 $relativeFilePath = $folderPath . '/' . $uniqueFileName;
-
                 if (!Storage::disk('external')->exists($folderPath)) {
                     Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
                 }
-
                 $issuedOn = now();
                 $certificateData = [
                     'id' => $project->project_cd,
@@ -167,15 +161,10 @@ class CertificateController extends Controller
                     'generated_by' => $user->name,
                     'download_count' => 0,
                 ];
-
-                $pdfContent = Pdf::loadView('pms.certification.certificateTemplate', compact('certificateData'))
-                    ->setPaper('a4', 'landscape')
-                    ->output();
-
+                $pdfContent = Pdf::loadView('pms.certification.certificateTemplate', compact('certificateData'))->setPaper('a4', 'landscape')->output();
                 if (!Storage::disk('external')->put($relativeFilePath, $pdfContent)) {
                     throw new \RuntimeException('Unable to store the certificate PDF.');
                 }
-
                 $certificateId = DB::table('prt_project_completion_certificate_details')->insertGetId([
                     'project_cd' => $projectId,
                     'version_no' => '1.0',
@@ -189,14 +178,14 @@ class CertificateController extends Controller
                     'created_at' => $issuedOn,
                     'updated_at' => $issuedOn,
                 ], 'certificate_id');
-
                 $this->logCertificateAction($certificateId, 'GENERATED', $user->id);
             });
-
             return redirect()
                 ->route('pms.certificates.index')
                 ->with('success', "Certificate {$certificateNumber} generated.");
-        } catch (Throwable $exception) {
+        } 
+        catch (Throwable $exception) 
+        {
             if ($relativeFilePath && Storage::disk('external')->exists($relativeFilePath)) {
                 Storage::disk('external')->delete($relativeFilePath);
             }
@@ -206,25 +195,22 @@ class CertificateController extends Controller
                 'user_id' => $user->id,
                 'message' => $exception->getMessage(),
             ]);
-
             return redirect()->back()->with('failed', $exception->getMessage());
         }
     }
-
-
     public function generateCopy($projectId)
     {
         $user = Auth::user();
         $certificateNumber = 'CERT-' . now()->format('Y') . '-' . strtoupper(Str::random(10));
         $relativeFilePath = null;
-
         try {
             DB::transaction(function () use (
                 $projectId,
                 $user,
                 $certificateNumber,
                 &$relativeFilePath
-            ) {
+            ) 
+            {
                 $project = DB::table('prt_project_details as p')
                     ->where('p.project_cd', $projectId)
                     ->where('p.owner_dept_cd', $user->department)
@@ -238,7 +224,6 @@ class CertificateController extends Controller
                         'p.work_order_no',
                         'p.project_awarded_to',
                     ]);
-
                 if (!$project) {
                     throw new \RuntimeException('Project not found.');
                 }

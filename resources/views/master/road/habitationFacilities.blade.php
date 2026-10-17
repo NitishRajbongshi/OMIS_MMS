@@ -22,7 +22,7 @@
             <form id="add_facility_form" method="POST">
                 @csrf
                 <div class="row align-items-end">
-                    <div class="col-md-5 mb-2">
+                    <div class="col-md-3 mb-2">
                         <label class="text-xs">Facility Name <span class="text-danger">*</span></label>
                         <input type="text" name="facility_name" class="form-control form-control-sm" placeholder="e.g., Primary Health Center" required>
                     </div>
@@ -32,13 +32,31 @@
                             placeholder="e.g., 10" min="0" max="100" step="0.01" onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();" required>
                     </div>
                     <div class="col-md-2 mb-2">
+                        <label class="text-xs">Scheme <span class="text-danger">*</span></label>
+                        <select name="scheme_id" class="form-control form-control-sm" required>
+                            <option value="">Select Scheme</option>
+                            @foreach ($schemes as $scheme)
+                                <option value="{{ $scheme->scheme_id }}">{{ $scheme->scheme_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="text-xs">Calculation Type <span class="text-danger">*</span></label>
+                        <select name="caulculation_type_id" class="form-control form-control-sm" required>
+                            <option value="">Select Calculation Type</option>
+                            @foreach ($calculationTypes as $calculationType)
+                                <option value="{{ $calculationType->caulculation_type_id }}">{{ $calculationType->caulculation_type_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1 mb-2">
                         <label class="text-xs">Status</label>
                         <select name="is_published" class="form-select form-select-sm">
                             <option value="Y">Published</option>
                             <option value="N">Draft</option>
                         </select>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-2 mb-2">
                         <button type="submit" class="btn btn-primary btn-sm btn-block fw-bold shadow-sm">
                             <i class="fa fa-plus-circle mr-1"></i> SAVE FACILITY
                         </button>
@@ -58,6 +76,8 @@
                             <tr>
                                 <th style="width: 10%;">ID</th>
                                 <th>Facility Name</th>
+                                <th>Scheme</th>
+                                <th>Calculation Type</th>
                                 <th class="text-center" style="width: 15%;">Weightage</th>
                                 <th class="text-center" style="width: 15%;">Status</th>
                                 <th class="text-center" style="width: 100px;">Action</th>
@@ -68,6 +88,8 @@
                                 <tr class="text-xs">
                                     <td>{{ $facility->id }}</td>
                                     <td class="font-weight-bold">{{ $facility->facility_name }}</td>
+                                    <td>{{ $facility->scheme_name }}</td>
+                                    <td>{{ $facility->caulculation_type_name }}</td>
                                     <td class="text-center">{{ $facility->weightage }}</td>
                                     <td class="text-center">
                                         <span class="badge {{ $facility->is_published == 'Y' ? 'badge-success' : 'badge-secondary' }}">
@@ -95,6 +117,26 @@
                                                     <div class="form-group">
                                                         <label class="text-xs">Facility Name</label>
                                                         <input type="text" name="facility_name" class="form-control form-control-sm" value="{{ $facility->facility_name }}" required>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="text-xs">Scheme <span class="text-danger">*</span></label>
+                                                        <select name="scheme_id" class="form-control form-control-sm" required>
+                                                            <option value="">Select Scheme</option>
+                                                            @foreach ($schemes as $scheme)
+                                                                <option value="{{ $scheme->scheme_id }}" {{ $facility->scheme_id == $scheme->scheme_id ? 'selected' : '' }}>{{ $scheme->scheme_name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="text-xs">Calculation Type <span class="text-danger">*</span></label>
+                                                        <select name="caulculation_type_id" class="form-control form-control-sm" required>
+                                                            <option value="">Select Calculation Type</option>
+                                                            @foreach ($calculationTypes as $calculationType)
+                                                                <option value="{{ $calculationType->caulculation_type_id }}" {{ $facility->caulculation_type_id == $calculationType->caulculation_type_id ? 'selected' : '' }}>
+                                                                    {{ $calculationType->caulculation_type_name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label class="text-xs">Weightage <span class="text-danger">*</span></label>

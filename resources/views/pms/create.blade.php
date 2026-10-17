@@ -581,6 +581,46 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- Selected Maintenance Asset Details -->
+                    <div class="card mt-3 border-success" id="maintenanceAssetDetailsCard"
+                        style="display:none;">
+                        <div class="card-header">
+                            <i class="fa fa-clipboard-list me-2"></i>
+                            Selected Asset — Inspection & Maintenance Scores
+                        </div>
+
+                        <div class="card-body">
+                            <div id="maintenanceAssetDetailsMessage"
+                                class="text-muted small mb-2"></div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:20%">Asset ID</th>
+                                            <th style="width:20%">Asset Name</th>
+                                            <th>Asset Type</th>
+                                            <th>Inspection Code</th>
+                                            <th>Inspection Date</th>
+                                            
+                                            <th>MAS Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td id="detailAssetId">-</td>
+                                            <td id="detailAssetName">-</td>
+                                            <td id="detailAssetType">-</td>
+                                            <td id="detailInspectionCode">-</td>
+                                            <td id="detailInspectionDate">-</td>
+                                            <td id="detailMasScore">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>    
                     <div class="text-start">
                         <button type="button" class="btn btn-primary btn-sm" onclick="addMaintenanceAssets()">
                             <i class="fa-solid fa-plus me-2"></i>
@@ -609,7 +649,7 @@
                     </div>
                 </div>
             </div>
-
+        
 
             <div class="row mt-2" id="kmlCard" style="background-color: #efeeee; display: none;">
                 <div class="col-12 pt-2">
@@ -2254,4 +2294,98 @@
         });
         //End by Pulak
     </script>
+
+    <script>
+        $(function () {
+
+            const detailsUrlTemplate =
+                @json(url('/project-management/maintenance-asset-details'));
+
+            const assetSelectors = [
+                '#maintRoads',
+                '#maintCulverts',
+                '#maintBridges',
+                '#maintWalls'
+            ];
+
+            function showMaintenanceAssetDetails(selectElement) {
+
+                const selectedOption = selectElement.options[
+                    selectElement.selectedIndex
+                ];
+
+                if (!selectedOption || !selectedOption.value) {
+                    $('#maintenanceAssetDetailsCard').hide();
+                    return;
+                }
+
+                // The selected option must contain the prt_maintainable_assets.id.
+                const maintainableAssetId = selectedOption.value;
+
+                $('#maintenanceAssetDetailsCard').show();
+
+                $('#maintenanceAssetDetailsMessage')
+                    .text('Loading inspection details...');
+
+                $.ajax({
+                    url: detailsUrlTemplate + '/' +
+                        encodeURIComponent(maintainableAssetId),
+                    method: 'GET',
+                    dataType: 'json',
+
+                    success: function (response) {
+
+                        if (!response.success) {
+                            $('#maintenanceAssetDetailsMessage')
+                                .text(response.message || 'No details found.');
+                            return;
+                        }
+
+                        const asset = response.data;
+
+                        // Use text() to avoid inserting database values as HTML.
+                        $('#detailAssetId').text(asset.asset_cd || '-');
+                        $('#detailAssetName').text(asset.asset_name || '-');
+                        $('#detailInspectionId').text(asset.inspection_id ?? '-');
+                        $('#detailInspectionCode').text(asset.insp_cd || '-');
+                        $('#detailInspectionDate').text(asset.insp_date || '-');
+                        $('#detailAssetType').text(asset.asset_type_name || asset.asset_type_cd || '-');
+
+                        $('#detailMasScore').text(formatScore(asset.mas_score));
+                        $('#detailMpsScore').text(formatScore(asset.mps_score));
+                        $('#detailConditionScore').text(formatScore(asset.condition_score));
+                        $('#detailCriticalityScore').text(formatScore(asset.criticality_score));
+
+                        $('#maintenanceAssetDetailsMessage').text('');
+                    },
+
+                    error: function (xhr) {
+
+                        let message = 'Unable to load maintenance asset details.';
+
+                        if (xhr.status === 404) {
+                            message = 'No inspection details were found for this asset.';
+                        }
+
+                        $('#maintenanceAssetDetailsMessage').text(message);
+                    }
+                });
+            }
+
+            function formatScore(value) {
+                return value === null || value === undefined || value === ''
+                    ? 'Not calculated'
+                    : Number(value).toFixed(2);
+            }
+
+            assetSelectors.forEach(function (selector) {
+
+                $(document).on('change', selector, function () {
+                    showMaintenanceAssetDetails(this);
+                });
+
+            });
+
+        });
+        </script>
 @endpush

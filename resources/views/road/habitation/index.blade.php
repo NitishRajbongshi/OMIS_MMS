@@ -35,8 +35,29 @@
                 <x-road-info :roadChainage="$roadChainage" />
                 <x-road-tab-navigation />
 
-                <form action="{{ route('road.add-habitation') }}" method="POST" autocomplete="off">
+                <form id="habitationForm" action="{{ route('road.add-habitation') }}" method="POST" autocomplete="off">
                     @csrf
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="scheme_id">
+                                Scheme Name: <span class="star">*</span>
+                            </label>
+                            <select class="form-select form-control-sm scheme-select"
+                                id="scheme_id" name="scheme_id">
+                                <option value="">Choose Scheme</option>
+                                @foreach ($schemes as $scheme)
+                                    <option value="{{ $scheme->scheme_id }}">
+                                        {{ $scheme->scheme_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('scheme_id')
+                                <div class="text-danger text-xs">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+                    </div>
                     <ul class="nav nav-tabs" id="habitationTab" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" data-toggle="tab" href="#habitationTabPane" role="tab">
@@ -195,10 +216,12 @@
                                 <div class="row mb-3">
                                     <div class="col-md-4">
                                         <label>Facility</label>
-                                        <select id="facility_id" class="form-select form-control-sm">
+                                        <select id="facility_id" class="form-select form-control-sm" disabled>
                                             <option value="">Choose Facility</option>
                                             @foreach($facilities as $facility)
-                                                <option value="{{ $facility->id }}">
+                                                <option value="{{ $facility->id }}"
+                                                    data-scheme="{{ $facility->scheme_id }}"
+                                                    data-weightage="{{ $facility->weightage }}">
                                                     {{ $facility->facility_name }}
                                                 </option>
                                             @endforeach
@@ -216,10 +239,13 @@
 
                                     <div class="col-md-4">
                                         <label>Sub Facility</label>
-                                        <select id="sub_facility_id" class="form-select form-control-sm">
+                                        <select id="sub_facility_id" class="form-select form-control-sm" disabled>
                                             <option value="">Choose Sub Facility</option>
                                             @foreach($subFacilities as $sub)
-                                                <option value="{{ $sub->id }}" data-facility="{{ $sub->facility_id }}">
+                                                <option value="{{ $sub->id }}"
+                                                    data-facility="{{ $sub->facility_id }}"
+                                                    data-scheme="{{ $sub->scheme_id }}"
+                                                    data-weightage="{{ $sub->weightage }}">
                                                     {{ $sub->sub_facility_name }}
                                                 </option>
                                             @endforeach
@@ -305,13 +331,13 @@
                             <th class="text-center">MP Constituency</th>
                             <th class="text-center">Population Count</th>
                             <th class="text-center">Habitation Remarks</th>
+							<th class="text-center">Habitation Score Scheme</th>													
                             <th class="text-center">Habitation Weightage</th>
                             <th class="text-center">Facilities</th>
                             <th class="text-center">Edit Habitation</th>
                             <th class="text-center">Select Habitation</th>
                             <th class="text-center">Action</th>
                         </thead>
-
                         <tbody>
                             <?php $i = 1; ?>
                             @foreach ($habitationDetails as $habitationDetail)
@@ -342,20 +368,20 @@
                                         {{ $habitationDetail->remarks }}
                                     </td>
                                     <td>
+										{{ optional(collect($schemes)->firstWhere('scheme_id', $habitationDetail->scheme_id))->scheme_name }}
+                                    </td>
+                                    <td>
                                         {{ $habitationDetail->habitation_score }}
                                     </td>
                                     <td>
                                         @if(isset($habitationFacilities[$habitationDetail->habitation_cd]))
-
                                             @php
                                                 $groupedFacilities = collect($habitationFacilities[$habitationDetail->habitation_cd])
                                                     ->groupBy('facility_name');
                                             @endphp
-
                                             <!-- Expand Button -->
                                             <a class="text-primary" data-toggle="collapse"
                                                 href="#facility{{ $habitationDetail->habitation_cd }}" role="button">
-
                                                 <i class="fas fa-plus-circle"></i> View
                                             </a>
                                             <div class="collapse mt-2" id="facility{{ $habitationDetail->habitation_cd }}">
@@ -369,24 +395,16 @@
                                                     </thead>
                                                     <tbody>
                                                         @foreach($groupedFacilities as $facilityName => $subs)
-
                                                             <tr>
                                                                 <td class="text-left">
                                                                     {{ $facilityName }}
                                                                 </td>
-
                                                                 <td class="text-left">
-
                                                                     <ul class="mb-0 ps-3">
-
                                                                         @foreach($subs as $sub)
-
                                                                             <li>{{ $sub->sub_facility_name }}</li>
-
                                                                         @endforeach
-
                                                                     </ul>
-
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -443,6 +461,19 @@
                                             </h6>
                                             <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                                         </div>
+
+                                        <div class="col-md-5">
+                                            <label>Scheme Name: <span class="star">*</span></label>
+                                            <input type="text"
+                                                class="form-control form-control-sm"
+                                                value="{{ optional(collect($schemes)->firstWhere('scheme_id', $habitationDetail->scheme_id))->scheme_name }}"
+                                                readonly
+                                                title="{{ optional(collect($schemes)->firstWhere('scheme_id', $habitationDetail->scheme_id))->scheme_name }}">
+                                        </div>
+
+
+                                        <input type="hidden" name="scheme_id" value="{{ $habitationDetail->scheme_id }}">
+
                                         <div class="modal-body">
                                             <!-- Tabs -->
                                             <ul class="nav nav-tabs">
@@ -588,15 +619,42 @@
                                                         </div>
                                                         <div class="col-md-3">
                                                             <label>Population Weightage:</label>
+                                                            @php
+                                                                $editScheme = $schemes->firstWhere('scheme_id', (int) $habitationDetail->scheme_id);
+                                                                $editPopulation = (float) $habitationDetail->total_population;
+
+                                                                if ((int) $habitationDetail->scheme_id === 2) {
+                                                                    $editPopulationWeightage = (
+                                                                        $editScheme &&
+                                                                        is_numeric($editScheme->population_unit ?? null) &&
+                                                                        $editScheme->population_unit > 0
+                                                                    )
+                                                                        ? min(
+                                                                            (int) round(
+                                                                                ($editPopulation / (float) $editScheme->population_unit)
+                                                                                * (float) $editScheme->score_per_unit,
+                                                                                0,
+                                                                                PHP_ROUND_HALF_UP
+                                                                            ),
+                                                                            (float) $editScheme->max_score
+                                                                        )
+                                                                        : 0;
+                                                                } else {
+                                                                    $editRange = $populationWeightages->first(function ($range) use ($editPopulation) {
+                                                                        return $editPopulation >= $range->lower_population
+                                                                            && (
+                                                                                $range->higher_population === null
+                                                                                || $editPopulation <= $range->higher_population
+                                                                            );
+                                                                    });
+
+                                                                    $editPopulationWeightage = $editRange->weightage ?? 0;
+                                                                }
+                                                            @endphp
+
                                                             <input type="text"
                                                                 name="population_weightage"
-                                                                value="{{ $populationWeightages->first(function ($range) use ($habitationDetail) {
-                                                                    return $habitationDetail->total_population >= $range->lower_population
-                                                                        && (
-                                                                            $range->higher_population === null
-                                                                            || $habitationDetail->total_population <= $range->higher_population
-                                                                        );
-                                                                })->weightage ?? 0 }}"
+                                                                value="{{ $editPopulationWeightage }}"
                                                                 class="form-control form-control-sm edit-population-weightage"
                                                                 readonly>
                                                         </div>
@@ -627,16 +685,18 @@
 
                                                         <div class="col-md-5">
                                                             <label for="sub_facility_weightage">Facility</label>
-                                                            <select class="form-select form-control-sm facility-select"
-                                                                id="facility_id">
+                                                            <select class="form-select form-control-sm facility-select">
                                                                 <option value="">Select Facility</option>
-
                                                                 @foreach($facilities as $facility)
-                                                                    <option value="{{ $facility->id }}">
-                                                                        {{ $facility->facility_name }}
-                                                                    </option>
+                                                                    @if($facility->scheme_id == $habitationDetail->scheme_id)
+                                                                        <option value="{{ $facility->id }}"
+                                                                            data-scheme="{{ $facility->scheme_id }}"
+                                                                            data-weightage="{{ $facility->weightage }}"
+                                                                            data-calculation-type="{{ $facility->caulculation_type_id }}">
+                                                                            {{ $facility->facility_name }}
+                                                                        </option>
+                                                                    @endif
                                                                 @endforeach
-
                                                             </select>
                                                         </div>
 
@@ -651,17 +711,20 @@
 
                                                         <div class="col-md-5">
                                                             <label for="sub_facility_weightage">Sub Facility</label>
-                                                            <select class="form-select form-control-sm subfacility-select"
-                                                                id="sub_facility_id">
+                                                            <select class="form-select form-control-sm subfacility-select">
                                                                 <option value="">Select Sub Facility</option>
 
                                                                 @foreach($subFacilities as $sub)
-                                                                    <option value="{{ $sub->id }}"
-                                                                        data-facility="{{ $sub->facility_id }}">
-                                                                        {{ $sub->sub_facility_name }}
-                                                                    </option>
+                                                                    @if($sub->scheme_id == $habitationDetail->scheme_id)
+                                                                        <option value="{{ $sub->id }}"
+                                                                            data-facility="{{ $sub->facility_id }}"
+                                                                            data-scheme="{{ $sub->scheme_id }}"
+                                                                            data-weightage="{{ $sub->weightage }}"
+                                                                            hidden>
+                                                                            {{ $sub->sub_facility_name }}
+                                                                        </option>
+                                                                    @endif
                                                                 @endforeach
-
                                                             </select>
                                                         </div>
 
