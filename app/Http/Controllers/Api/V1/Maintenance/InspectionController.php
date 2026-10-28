@@ -214,6 +214,11 @@ class InspectionController extends Controller
         return $pciCode;
     }
 
+    private function rollbackInspection(string $insp_id)
+    {
+        //
+    }
+
     public function store(StoreInspectionRequest $request, MaintenanceAssessmentController $assessmentController)
     {
         try {
@@ -358,15 +363,16 @@ class InspectionController extends Controller
                 $assessmentResult = $assessmentController->calculateAndSaveForAsset(
                     $inspection->insp_cd
                 );
+
                 Log::info('Maintenance assessment result', [
                     'inspection_code' => $inspection->insp_cd,
                     'result' => $assessmentResult,
                 ]);
 
-                Log::info('Inspection record created', [
-                    'inspection_id' => $inspection->id,
-                    'insp_cd' => $inspection->insp_cd,
-                ]);
+                // rollback everything if assessment fails
+                if ($assessmentResult['success'] == false) {
+                    throw new \Exception('Unable to calculate and save maintenance assessment.');
+                }
 
                 if (!empty($observations)) {
                     $now = now();
