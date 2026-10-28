@@ -17,7 +17,7 @@ class MtnAssessmentController extends Controller
         $validator = Validator::make(
             ['assetType' => $assetType],
             [
-                'assetType' => ['required', 'integer', 'min:1'],
+                'assetType' => ['required', 'integer', 'min:0'],
             ]
         );
 
