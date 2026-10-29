@@ -218,7 +218,7 @@ class AssetDetailService
                 '=',
                 'asset_master_protection_wall_structure_type.structure_type_cd'
             )
-            ->where('asset_protection_wall_details.protection_wall_cd', $assetId)
+            ->where('asset_protection_wall_details.protection_wall_cd', (int) $assetId)
             ->get();
     }
 }
