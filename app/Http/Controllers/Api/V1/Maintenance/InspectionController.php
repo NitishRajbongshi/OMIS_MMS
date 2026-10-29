@@ -99,6 +99,12 @@ class InspectionController extends Controller
                         ->where('insp.insp_asset_type', '=', 12);
                 }
             )
+            ->leftJoin(
+                'public.asset_road_details as road',
+                'road.rd_system_id',
+                '=',
+                'insp.insp_asset_id'
+            )
             ->select(
                 'insp.*',
                 'insp_type.inspection_type_descr as insp_type',
@@ -114,7 +120,8 @@ class InspectionController extends Controller
                 'recm_action.action_type_descr as recm_action_type',
                 'recm_priority.condition_type_descr as recm_priority',
                 'prtc_wl.affected_start_chainage',
-                'prtc_wl.affected_end_chainage'
+                'prtc_wl.affected_end_chainage',
+                'road.rd_name as road_name',
             );
     }
 
