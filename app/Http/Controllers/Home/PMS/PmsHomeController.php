@@ -15,7 +15,7 @@ class PmsHomeController extends Controller
     public function projectList(string $type)
     {
         try {
-            if (!in_array($type, ['total', 'delayed'], true)) {
+            if (!in_array($type, ['total', 'delayed', 'completed', 'ongoing'], true)) {
                 abort(404);
             }
 
@@ -102,20 +102,47 @@ class PmsHomeController extends Controller
             }
 
             // Apply the selected listing type.
-            if ($type === 'delayed') {
+            if ($type === 'completed') {
+
+                // Physical progress is 100% or above.
+                $projectsQuery->whereRaw(
+                    'COALESCE(progress.physical_progress, 0) >= 100'
+                );
+            } elseif ($type === 'delayed') {
+
+                // Scheduled end date has passed and project is incomplete.
                 $projectsQuery
                     ->whereNotNull('p.project_end_date')
                     ->whereDate('p.project_end_date', '<', now()->toDateString())
-                    ->whereRaw('COALESCE(progress.physical_progress, 0) < 100');
+                    ->whereRaw(
+                        'COALESCE(progress.physical_progress, 0) < 100'
+                    );
+            } elseif ($type === 'ongoing') {
+
+                // Project has started, is incomplete, and is not delayed.
+                $projectsQuery
+                    ->whereRaw('COALESCE(progress.physical_progress, 0) > 0')
+                    ->whereRaw('COALESCE(progress.physical_progress, 0) < 100')
+                    ->where(function ($query) {
+                        $query->whereNull('p.project_end_date')
+                            ->orWhereDate(
+                                'p.project_end_date',
+                                '>=',
+                                now()->toDateString()
+                            );
+                    });
             }
 
             $projects = $projectsQuery
                 ->orderBy('p.project_end_date', 'desc')
                 ->paginate(20);
 
-            $pageTitle = $type === 'total'
-                ? 'All Projects'
-                : 'Delayed Projects';
+            $pageTitle = match ($type) {
+                'total' => 'All Projects',
+                'completed' => 'Completed Projects',
+                'ongoing' => 'Ongoing Projects',
+                'delayed' => 'Delayed Projects',
+            };
 
             return view('pms.dashboard.project-list', compact(
                 'projects',
