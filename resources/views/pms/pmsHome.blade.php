@@ -241,6 +241,7 @@
 
             new Chart(document.getElementById('projectStatusChart'), {
                 type: 'doughnut',
+
                 data: {
                     labels: statusLabels,
                     datasets: [{
@@ -249,26 +250,69 @@
                         borderWidth: 0
                     }]
                 },
+
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     cutoutPercentage: 68,
                     legend: commonLegend,
+
                     tooltips: {
                         callbacks: {
                             label: function(item, data) {
                                 var value = data.datasets[0].data[item.index] || 0;
+
                                 var total = statusCounts.reduce(function(sum, current) {
                                     return sum + current;
                                 }, 0);
-                                var percent = total ? Math.round((value / total) * 100) : 0;
-                                return ' ' + data.labels[item.index] + ': ' + value + ' (' + percent +
-                                    '%)';
+
+                                var percent = total ?
+                                    Math.round((value / total) * 100) :
+                                    0;
+
+                                return ' ' + data.labels[item.index] + ': ' +
+                                    value + ' (' + percent + '%)';
                             }
                         }
+                    },
+
+                    // Click functionality - Chart.js 2.x
+                    onClick: function(event, elements) {
+
+                        if (!elements || elements.length === 0) {
+                            return;
+                        }
+
+                        // Chart.js 2.x uses _index
+                        var index = elements[0]._index;
+
+                        var selectedStatus = statusLabels[index];
+
+                        var statusTypeMap = {
+                            'Completed': 'completed',
+                            'Ongoing': 'ongoing',
+                            'Delayed': 'delayed'
+                        };
+
+                        var type = statusTypeMap[selectedStatus];
+
+                        if (!type) {
+                            return;
+                        }
+
+                        window.location.href =
+                            "{{ route('pms.project-list', ['type' => '__TYPE__']) }}"
+                            .replace('__TYPE__', type);
+                    },
+
+                    // Pointer cursor on hover
+                    onHover: function(event, elements) {
+                        event.target.style.cursor =
+                            elements.length ? 'pointer' : 'default';
                     }
                 }
             });
+
 
             new Chart(document.getElementById('progressChart'), {
                 type: 'bar',
