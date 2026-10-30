@@ -32,11 +32,25 @@
         </section>
 
         <section class="pms-kpis" aria-label="Project key performance indicators">
-            <article class="pms-kpi pms-kpi-blue"><span class="pms-kpi-icon"><i class="fas fa-diagram-project"></i></span>
+            {{-- Modified by: Nitish (30-10-26) --}}
+            {{-- <article class="pms-kpi pms-kpi-blue"><span class="pms-kpi-icon"><i class="fas fa-diagram-project"></i></span>
                 <div><small>Total
                         Projects</small><strong>{{ number_format($dashboard['total_projects']) }}</strong><span>{{ $dashboard['completed_projects'] }}
                         completed</span></div>
-            </article>
+            </article> --}}
+            <a href="{{ route('pms.project-list', ['type' => 'total']) }}" class="pms-kpi-link">
+                <article class="pms-kpi pms-kpi-blue">
+                    <span class="pms-kpi-icon">
+                        <i class="fas fa-diagram-project"></i>
+                    </span>
+                    <div>
+                        <small>Total Projects</small>
+                        <strong>{{ number_format($dashboard['total_projects']) }}</strong>
+                        <span>{{ $dashboard['completed_projects'] }} completed</span>
+                    </div>
+                </article>
+            </a>
+            {{-- End --}}
             <article class="pms-kpi pms-kpi-green"><span class="pms-kpi-icon"><i
                         class="fas fa-indian-rupee-sign"></i></span>
                 <div><small>Total Work Order
@@ -48,12 +62,26 @@
                         Progress</small><strong>{{ $dashboard['physical_progress'] }}%</strong><span>Across published
                         projects</span></div>
             </article>
-            <article class="pms-kpi pms-kpi-red"><span class="pms-kpi-icon"><i
+            {{-- Modified by: Nitish (30-10-26) --}}
+            {{-- <article class="pms-kpi pms-kpi-red"><span class="pms-kpi-icon"><i
                         class="fas fa-triangle-exclamation"></i></span>
                 <div><small>Delayed
                         Projects</small><strong>{{ number_format($dashboard['delayed_projects']) }}</strong><span>Past
                         scheduled end date</span></div>
-            </article>
+            </article> --}}
+            <a href="{{ route('pms.project-list', ['type' => 'delayed']) }}" class="pms-kpi-link">
+                <article class="pms-kpi pms-kpi-red">
+                    <span class="pms-kpi-icon">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </span>
+                    <div>
+                        <small>Delayed Projects</small>
+                        <strong>{{ number_format($dashboard['delayed_projects']) }}</strong>
+                        <span>Past scheduled end date</span>
+                    </div>
+                </article>
+            </a>
+            {{-- End --}}
         </section>
 
         <section class="pms-dashboard-grid">
@@ -93,7 +121,7 @@
             </article> --}}
 
             {{-- Nitish: 15-10-26 --}}
-            <article class="pms-panel pms-panel-wide">
+            <article class="pms-panel pms-panel-wide" id="monthlyCompletionSection">
                 <div class="pms-panel-heading">
                     <div>
                         <h2>Monthly Project Completion</h2>
@@ -196,6 +224,20 @@
                     fontColor: '#526170'
                 }
             };
+
+            // Script to scroll to the section after applying filters
+            const urlParams = new URLSearchParams(window.location.search);
+            const departmentId = urlParams.get('department_id');
+            const contractorId = urlParams.get('contractor_id');
+            if (departmentId || contractorId) {
+                const targetElement = document.getElementById('monthlyCompletionSection');
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
 
             new Chart(document.getElementById('projectStatusChart'), {
                 type: 'doughnut',
