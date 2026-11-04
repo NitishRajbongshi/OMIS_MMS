@@ -412,6 +412,7 @@ class HomeController extends Controller
                     $firstProject = $contractorProjects->first();
 
                     return [
+                        'contractor_id' => $firstProject->project_awarded_to,
                         'name' => $firstProject->contractor_name
                             ?: $firstProject->project_awarded_to,
                         'progress' => round(
