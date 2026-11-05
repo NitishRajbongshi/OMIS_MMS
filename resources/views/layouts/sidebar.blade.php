@@ -880,7 +880,7 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                             <li class="nav-item">
                                 <a href="{{ route('mmis.inspection.index') }}" class="nav-link" style="color:dark">
                                     <i class="nav-iconn far fa-circle nav-icon text-xs"></i>
-                                    <p>Inspection Report </p>
+                                    <p>Field Report </p>
                                 </a>
                             </li>
                             <!-- <li class="nav-item">
@@ -923,13 +923,13 @@ I have created a new css class named "nav-iconn" for the sidebar icons to adjust
                 @endif
                 <!--End Added by Pulak 09-09-2026-->
 
-
                 {{-- Wrap the admin level option under one drop down list --}}
                 @php
                     $menuItems = session('menu', []);
                     $validMenuItems = [1, 2, 3, 4, 5, 6];
                     $showDropdown = count(array_intersect($validMenuItems, $menuItems)) > 0;
                 @endphp
+
                 @if ($showDropdown)
                     @if($isOmisPortal)
                         <li class="nav-item" id="menu_manage_system">

@@ -777,48 +777,94 @@ async function loadDraftIntoForm(draft, images = [], documents = [],department){
         if (draft.projectTypeSelect === 'MTN') {
             const mtn = draft.maintenance || {};
             const assets = mtn.assets || {};
+            const maintainableIds = mtn.maintainable_asset_ids || {};
 
             const tbody = document.querySelector("#mtnAssetTable tbody");
 
             if (!tbody) return;
 
             tbody.innerHTML = "";
-
-            const tr = document.createElement("tr");
-
             mnt_rowIndex = 0;
 
-            (assets.roads || []).forEach((road, i) => {
+            const maxRows = Math.max(
+                (assets.roads || []).length,
+                (assets.culverts || []).length,
+                (assets.bridges || []).length,
+                (assets.retaining_walls || []).length,
+                1
+            );
+
+
+            for (let i = 0; i < maxRows; i++) {
 
                 mnt_rowIndex++;
+
+                const road = (assets.roads || [])[i];
+                const culvert = (assets.culverts || [])[i];
+                const bridge = (assets.bridges || [])[i];
+                const wall = (assets.retaining_walls || [])[i];
 
                 const tr = document.createElement("tr");
 
                 tr.innerHTML = `
                     <td>
-                        <input type="hidden" name="roads_mnt${mnt_rowIndex}[]" value="${road}">
-                        <span class="badge bg-info me-1">${road}</span>
+                        ${road ? `
+                            <input type="hidden"
+                                name="roads_mnt${mnt_rowIndex}[]"
+                                value="${road}">
+                            <span class="badge bg-info me-1">${road}</span>
+                        ` : ""}
+
+                        ${i === 0 ? (maintainableIds.roads || []).map(id => `
+                            <input type="hidden"
+                                name="road_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
-                        ${(assets.culverts || []).map(c => `
-                            <input type="hidden" name="culverts_mnt_${mnt_rowIndex}[]" value="${c}">
-                            <span class="badge bg-info me-1">${c}</span>
-                        `).join("")}
+                         ${culvert ? `
+                            <input type="hidden"
+                                name="culverts_mnt_${mnt_rowIndex}[]"
+                                value="${culvert}">
+                            <span class="badge bg-info me-1">${culvert}</span>
+                        ` : ""}
+
+                        ${i === 0 ? (maintainableIds.culverts || []).map(id => `
+                            <input type="hidden"
+                                name="culvert_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
-                        ${(assets.bridges || []).map(b => `
-                            <input type="hidden" name="bridges_mnt_${mnt_rowIndex}[]" value="${b}">
-                            <span class="badge bg-warning text-dark me-1">${b}</span>
-                        `).join("")}
+                        ${bridge ? `
+                            <input type="hidden"
+                                name="bridges_mnt_${mnt_rowIndex}[]"
+                                value="${bridge}">
+                            <span class="badge bg-warning text-dark me-1">${bridge}</span>
+                        ` : ""}
+
+                        ${i === 0 ? (maintainableIds.bridges || []).map(id => `
+                            <input type="hidden"
+                                name="bridge_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
-                        ${(assets.retaining_walls || []).map(w => `
-                            <input type="hidden" name="walls_mnt_${mnt_rowIndex}[]" value="${w}">
-                            <span class="badge bg-secondary me-1">${w}</span>
-                        `).join("")}
+                        ${wall ? `
+                            <input type="hidden"
+                                name="walls_mnt_${mnt_rowIndex}[]"
+                                value="${wall}">
+                            <span class="badge bg-secondary me-1">${wall}</span>
+                        ` : ""}
+
+                        ${i === 0 ? (maintainableIds.retaining_walls || []).map(id => `
+                            <input type="hidden"
+                                name="wall_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
@@ -831,7 +877,7 @@ async function loadDraftIntoForm(draft, images = [], documents = [],department){
                 tr.querySelector(".deleteRowBtn").addEventListener("click", () => {
                     tr.remove();
                 });
-            });
+            }
 
             document.getElementById("mnt_rowCount").value = mnt_rowIndex;
 

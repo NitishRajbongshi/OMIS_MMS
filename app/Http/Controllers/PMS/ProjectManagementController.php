@@ -1433,11 +1433,37 @@ class ProjectManagementController extends Controller
                     $bridgeData = [];
                     $wallData = [];
 
+					$roadMaintainableIds = [];
+                    $culvertMaintainableIds = [];
+                    $bridgeMaintainableIds = [];
+                    $wallMaintainableIds = [];
+                    $pavementMaintainableIds = [];
+					
                     for ($i = 1; $i <= $rows; $i++) {
                         $roads = array_filter($request->input("roads_mnt$i", []));
                         $culverts = array_filter($request->input("culverts_mnt_$i", []));
                         $bridges = array_filter($request->input("bridges_mnt_$i", []));
                         $walls = array_filter($request->input("walls_mnt_$i", []));
+
+						$roadMaintainableIds = array_merge(
+                            $roadMaintainableIds,
+                            array_filter($request->input("road_maintainable_ids_mnt_$i", []))
+                        );
+
+                        $culvertMaintainableIds = array_merge(
+                            $culvertMaintainableIds,
+                            array_filter($request->input("culvert_maintainable_ids_mnt_$i", []))
+                        );
+
+                        $bridgeMaintainableIds = array_merge(
+                            $bridgeMaintainableIds,
+                            array_filter($request->input("bridge_maintainable_ids_mnt_$i", []))
+                        );
+
+                        $wallMaintainableIds = array_merge(
+                            $wallMaintainableIds,
+                            array_filter($request->input("wall_maintainable_ids_mnt_$i", []))
+                        );
 
                         if (!empty($roads)) {
                             $roadData = array_merge($roadData, $roads);
@@ -1456,11 +1482,41 @@ class ProjectManagementController extends Controller
                         }
                     }
 
+
                     // Remove duplicates (optional but recommended)
                     $roadData = array_values(array_unique($roadData));
                     $culvertData = array_values(array_unique($culvertData));
                     $bridgeData = array_values(array_unique($bridgeData));
                     $wallData = array_values(array_unique($wallData));
+					$roadMaintainableIds = array_values(array_unique($roadMaintainableIds));
+                    $culvertMaintainableIds = array_values(array_unique($culvertMaintainableIds));
+                    $bridgeMaintainableIds = array_values(array_unique($bridgeMaintainableIds));
+                    $wallMaintainableIds = array_values(array_unique($wallMaintainableIds));
+
+
+                    if (!empty($roadMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $roadMaintainableIds)
+                            ->update(['flag' => '1']);
+                    }
+
+                    if (!empty($culvertMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $culvertMaintainableIds)
+                            ->update(['flag' => '1']);
+                    }
+
+                    if (!empty($bridgeMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $bridgeMaintainableIds)
+                            ->update(['flag' => '1']);
+                    }
+
+                    if (!empty($wallMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $wallMaintainableIds)
+                            ->update(['flag' => '1']);
+                    }
 
                     $subAssets = [];
 
@@ -1507,17 +1563,35 @@ class ProjectManagementController extends Controller
 
                     $others['maintenance'] = [
                         "asset_dtls" => $assetDtls,
-                        "sub_asset_dtls" => $subAssetDtls
+                        "sub_asset_dtls" => $subAssetDtls,
+                        "maintainable_asset_ids" => [
+                            "roads" => $roadMaintainableIds ?? [],
+                            "culverts" => $culvertMaintainableIds ?? [],
+                            "bridges" => $bridgeMaintainableIds ?? [],
+                            "retaining_walls" => $wallMaintainableIds ?? [],
+                            "pavements" => $pavementMaintainableIds ?? []
+                        ]
                     ];
                 }
 
                 if ($department == 6) {
                     $buildingId = $request->input('maintBuildings');
-                    $mtn = [
-                        'building_id' => $buildingId
-                    ];
+                    $maintainableAssetId = $request->input('maintBuildingMaintainableId');
+													
+                if (!empty($maintainableAssetId)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->where('id', $maintainableAssetId)
+                            ->update(['flag' => '1']);
+                    }
 
-                    $others['maintenance'] = $mtn;
+                    $others['maintenance'] = [
+                        'building_id' => $buildingId,
+                        'maintainable_asset_ids' => [
+                            'buildings' => !empty($maintainableAssetId)
+                                ? [(int) $maintainableAssetId]
+                                : []
+                        ]
+                    ];
                 }
 
                 if ($department == 15) {
@@ -1529,10 +1603,18 @@ class ProjectManagementController extends Controller
 
                     if (!empty($vehicles)) {
                         $mtn['vehicles'] = array_values($vehicles);
+
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('insp_asset_id', $vehicles)
+                            ->update(['flag' => '1']);						  
                     }
 
                     if (!empty($equipments)) {
                         $mtn['equipments'] = array_values($equipments);
+
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('insp_asset_id', $equipments)
+                            ->update(['flag' => '1']);
                     }
 
                     $others['maintenance'] = $mtn;
@@ -1629,7 +1711,7 @@ class ProjectManagementController extends Controller
                 $this->handleDocument($request, $randomCode, $project_cd);
                 $this->storeProjectSchemeFundingMapping($project_cd, $request->work_order_amount, $request->scheme_cd);
 
-                DB::connection(self::DB_CONNECTION)->commit();
+
 
                 if ($request->hasFile('road_kml_file')) {
                     $file = $request->file('road_kml_file');
@@ -1680,26 +1762,42 @@ class ProjectManagementController extends Controller
                     if ($categoryDetails)
                         $rd_catg_descr = $categoryDetails->rd_catg_descr;
 
-                    $response = $client->request('POST', $kml_file_api, [
+					$json_data = null;
+
+                    try {
+						$response = $client->request('POST', $kml_file_api, [
                         'json' => [
-                            'uid' => auth()->id(),
-                            'kml_file_path' => $completeFilePath,
-                            'road_id' => $project_cd,
-                            'road_name' => $newRoadName,
-                            'road_length' => $total_road_length,
-                            'road_category' => $rd_catg_descr,
-                            'division_cd' => $request->division_cd,
-                            'division_name' => $division_name
-                        ]
-                    ]);
+									'uid' => auth()->id(),
+									'kml_file_path' => $completeFilePath,
+									'road_id' => $project_cd,
+									'road_name' => $newRoadName,
+									'road_length' => $total_road_length,
+									'road_category' => $rd_catg_descr,
+									'division_cd' => $request->division_cd,
+									'division_name' => $division_name
+								],
+									'connect_timeout' => 5,
+									'timeout' => 30
+							]);
 
+						$responseBody = (string) $response->getBody();
+						$json_data = json_decode($responseBody);
+						
+					} catch (Throwable $e) {
 
-                    // $json_data= json_decode($response->getBody()->getContents());
-                    $json_data = json_decode($response->getBody());
-                    if ($json_data->status == False) {
-                        DB::rollback();
+                        \Log::error('KML API EXCEPTION', [
+                            'exception' => get_class($e),
+                            'message' => $e->getMessage(),
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine()
+                        ]);
+
+                    }
+                    
+					if ( !$json_data || !isset($json_data->status) || $json_data->status == false) {
+                        DB::connection(self::DB_CONNECTION)->rollBack();
                         return redirect()->back()
-                            ->with('failed', 'Failed to add road details. Uploaded KML File does not have Roads Layer Structure!!!!')
+                            ->with('error', 'Failed to add road details')
                             ->with('kmlFormatIssue', 'KML File Not In Proper Format');
                     } else {
                         DB::table('asset_road_details_draft')
@@ -1710,32 +1808,44 @@ class ProjectManagementController extends Controller
                             ]);// this query never get executed as road id does not exist in draft table
                     }
                 }
+				DB::connection(self::DB_CONNECTION)->commit();	 
                 //Saiful -- End -- After ulpoad the kml File, convert that file into geojson -- End
-                return redirect()->back()->with('success', 'Project details saved successfully!');
+                return redirect()->back()->with('success',  'Project details saved successfully! Project Code: ' . $project_cd);
             } else {
                 DB::connection(self::DB_CONNECTION)->rollBack();
                 return redirect()->back()->with('error', 'Project details failed to save!!!');
             }
         } catch (QueryException $e) {
-            DB::connection(self::DB_CONNECTION)->rollBack();
-            Log::error("Database Error: " . $e->getMessage(), [
-                'url' => request()->fullUrl(),
-                'method' => request()->method(),
+			
+		DB::connection(self::DB_CONNECTION)->rollBack();
+
+            Log::error('PROJECT DATABASE ERROR', [
+                'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'query' => $e->getSql(),
-                'bindings' => $e->getBindings(),
+                'bindings' => $e->getBindings()
             ]);
-            return response()->view('errors.generic', [], 500);
-        } catch (Exception $e) {
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Database error. Unable to save project.');
+
+        } catch (Throwable $e) {
+
             DB::connection(self::DB_CONNECTION)->rollBack();
-            Log::error("Unexpected Error: " . $e->getMessage(), [
-                'url' => request()->fullUrl(),
-                'method' => request()->method(),
+			
+            Log::error('PROJECT UNEXPECTED ERROR', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
-            return response()->view('errors.generic', [], 500);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Unable to save project. Please try again.');
         }
     }
 
@@ -2016,16 +2126,81 @@ class ProjectManagementController extends Controller
                     $wallData = [];
                     $pavementData = [];
 
-                    for ($i = 1; $i <= $rows; $i++) {
+                    $roadMaintainableIds = [];
+                    $culvertMaintainableIds = [];
+                    $bridgeMaintainableIds = [];
+                    $wallMaintainableIds = [];
 
+                    $existingDraft = DB::table('projects.prt_project_details_draft')
+                        ->where('project_cd', $project_cd)
+                        ->first();
+
+                    $previousMaintainableIds = [];
+
+                    if ($existingDraft && !empty($existingDraft->others)) {
+
+                        $oldOthers = json_decode($existingDraft->others, true);
+
+                        if (is_array($oldOthers)) {
+
+                            $oldIds = $oldOthers['maintenance']['maintainable_asset_ids'] ?? [];
+
+                            array_walk_recursive(
+                                $oldIds,
+                                function ($id) use (&$previousMaintainableIds) {
+                                    if ($id !== null && $id !== '') {
+                                        $previousMaintainableIds[] = $id;
+                                    }
+                                }
+                            );
+                        }
+                    }
+
+                    $previousMaintainableIds = array_values(array_unique($previousMaintainableIds));
+
+                    for ($i = 1; $i <= $rows; $i++) {
                         $roadData = array_merge($roadData, array_filter($request->input("roads_mnt$i", [])));
                         $culvertData = array_merge($culvertData, array_filter($request->input("culverts_mnt_$i", [])));
                         $bridgeData = array_merge($bridgeData, array_filter($request->input("bridges_mnt_$i", [])));
                         $wallData = array_merge($wallData, array_filter($request->input("walls_mnt_$i", [])));
                         $pavementData = array_merge($pavementData, array_filter($request->input("pavements_mnt_$i", [])));
+						
+						$roadMaintainableIds = array_merge($roadMaintainableIds,array_filter($request->input("road_maintainable_ids_mnt_$i", [])));
+                        $culvertMaintainableIds = array_merge($culvertMaintainableIds,array_filter($request->input("culvert_maintainable_ids_mnt_$i", [])));
+                        $bridgeMaintainableIds = array_merge($bridgeMaintainableIds,array_filter($request->input("bridge_maintainable_ids_mnt_$i", [])));
+                        $wallMaintainableIds = array_merge($wallMaintainableIds,array_filter($request->input("wall_maintainable_ids_mnt_$i", [])));
                     }
 
 
+				$roadMaintainableIds = array_values(array_unique($roadMaintainableIds));
+                    $culvertMaintainableIds = array_values(array_unique($culvertMaintainableIds));
+                    $bridgeMaintainableIds = array_values(array_unique($bridgeMaintainableIds));
+                    $wallMaintainableIds = array_values(array_unique($wallMaintainableIds));
+
+                    // Update maintainable asset flags
+                    $maintainableAssetIds = array_values(array_unique(array_merge(
+                        $roadMaintainableIds,
+                        $culvertMaintainableIds,
+                        $bridgeMaintainableIds,
+                        $wallMaintainableIds
+                    )));
+
+                    $removedMaintainableIds = array_values(array_diff(
+                        $previousMaintainableIds,
+                        $maintainableAssetIds
+                    ));
+
+                    if (!empty($removedMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $removedMaintainableIds)
+                            ->update(['flag' => '0']);
+                    }
+
+                    if (!empty($maintainableAssetIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $maintainableAssetIds)
+                            ->update(['flag' => '1']);
+                    }
 
                     $subAssetDtls = [];
 
@@ -2063,17 +2238,65 @@ class ProjectManagementController extends Controller
                             "asset_type_cd" => 10
                         ] : null,
 
-                        "sub_asset_dtls" => !empty($subAssetDtls) ? $subAssetDtls : null
+                        "sub_asset_dtls" => !empty($subAssetDtls) ? $subAssetDtls : null,
+                        "maintainable_asset_ids" => [
+                            "roads" => $roadMaintainableIds,
+                            "culverts" => $culvertMaintainableIds,
+                            "bridges" => $bridgeMaintainableIds,
+                            "walls" => $wallMaintainableIds
+                        ]
                     ];
                 }
 
                 if ($request->owner_dept_cd == 6) {
                     $buildingId = $request->input('maintBuildings');
-                    $mtn = [
-                        'building_id' => $buildingId
-                    ];
+                    $maintainableAssetId = $request->input('maintBuildingMaintainableId');
+													
+                     $existingDraft = DB::table('projects.prt_project_details_draft')
+                        ->where('project_cd', $project_cd)
+                        ->first();
 
-                    $others['maintenance'] = $mtn;
+                    $previousMaintainableIds = [];
+
+                    if ($existingDraft && !empty($existingDraft->others)) {
+                        $oldOthers = json_decode($existingDraft->others, true);
+
+                        if (is_array($oldOthers)) {
+                            $previousMaintainableIds =
+                                $oldOthers['maintenance']['maintainable_asset_ids']['buildings'] ?? [];
+                        }
+                    }
+
+                    $newMaintainableIds = !empty($maintainableAssetId)
+                        ? [(int) $maintainableAssetId]
+                        : [];
+
+                    // Reset previously selected building if removed
+                    $removedIds = array_diff(
+                        $previousMaintainableIds,
+                        $newMaintainableIds
+                    );
+
+                    if (!empty($removedIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $removedIds)
+                            ->update(['flag' => '0']);
+                    }
+
+                    // Set selected building flag to 1
+                    if (!empty($newMaintainableIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $newMaintainableIds)
+                            ->update(['flag' => '1']);
+                    }
+
+
+                    $others['maintenance'] = [
+                        'building_id' => $buildingId,
+                        'maintainable_asset_ids' => [
+                            'buildings' => $newMaintainableIds
+                        ]
+                    ];
                 }
 
                 if ($request->owner_dept_cd == 15) {
@@ -2539,7 +2762,7 @@ class ProjectManagementController extends Controller
                 ->get();
 
             foreach ($items as $item) {
-
+				
                 $item->sub_items = DB::table('projects.prt_project_work_sub_items_details AS ps')
                     ->leftJoin(
                         'projects.prm_item_sub_item_of_work AS s',
@@ -2583,9 +2806,9 @@ class ProjectManagementController extends Controller
                     ->get()
                     //by dipshikha
                     ->map(function ($agency) use ($work_order_amount) {
-
+						
                         $percentage = (float) $agency->funding_percentage;
-
+						
                         $agency->funding_amount =
                             ($work_order_amount * $percentage) / 100;
 
@@ -2601,12 +2824,12 @@ class ProjectManagementController extends Controller
                 ->where('project_cd', $project_cd)
                 ->get()
                 ->map(function ($img) use ($basePath) {
-
+					
                     $fullPath = str_replace('\\', '/', $img->image_path);
                     $basePathClean = str_replace('\\', '/', $basePath);
-
+					
                     $relativePath = ltrim(str_replace($basePathClean, '', $fullPath), '/');
-
+					
                     return [
                         'id' => $img->id,
                         'image_url' => url('asset-management/uploaded_docs/' . $relativePath),
@@ -2625,12 +2848,12 @@ class ProjectManagementController extends Controller
                 )
                 ->get()
                 ->map(function ($doc) use ($basePath) {
-
+					
                     $fullPath = str_replace('\\', '/', $doc->file_path);
                     $basePathClean = str_replace('\\', '/', $basePath);
-
+					
                     $relativePath = ltrim(str_replace($basePathClean, '', $fullPath), '/');
-
+					
                     return [
                         'id' => $doc->id,
                         'doc_catg' => $doc->doc_catg,
@@ -2648,8 +2871,12 @@ class ProjectManagementController extends Controller
             $vehicleDetails = [];
             $equipmentDetails = [];
 
-
-
+			$roadCategoryCd = null;
+            $roadTypeCd = null;
+            $roadOwnerCd = null;
+			
+			
+			
             if ($department === 14 || $department === 3) {
                 if (($others['project_type'] ?? null) === 'NEW') {
                     $roadCategoryCd = $others['road_category'] ?? null;
@@ -2665,22 +2892,22 @@ class ProjectManagementController extends Controller
                 // Category
                 if (!empty($roadCategoryCd)) {
                     $roadCategoryName = DB::table('asset_master_road_category')
-                        ->where('rd_catg_cd', $roadCategoryCd)
-                        ->value('rd_catg_descr');
+                                        ->where('rd_catg_cd', $roadCategoryCd)
+                                        ->value('rd_catg_descr');
                 }
 
                 // Type
                 if ($roadTypeCd !== null && $roadTypeCd !== '') {
                     $roadTypeName = DB::table('asset_master_rd_type')
-                        ->where('rd_type_cd', $roadTypeCd)
-                        ->value('rd_type_descr');
+                                    ->where('rd_type_cd', $roadTypeCd)
+                                    ->value('rd_type_descr');
                 }
 
                 // Owner
                 if ($roadOwnerCd !== null && $roadOwnerCd !== '') {
                     $roadOwnerName = DB::table('asset_master_road_owner')
-                        ->where('owner_cd', $roadOwnerCd)
-                        ->value('owner_name');
+                                    ->where('owner_cd', $roadOwnerCd)
+                                    ->value('owner_name');
                 }
             } else if ($department === 6) {
                 if (($others['project_type'] ?? null) === 'UPG') {
@@ -2728,25 +2955,25 @@ class ProjectManagementController extends Controller
                     $mtn = $others['maintenance'] ?? [];
                     if (!empty($mtn['building_id'])) {
                         $building = DB::table('buildings.asset_building_details')
-                            ->where('building_system_cd', $mtn['building_id'])
-                            ->first();
+                                ->where('building_system_cd', $mtn['building_id'])
+                                ->first();
 
                         $building->building_type_name = DB::table('buildings.asset_master_building_types')
-                            ->where('building_type_cd', $building->building_type_cd)
-                            ->value('building_type_descr');
+                                                        ->where('building_type_cd', $building->building_type_cd)
+                                                        ->value('building_type_descr');
 
                         $building->asset_owning_dept_name = DB::table('asset_master_dept_of_state')
-                            ->where('id', $building->asset_owning_dept_cd)
-                            ->value('dept_name');
+                                                            ->where('id', $building->asset_owning_dept_cd)
+                                                            ->value('dept_name');
 
                         $building->building_class_name = DB::table('buildings.asset_master_building_class')
-                            ->where('building_class_cd', $building->building_class_cd)
-                            ->value('building_class_descr');
+                                                        ->where('building_class_cd', $building->building_class_cd)
+                                                        ->value('building_class_descr');
 
                         // Building Location
                         $building->building_location_name = DB::table('buildings.asset_master_building_locations')
-                            ->where('location_cd', $building->building_location_cd)
-                            ->value('location_name');
+                                                            ->where('location_cd', $building->building_location_cd)
+                                                            ->value('location_name');
                     }
                 }
             }else if ($department === 15) {
@@ -2875,9 +3102,9 @@ class ProjectManagementController extends Controller
             ->get();
         //done by dipshikha
         $fundingAgencies = $fundingAgencies->map(function ($agency) use ($work_order_amt) {
-
+			
             $percentage = (float) $agency->funding_percentage;
-
+			
             $agency->funding_amount =
                 round(($work_order_amt * $percentage) / 100, 2);
 

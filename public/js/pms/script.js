@@ -79,12 +79,13 @@ async function populateMaintenanceAssetsSubDiv(sub_division_cd,maintRoads,maintC
         roadSelect.innerHTML = `<option value="">-- NA --</option>`;
 
         data.roads.forEach((road) => {
-            roadSelect.add(
-                    new Option(
-                        `${road.rd_name} (${road.rd_number})`,
+            const option = new Option(
+                        `${road.rd_system_id} (${road.rd_name})`,
                     road.rd_system_id
-                )
                 );
+				
+            option.dataset.maintainableId = road.id;
+            roadSelect.add(option);
             });
 
         // ------------------ BRIDGES ------------------
@@ -92,10 +93,13 @@ async function populateMaintenanceAssetsSubDiv(sub_division_cd,maintRoads,maintC
         bridgeSelect.innerHTML = `<option value="">-- NA --</option>`;
 
         data.bridges.forEach((b) => {
-            bridgeSelect.innerHTML += `
-                <option value="${b.rd_bridge_cd}">
-                    ${b.bridge_name}
-                </option>`;
+            const option = new Option(
+                b.bridge_name,
+                b.rd_bridge_cd
+            );
+
+            option.dataset.maintainableId = b.id;
+            bridgeSelect.add(option);
         });
 
         // ------------------ WALLS ------------------
@@ -103,10 +107,13 @@ async function populateMaintenanceAssetsSubDiv(sub_division_cd,maintRoads,maintC
         wallSelect.innerHTML = `<option value="">-- NA --</option>`;
 
         data.walls.forEach((w) => {
-            wallSelect.innerHTML += `
-                <option value="${w.protection_wall_cd}">
-                    ${w.protection_wall_cd}
-                </option>`;
+            const option = new Option(
+                w.protection_wall_cd,
+                w.protection_wall_cd
+            );
+
+            option.dataset.maintainableId = w.id;
+            wallSelect.add(option);
         });
 
         // ------------------ CULVERTS ------------------
@@ -114,10 +121,13 @@ async function populateMaintenanceAssetsSubDiv(sub_division_cd,maintRoads,maintC
         culvertSelect.innerHTML = `<option value="">-- NA --</option>`;
 
         data.culverts.forEach((c) => {
-            culvertSelect.innerHTML += `
-                <option value="${c.rd_cdwork_cd}">
-                    ${c.culvert_no}
-                </option>`;
+            const option = new Option(
+                c.culvert_no,
+                c.rd_cdwork_cd
+            );
+
+            option.dataset.maintainableId = c.id;
+            culvertSelect.add(option);
         });
 
     } catch (error) {

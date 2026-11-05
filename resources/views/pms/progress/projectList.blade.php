@@ -106,6 +106,23 @@
                         @endforelse
                     </tbody>
                 </table>
+
+                {{-- Laravel Pagination --}}
+                @if(isset($paginator) && $paginator->hasPages())
+                    <div class="d-flex justify-content-between align-items-center flex-wrap mt-3 px-2">
+
+                        <div class="text-muted text-sm mb-2">
+                            Showing {{ $paginator->firstItem() ?? 0 }}
+                            to {{ $paginator->lastItem() ?? 0 }}
+                            of {{ $paginator->total() }} projects
+                        </div>
+
+                        <div>
+                            {{ $paginator->withQueryString()->links() }}
+                        </div>
+
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -174,16 +191,31 @@
         $(document).ready(function () {
 
             // DataTable Init
+            //$('.projectTable').DataTable({
+            //    pageLength: 25,
+            //    ordering: true,
+            //    columnDefs: [
+            //        {
+            //            orderable: false,
+            //            targets: 7
+            //        }
+            //    ]
+            //});
+
             $('.projectTable').DataTable({
-                pageLength: 25,
-                ordering: true,
-                columnDefs: [
-                    {
-                        orderable: false,
-                        targets: 7
-                    }
-                ]
-            });
+                                            paging: true,
+                                            pageLength: 25,
+                                            lengthChange: false,
+                                            searching: true,
+                                            ordering: true,
+                                            info: true,
+                                            columnDefs: [
+                                                {
+                                                    orderable: false,
+                                                    targets: [8]
+                                                }
+                                            ]
+                                        });
 
             // Toggle Detail Row
             $(document).on('click', '.toggle-detail', function () {

@@ -861,6 +861,15 @@
 
                 {{-- Action Buttons --}}
                 <h6 class="border-bottom pb-2 mt-4 mb-3">Actions</h6>
+				@if ($disableButtons)
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Map Verification Required:</strong>
+                        Please click on <strong>View Road on Map</strong> and verify the road.
+                        After checking the map, select <strong>Yes</strong> if the road is correct or
+                        <strong>No</strong> if the road is incorrect.
+                    </div>
+                @endif
                 <div class="d-flex gap-1 justify-content-end">
                     <div style="margin-bottom: 0.1rem;">
                         <button class="approveBtn btn btn-outline-primary btn-md text-xs fw-bold rounded-0"

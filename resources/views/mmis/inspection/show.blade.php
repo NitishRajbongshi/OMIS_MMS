@@ -15,18 +15,50 @@
         word-wrap: break-word;
         overflow-wrap: anywhere;
     }
+    .page-header {
+        position: sticky;
+        top: 73px;
+        z-index: 100;
+        background: #fff;
+        padding: 10px 10px;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 1rem;
+        width: 99%;
+        margin: 0 auto;
+    }
 </style>
+
+
+ {{-- Page heading + buttons --}}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        Inspection Details - {{ $inspection->insp_cd }}
+    </h4>
+
+    <div>
+        <a href="{{ route('mmis.inspection.pdf', $inspection->id) }}"
+           class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-file-pdf"></i> Generate Report
+        </a>
+
+        <a href="{{ route('mmis.inspection.print', $inspection->id) }}"
+           class="btn btn-sm btn-outline-secondary"
+           target="_blank">
+            <i class="fa fa-print"></i> Print
+        </a>
+
+        <a href="{{ route('mmis.inspection.index') }}"
+           class="btn btn-sm btn-secondary">
+            Back
+        </a>
+    </div>
+</div>
+
 
 <div class="container-fluid py-4">
 
-    {{-- Page heading + back button --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Inspection Details - {{ $inspection->insp_cd }}</h4>
-        <a href="{{ route('mmis.inspection.index') }}" class="btn btn-sm btn-secondary">Back</a>
-    </div>
-
     {{-- 1. INSPECTION DETAILS --}}
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Inspection Details</div>
         <div class="card-body">
             <div class="row">
@@ -96,9 +128,24 @@
         </div>
     </div>
 
+    <div class="card mb-2">
+        <div class="card-header fw-bold">Maintenance Score</div>
+        <div class="card-body">
+            <small class="text-muted">
+                MAS
+            </small>
+            <div class="display-6 fw-bold text-success">
+                {{number_format($inspection->mas_score, 2)}}
+            </div>
+            <small>
+                Maintenance Assessment Score
+            </small>
+        </div>
+    </div>
+
     {{-- BRIDGE DETAILS (shown only for bridge inspections) --}}
     @if ($bridge)
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Bridge Details</div>
         <div class="card-body">
             <div class="row">
@@ -151,7 +198,7 @@
 
     {{-- CULVERT DETAILS (shown only for culvert inspections) --}}
     @if ($culvert)
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Culvert Details</div>
         <div class="card-body">
             <div class="row">
@@ -186,7 +233,7 @@
 
     {{-- PROTECTION WALL DETAILS (shown only for protection wall inspections) --}}
     @if ($wall)
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Protection Wall Details</div>
         <div class="card-body">
             <div class="row">
@@ -228,7 +275,7 @@
     @endif
 
     {{-- 2. CONDITIONS --}}
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Conditions</div>
         <div class="card-body">
             <div class="row">
@@ -268,7 +315,7 @@
     </div>
 
     {{-- 3. RECOMMENDATION --}}
-    {{-- <div class="card mb-3">
+    {{-- <div class="card mb-2">
         <div class="card-header fw-bold">Risk & Recommendation</div>
         <div class="card-body">
             <div class="row">
@@ -294,7 +341,7 @@
 
     {{-- 4. OBSERVATIONS (not for asset type 12 = Protection Wall) --}}
     @if ((string) $inspection->insp_asset_type !== '12')
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Observations ({{ $observations->count() }})</div>
         <div class="card-body">
             <table class="table table-bordered table-sm mb-0">
@@ -303,7 +350,7 @@
                         <th width="60">#</th>
                         <th>Activity</th>
                         <th>Observation</th>
-                        <th>Grading</th>
+                        {{-- <th>Grading</th> --}}
                         <th width="100">Weightage</th>
                     </tr>
                 </thead>
@@ -313,7 +360,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $obs->activity_name ?: '-' }}</td>
                             <td>{{ $obs->obsrv_desc ?: '-' }}</td>
-                            <td>{{ $obs->grading_name ?: '-' }}</td>
+
                             <td>{{ $obs->obsrv_weightage ?? '-' }}</td>
                         </tr>
                     @empty
@@ -329,7 +376,7 @@
 
     {{-- 5. PCI DETAILS (only for asset type 10 = Road) --}}
     @if ((string) $inspection->insp_asset_type === '10')
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">PCI Details</div>
         <div class="card-body">
             @if ($pci)
@@ -410,7 +457,7 @@
     @endif
 
     {{-- 6. REMARKS --}}
-    <div class="card mb-3">
+    <div class="card mb-2">
         <div class="card-header fw-bold">Remarks</div>
         <div class="card-body">
             <p class="mb-0">{{ $inspection->remarks ?: '-' }}</p>

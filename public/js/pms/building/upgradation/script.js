@@ -48,7 +48,24 @@ buildingCategoryUpgradation.addEventListener("change", function () {
 });
 
 buildings.addEventListener("change", () => {
+	const selectedOption = buildings.selectedOptions[0];													
     const buildingCd = document.getElementById("maintBuildings").value;
+	const maintainableAssetId = selectedOption?.dataset.id || "";
+
+    let hiddenInput = document.getElementById(
+        "maintBuildingMaintainableId"
+    );
+
+    if (!hiddenInput) {
+        hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.id = "maintBuildingMaintainableId";
+        hiddenInput.name = "maintBuildingMaintainableId";
+        buildings.form.appendChild(hiddenInput);
+    }
+
+    hiddenInput.value = maintainableAssetId;
+
     loadBuildingDetails(buildingCd, "maint");
 });
 
@@ -77,12 +94,14 @@ async function populateMaintenanceBuildingSelectSubDiv(
         );
         if (Array.isArray(data) && data.length > 0) {
             data.forEach((building) => {
-                select.add(
-                    new Option(
-                        `${building.building_name} (${building.building_system_cd})`,
-                        building.building_system_cd,
-                    ),
+                const option = new Option(
+                    `${building.building_name} (${building.building_system_cd})`,
+                    building.building_system_cd,
                 );
+
+                option.dataset.id = building.id;
+
+                select.add(option);	   
             });
         } else {
             select.innerHTML = '<option value="">No buildings found</option>';

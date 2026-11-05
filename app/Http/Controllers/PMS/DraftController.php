@@ -329,12 +329,21 @@ class DraftController extends Controller
                         }
                     }
 
+					$maintainableAssetIds = $maintenance['maintainable_asset_ids'] ?? [];
+					
                     $maintenanceData = [
                         'assets' => [
                             'roads' => $formattedAssets['roads'] ?? [],
                             'culverts' => $formattedAssets['culverts'] ?? [],
                             'bridges' => $formattedAssets['bridges'] ?? [],
                             'retaining_walls' => $formattedAssets['retaining_walls'] ?? [],
+						],
+                        'maintainable_asset_ids' => [
+                            'roads' => $maintainableAssetIds['roads'] ?? [],
+                            'culverts' => $maintainableAssetIds['culverts'] ?? [],
+                            'bridges' => $maintainableAssetIds['bridges'] ?? [],
+                            'retaining_walls' => $maintainableAssetIds['retaining_walls'] ?? [],
+                            'pavements' => $maintainableAssetIds['pavements'] ?? [],
                         ]
                     ];
                 }
@@ -544,6 +553,35 @@ class DraftController extends Controller
                 'success' => false,
                 'message' => 'Draft not found'
             ]);
+        }
+
+		$previousMaintainableIds = [];
+
+        if (!empty($draft->others)) {
+            $oldOthers = json_decode($draft->others, true);
+
+            if (is_array($oldOthers)) {
+                $oldIds = $oldOthers['maintenance']['maintainable_asset_ids'] ?? [];
+
+                array_walk_recursive(
+                    $oldIds,
+                    function ($id) use (&$previousMaintainableIds) {
+                        if ($id !== null && $id !== '') {
+                            $previousMaintainableIds[] = $id;
+                        }
+                    }
+                );
+            }
+        }
+
+        $previousMaintainableIds = array_values(
+            array_unique($previousMaintainableIds)
+        );
+
+        if (!empty($previousMaintainableIds)) {
+            DB::table('projects.prt_maintainable_assets')
+                ->whereIn('id', $previousMaintainableIds)
+                ->update(['flag' => '0']);
         }
 
         // Convert draft to array

@@ -61,9 +61,9 @@
                     <div class="row g-2">
                         <div class="col-sm-3">
                             <label class="form-label">Project Type <span class="text-danger">*</span></label>
-							@php							
+                            @php							
                                 $hasExceptionOrError = $errors->any() || session('error') || session('failed');
-                            @endphp	
+                            @endphp
                             <select name="projectTypeSelect" id="projectTypeSelect" class="form-select form-select-sm"
                                 required>
                                 <option value="">Select</option>
@@ -89,7 +89,7 @@
                         <div class="col-sm-3">
                             <label class="form-label">Owner Department <span class="text-danger">*</span></label>
                             <select name="owner_dept_cd" id="owner_dept_cd" class="form-select form-select-sm" required>
-                                <option value="{{ $department->id }}" 
+                                <option value="{{ $department->id }}"
 									{{ old('owner_dept_cd', $project->owner_dept_cd ?? '') == $department->id ? 'selected' : '' }}>
                                     {{ $department->department_name }}
                                 </option>
@@ -99,7 +99,7 @@
                         <div class="col-sm-3">
                             <label class="form-label">Division Name <span class="text-danger">*</span></label>
                             {{-- Add new tag Name dipshikha 16-05-2026 Start --}}
-                            <select id="division_cd" name="division_cd" class="form-select form-select-sm"
+                            <select id="division_cd" name="division_cd" class="form-select form-select-2"
                                 data-user-subdivision="{{ session('userMapping')->sub_division_cd ?? '' }}"
                                 @if (session('userMapping')->office_type_cd === 'DO' || session('userMapping')->office_type_cd === 'SDO') selected disabled @endif required>
                                 <option value="">Select Division</option>
@@ -141,7 +141,7 @@
 
                         <div class="col-sm-3">
                             <label class="form-label">Project Awarded To <span class="text-danger">*</span></label>
-                            <select name="project_awarded_to" id="project_awarded_to" class="form-select form-select-sm"
+                            <select name="project_awarded_to" id="project_awarded_to" class="form-select  form-select-2"
                                 required>
                                 <option value="">Select Constructor</option>
                                 @foreach ($constructors as $constructor)
@@ -201,7 +201,7 @@
 
                         <div class="col-sm-3">
                             <label class="form-label">Project Scheme <span class="text-danger">*</span></label>
-                            <select name="scheme_cd" id="scheme_cd" class="form-select form-select-sm" required>
+                            <select name="scheme_cd" id="scheme_cd" class="form-select-2 form-select-sm" required>
                                 <option value="">Select Scheme</option>
                                 @foreach ($schemes as $scheme)
                                     <option value="{{ $scheme->scheme_id }}"
@@ -211,9 +211,9 @@
                                 @endforeach
                             </select>
                         </div>
-						<div class="col-sm-3">
+                        <div class="col-sm-3">
                             <label class="form-label">Project Technology Type <span class="text-danger">*</span></label>
-                            <select name="tech_type_cd" id="tech_type_cd" class="form-select form-select-sm" required>
+                            <select name="tech_type_cd" id="tech_type_cd" class="form-select-2 form-select-sm" required>
                                 <option value="">Select Technology</option>
                                 @foreach ($technologies as $technology)
                                     <option value="{{ $technology->tech_type_cd }}">
@@ -221,7 +221,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>	
+                        </div>
                         {{-- End of new fields: nitish --}}
                     </div>
                     {{-- section to show funding agency details: Nitish --}}
@@ -258,7 +258,7 @@
                         <div class="row g-3 mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Select Road</label>
-                                <select id="refRoadSelect" name='refRoadSelect' class="form-select form-select-sm">
+                                <select id="refRoadSelect" name='refRoadSelect' class="form-select-2 form-select-sm">
                                     <option value="">Choose a road</option>
                                 </select>
                             </div>
@@ -295,23 +295,23 @@
                     <div class="row g-3 mb-2">
                         <div class="col-md-6 col-lg-3">
                             <label class="form-label">List of Culverts</label>
-                            <select id="refCulvertSelect" class="form-select form-select-sm" multiple size="4">
+                            <select id="refCulvertSelect" class="form-select-2 form-select-sm" multiple size="4">
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
                         <div class="col-md-6 col-lg-3">
                             <label class="form-label">List of Bridges</label>
-                            <select id="refBridgeSelect" class="form-select form-select-sm" multiple size="4">
+                            <select id="refBridgeSelect" class="form-select-2 form-select-sm" multiple size="4">
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
                         <div class="col-md-6 col-lg-3">
                             <label class="form-label">List of Retaining Walls</label>
-                            <select id="refWallSelect" class="form-select form-select-sm" multiple size="4">
+                            <select id="refWallSelect" class="form-select-2 form-select-sm" multiple size="4">
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
-					</div>
+                    </div>
                     <!-- Add Button -->
 
                     <div class="row g-3 align-items-end">
@@ -333,11 +333,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Road</th>
-									<th>From Chainage (KM)</th>
-                                    <th>To Chainage (KM)</th>									   
+                                    <th>From Chainage (KM)</th>
+                                    <th>To Chainage (KM)</th>
                                     <th>Culverts</th>
                                     <th>Bridges</th>
-									<th>Retaining Walls</th>						
+                                    <th>Retaining Walls</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -349,50 +349,49 @@
 
 
 
-                        <div id="newRoadDetailsForm" class="row g-3">
-                            <div class="col-md-4">
-                                <label for="total_road_length" class="form-label fw-bold">
+                    <div id="newRoadDetailsForm" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="total_road_length" class="form-label fw-bold">
                                 Total Road Length (Km)
                             </label>
-                                <input type="text" id="total_road_length" name="total_road_length" class="form-control"
+                            <input type="text" id="total_road_length" name="total_road_length" class="form-control"
                                 value="" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="road_category">Road Category</label>
-                                <select id="road_category" class="custom-select form-control form-control-sm"
-                                    name="road_category">
-                                    <option value="" disable selected hidden>Please Select</option>
-                                    @foreach ($roadCategories as $roadCategory)
-                                        <option value="{{ $roadCategory->rd_catg_cd }}">
-                                            {{ $roadCategory->rd_catg_descr }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="road_type">Road Type</label>
-                                <select id="road_type" class="custom-select form-control form-control-sm" name="road_type">
-                                    <option value="" disable selected hidden>Please Select</option>
-                                    @foreach ($roadTypes as $roadType)
-                                        <option value="{{ $roadType->rd_type_cd }}">
-                                            {{ $roadType->rd_type_descr }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="road_owner">Road Owner</label>
-                                <select id="road_owner" class="custom-select form-control form-control-sm" name="road_owner">
-                                    <option value="" disable selected hidden>Please Select</option>
-                                    @foreach ($roadOwners as $roadOwner)
-                                        <option value="{{ $roadOwner->owner_cd }}">{{ $roadOwner->owner_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
                         </div>
+                        <div class="col-md-4">
+                            <label for="road_category">Road Category</label>
+                            <select id="road_category" class="form-select-2 form-select-sm" name="road_category">
+                                <option value="" disable selected hidden>Please Select</option>
+                                @foreach ($roadCategories as $roadCategory)
+                                    <option value="{{ $roadCategory->rd_catg_cd }}">
+                                        {{ $roadCategory->rd_catg_descr }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="road_type">Road Type</label>
+                            <select id="road_type" class="form-select-2 form-select-sm" name="road_type">
+                                <option value="" disable selected hidden>Please Select</option>
+                                @foreach ($roadTypes as $roadType)
+                                    <option value="{{ $roadType->rd_type_cd }}">
+                                        {{ $roadType->rd_type_descr }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="road_owner">Road Owner</label>
+                            <select id="road_owner" class="form-select-2 form-select-sm" name="road_owner">
+                                <option value="" disable selected hidden>Please Select</option>
+                                @foreach ($roadOwners as $roadOwner)
+                                    <option value="{{ $roadOwner->owner_cd }}">{{ $roadOwner->owner_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="row g-3 align-items-end mt-2">
                         <div class="col-md-2">
@@ -408,9 +407,9 @@
                             <button type="button" id="closeNewAssetsForm" class="btn btn-danger btn-sm">
                                 Remove
                             </button>
-                    </div>
+                        </div>
 
-					<div class="row g-3">
+                        <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">New Road Name</label>
                                 <input type="text" class="form-control" name="new_road_name" id="new_road_name">
@@ -418,14 +417,14 @@
 
                             <div class="col-md-4">
                                 <label class="form-label">Road Length (in KM)</label>
-                                <input type="number" class="form-control" name="road_length" id="road_length"
-                                    min="0" step="0.01">
+                                <input type="number" class="form-control" name="road_length" id="road_length" min="0"
+                                    step="0.01">
                             </div>
                         </div>
                     </div>
-						 
-				<div class="card mt-3" id="priorityCard" style="display:none;">
-                       <div class="card-header">
+
+                    <div class="card mt-3" id="priorityCard" style="display:none;">
+                        <div class="card-header">
                             Road Alignment Sequence
                         </div>
 
@@ -451,8 +450,7 @@
                     {{-- hidden section as asked by client --}}
                     {{-- Friendly remainder: do not remove, will thraw lots of JS error --}}
                     <div class="form-check form-check-inline" style="display: none;">
-                        <input class="form-check-input" type="radio" name="rdo_type" id="opt1" value="1"
-                            checked />
+                        <input class="form-check-input" type="radio" name="rdo_type" id="opt1" value="1" checked />
                         <label class="form-check-label text-sm" for="opt1">New road with/without sub
                             asset(s)</label>
                     </div>
@@ -463,15 +461,14 @@
                         <div class="row mb-1 pb-2">
                             <div class="col-12 col-md-3">
                                 <label class="form-label">New Road Name: </label>
-                                <input class="form-control form-control-sm" type="text" id="slnewRdNew"
-                                    name='slnewRdNew' value="{{ old('slnewRdNew') }}" size="8"
-                                    placeholder="Enter Road Name" />
+                                <input class="form-control form-control-sm" type="text" id="slnewRdNew" name='slnewRdNew'
+                                    value="{{ old('slnewRdNew') }}" size="8" placeholder="Enter Road Name" />
                                 <small id="roadNameError" class="text-danger"></small>
                             </div>
 
                             <div class="col-md-4">
-								<label for="road_category_new">Road Category</label>
-                                <select id="road_category_new" class="custom-select form-control form-control-sm"
+                                <label for="road_category_new">Road Category</label>
+                                <select id="road_category_new" class="form-select-2 form-select-sm"
                                     name="road_category_new">
                                     <option value="" disable selected hidden>Please Select</option>
                                     @foreach ($roadCategories as $roadCategory)
@@ -479,13 +476,12 @@
                                             {{ $roadCategory->rd_catg_descr }}
                                         </option>
                                     @endforeach
-                                </select>													
+                                </select>
                             </div>
 
                             <div class="col-md-4">
                                 <label for="road_type_new">Road Type</label>
-                                <select id="road_type_new" class="custom-select form-control form-control-sm"
-                                    name="road_type_new">
+                                <select id="road_type_new" class="form-select-2 form-select-sm" name="road_type_new">
                                     <option value="" disable selected hidden>Please Select</option>
                                     @foreach ($roadTypes as $roadType)
                                         <option value="{{ $roadType->rd_type_cd }}">
@@ -495,14 +491,14 @@
                                 </select>
                             </div>
 
-                             <div class="col-12 col-md-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">Road Length(in KM): </label>
                                 <input class="form-control form-control-sm" type="number" min="0" id="rdLength"
                                     name='rdLength' value="{{ old('rdLength') }}" size="8"
-                                    placeholder="Enter Road Length"/>
+                                    placeholder="Enter Road Length" />
                             </div>
 
-							<div class="col-md-4">
+                            <div class="col-md-4">
                                 <label for="road_owner_new">Road Owner</label>
                                 <select id="road_owner_new" class="custom-select form-control form-control-sm"
                                     name="road_owner_new">
@@ -558,57 +554,59 @@
                     <div class="row mb-2">
                         <div class="col">
                             <label class="form-label">List of Roads</label>
-                            <select id="maintRoads" class="form-select form-select-sm" multiple size="5">
+                            <!--modified by PulAK 28-10-26-->
+                            <select id="maintRoads" class="form-select-2 form-select-sm" multiple size="5"
+                                data-confirm-add-on-select="true">
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
                         <div class="col">
                             <label class="form-label">List of Culverts</label>
-                            <select id="maintCulverts" class="form-select form-select-sm" multiple size="5">
+                            <select id="maintCulverts" class="form-select-2 form-select-sm" multiple size="5">
                                 <option value="">-- NA --</option>
                             </select>
                         </div>
                         <div class="col">
                             <label class="form-label">Select Bridges</label>
-                            <select class="form-select form-select-sm" id="maintBridges" multiple size="5">
+                            <select class="form-select-2 form-select-sm" id="maintBridges" multiple size="5">
                                 <option value="">--NA---</option>
                             </select>
                         </div>
                         <div class="col">
                             <label class="form-label">Select Retaining Walls</label>
-                            <select class="form-select form-select-sm" id="maintWalls" multiple size="5">
+                            <select class="form-select-2 form-select-sm" id="maintWalls" multiple size="5">
                                 <option value="">--NA---</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Selected Maintenance Asset Details -->
-                    <div class="card mt-3 border-success" id="maintenanceAssetDetailsCard"
-                        style="display:none;">
+                    <div class="card mt-3 border-success" id="maintenanceAssetDetailsCard" style="display:none;">
                         <div class="card-header">
                             <i class="fa fa-clipboard-list me-2"></i>
                             Selected Asset — Inspection & Maintenance Scores
                         </div>
 
                         <div class="card-body">
-                            <div id="maintenanceAssetDetailsMessage"
-                                class="text-muted small mb-2"></div>
+                            <div id="maintenanceAssetDetailsMessage" class="text-muted small mb-2"></div>
 
                             <div class="table-responsive">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead>
                                         <tr>
-                                            <th style="width:20%">Asset ID</th>
-                                            <th style="width:20%">Asset Name</th>
+                                            <th style="width:12%">Priority</th>
+                                            <th style="width:15%">Asset ID</th>
+                                            <th style="width:15%">Asset Name</th>
                                             <th>Asset Type</th>
                                             <th>Inspection Code</th>
                                             <th>Inspection Date</th>
-                                            
-                                            <th>MAS Score</th>
+											
+                                            <th style="width:12%">MAS Score</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
+                                            <td id="detailPriority">-</td>
                                             <td id="detailAssetId">-</td>
                                             <td id="detailAssetName">-</td>
                                             <td id="detailAssetType">-</td>
@@ -620,13 +618,12 @@
                                 </table>
                             </div>
                         </div>
-                    </div>    
-                    <div class="text-start">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="addMaintenanceAssets()">
-                            <i class="fa-solid fa-plus me-2"></i>
-                            Add Assets
-                        </button>
                     </div>
+
+                    <!--modified by PulAK 28-10-26 -->
+                    <p class="text-muted small mb-2">
+                        Selecting a road will ask you to confirm adding the selected assets to this project.
+                    </p>
 
                     <!-- For counting the row of the table -->
                     <input type="hidden" name="mnt_rowCount" id="mnt_rowCount" value="0">
@@ -649,213 +646,268 @@
                     </div>
                 </div>
             </div>
-        
 
-            <div class="row mt-2" id="kmlCard" style="background-color: #efeeee; display: none;">
-                <div class="col-12 pt-2">
-                    <legend class="w-auto px-2" style="font-size:13px ">
-                        Upload Documents
-                    </legend>
-                    <div class="p-2">
-                        <div>
-                            <p class="text-sm text-info text-underline"><strong>
-                                    <i class="fa fa-info-circle mr-1 text-sm"></i>Important:
-                                </strong></p>
-                            <ul class="text-xs text-secondary">
-                                <li>
-                                    <strong>
-                                        File Type:
-                                    </strong>
-                                    Only KML files are supported for upload in this section.
-                                </li>
-                                <li>
-                                    <strong>
-                                        File Size Limit:
-                                    </strong>
-                                    The maximum allowed file size is 2 MB.
-                                </li>
-                            </ul>
+
+            <div class="row mt-3" id="kmlCard" style="display: none;">
+                <div class="col-12">
+                    <div class="card border rounded-3 shadow-sm">
+                        <div class="card-header text-light fw-bold text-uppercase">
+                            Upload Road KML Document
                         </div>
-                        <div class="row form-1-box my-1">
-                            <div class="col-md-4">
-                                <label for="road_kml_file">1. Upload KML File for this Road:<span
-                                        class="star">*</span></label>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+
+                            <!-- Information -->
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    <strong class="text-xs">Important Instructions</strong>
+                                </div>
+
+                                <ul class="text-xs mb-0 pl-4">
+                                    <li>Only <strong>.KML</strong> files are supported.</li>
+                                    <li>Maximum allowed file size is <strong>2 MB</strong>.</li>
+                                </ul>
                             </div>
-                            <div class="col-md-8">
-                                <input type="file" class="text-xs text-success" id="road_kml_file"
-                                    name="road_kml_file" onchange="showRemoveBtn('road_kml_file')">
-                                <button type="button" id="removeBtn_road_kml_file"
-                                    class="outline-0 border border-danger text-danger text-xs rounded-1"
-                                    style="background:rgb(252, 217, 217); display:none;"
-                                    onclick="removeFile('road_kml_file')">
-                                    <i class="fa fa-trash mr-1 text-xs"></i>
-                                    Remove
-                                </button>
+
+                            <!-- Upload Section -->
+                            <div class="p-3 rounded-2"
+                                style="background-color: #fafafa; border: 1px dashed #b8c7c0;">
+
+                                <label for="road_kml_file" class="text-sm font-weight-bold mb-2">
+                                    <i class="fa fa-file-upload text-success mr-1"></i>
+                                    Upload KML File for this Road
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="d-flex flex-wrap align-items-center">
+                                    <input type="file"
+                                        class="form-control-file text-xs"
+                                        id="road_kml_file"
+                                        name="road_kml_file"
+                                        accept=".kml"
+                                        onchange="showRemoveBtn('road_kml_file')">
+
+                                    <button type="button"
+                                        id="removeBtn_road_kml_file"
+                                        class="btn btn-sm btn-outline-danger mt-2"
+                                        style="display:none;"
+                                        onclick="removeFile('road_kml_file')">
+                                        <i class="fa fa-trash mr-1"></i>
+                                        Remove
+                                    </button>
+                                </div>
+
                                 @error('road_kml_file')
-                                    <div class="text-danger text-xs">
+                                    <div class="text-danger text-xs mt-2">
                                         {{ $message }}
                                     </div>
                                 @enderror
+
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Upload Documents -->
-            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_image_container">
-                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
-                    <fieldset class="">
-                        <legend class="w-auto px-2" style="font-size:13px ">
+<!-- Upload Images -->
+            <div class="row mt-3" id="asset_image_container">
+                <div class="col-12">
+                    <div class="card border rounded-3 shadow-sm">
+
+                        <!-- Card Header -->
+                        <div class="card-header text-light fw-bold text-uppercase">
                             Upload Site Images
-                        </legend>
-                        <div class="p-2">
-                            <div>
-                                <p class="text-sm text-info text-underline"><strong>
-                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
-                                    </strong></p>
-                                <ul class="text-xs text-secondary">
-                                    <li>
-                                        <strong>
-                                            File Type:
-                                        </strong>
-                                        Only JPG, JPEG files are supported for upload in this section.
-                                    </li>
-                                    <li>
-                                        <strong>
-                                            File Size Limit:
-                                        </strong>
-                                        The maximum allowed file size is 1 MB.
-                                    </li>
-                                    <li>
-                                        <strong>
-                                            Note:
-                                        </strong>
-                                        Multiple files can be uploaded.
-                                    </li>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+
+                            <!-- Information -->
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    <strong class="text-xs">Important Instructions</strong>
+                                </div>
+
+                                <ul class="text-xs mb-0 pl-4">
+                                    <li>Only <strong>.JPG, .JPEG</strong> files are supported.</li>
+                                    <li>Maximum allowed file size is <strong>1 MB</strong>.</li>
+                                    <li>Multiple files can be uploaded.</li>
                                 </ul>
                             </div>
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="images">Upload Site Images: </label>
+
+                            <!-- Upload Section -->
+                            <div class="p-3 rounded-2"
+                                style="background-color: #fafafa; border: 1px dashed #b8c7c0;">
+
+                                <label for="images" class="text-sm font-weight-bold mb-2">
+                                    <i class="fa fa-images text-success mr-1"></i>
+                                    Upload Site Images
+                                </label>
+
+                                <div class="d-flex flex-wrap align-items-center">
+                                    <input type="file"
+                                        class="form-control-file text-xs"
+                                        id="images"
+                                        name="images[]"
+                                        accept=".jpg,.jpeg"
+                                        multiple>
                                 </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="images" name="images[]"
-                                        accept=".jpg,.jpeg" multiple>
-                                    <div id="imagesPreview" class="row mt-2"></div>
-                                    @error('images.*')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
-                                    @enderror
-                                </div>
+
+                                <!-- Image Preview -->
+                                <div id="imagesPreview" class="row mt-3"></div>
+
+                                @error('images.*')
+                                    <div class="text-danger text-xs mt-2">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
                             </div>
                         </div>
-                    </fieldset>
+                    </div>
                 </div>
             </div>
 
-            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_document_container">
-                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
-                    <fieldset class="">
-                        <legend class="w-auto px-2" style="font-size:13px ">
+            <div class="row mt-3" id="asset_document_container">
+                <div class="col-12">
+                    <div class="card border rounded-3 shadow-sm">
+
+                        <!-- Card Header -->
+                        <div class="card-header text-light fw-bold text-uppercase">
                             Upload Documents
-                        </legend>
-                        <div class="p-2">
-                            <div>
-                                <p class="text-sm text-info text-underline"><strong>
-                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
-                                    </strong></p>
-                                <ul class="text-xs text-secondary">
-                                    <li>
-                                        <strong>
-                                            File Size Limit:
-                                        </strong>
-                                        The maximum allowed file size is 2 MB.
-                                    </li>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+
+                            <!-- Information -->
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    <strong class="text-xs">Important Instructions</strong>
+                                </div>
+
+                                <ul class="text-xs mb-0 pl-4">
+                                    <li>Only <strong>PDF</strong> files are supported.</li>
+                                    <li>Maximum allowed file size is <strong>2 MB</strong>.</li>
                                 </ul>
                             </div>
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="workorder">1. Upload Sanction Order (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="workOrder" name="workOrder"
-                                        accept=".pdf">
-                                    <button type="button" id="removeBtn_workOrder"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('workOrder')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+
+                            <!-- Upload Section -->
+                            <div class="p-3 rounded-2"
+                                style="background-color: #fafafa; border: 1px dashed #b8c7c0;">
+
+                                <!-- 1. Sanction Order -->
+                                <div class="mb-3">
+                                    <label for="workOrder" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        1. Upload Sanction Order (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="workOrder" name="workOrder" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_workOrder"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('workOrder')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('workOrder')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="projectPlan">2. Upload Work Order (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" name="projectPlan" id="projectPlan"
-                                        class="text-xs text-success" accept=".pdf">
-                                    <button type="button" id="removeBtn_projectPlan"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('projectPlan')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 2. Work Order -->
+                                <div class="mb-3">
+                                    <label for="projectPlan" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        2. Upload Work Order (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" name="projectPlan" id="projectPlan"
+                                            class="form-control-file text-xs" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_projectPlan"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('projectPlan')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('projectPlan')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="drpDocument">3. Upload Work Plans (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="drpDocument"
-                                        name="drpDocument" accept=".pdf">
-                                    <button type="button" id="removeBtn_drpDocument"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('drpDocument')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 3. Work Plans -->
+                                <div class="mb-3">
+                                    <label for="drpDocument" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        3. Upload Work Plans (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="drpDocument" name="drpDocument" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_drpDocument"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('drpDocument')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('drpDocument')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="design_doc">4. Upload Agreement (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="designDoc" name="designDoc"
-                                        accept=".pdf">
-                                    <button type="button" id="removeBtn_designDoc"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('designDoc')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 4. Agreement -->
+                                <div class="mb-0">
+                                    <label for="designDoc" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        4. Upload Agreement (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="designDoc" name="designDoc" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_designDoc"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('designDoc')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('designDoc')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                             </div>
                         </div>
-                    </fieldset>
+                    </div>
                 </div>
             </div>
+			
             <div class="text-end">
                 <button type="submit" id="PmsSaveBtn" class="btn btn-success btn-sm rounded-0 mt-2">
                     <i class="fa fa-save"></i> Submit
@@ -978,8 +1030,7 @@
                                     placeholder="Enter IFSC Code" maxlength="20">
                             </div>
 
-                            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;"
-                                id="asset_document_container">
+                            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_document_container">
                                 <div class="col-md-12 pt-2" style="background-color: #efeeee;">
                                     <fieldset class="">
                                         <legend class="w-auto px-2" style="font-size:13px ">
@@ -1057,7 +1108,7 @@
                                                     @enderror
                                                 </div>
                                             </div>
-								<div class="row form-1-box my-1">
+                                            <div class="row form-1-box my-1">
                                                 <div class="col-md-4">
                                                     <label for="passbookDoc">3. Upload Passbook (PDF):</label>
                                                 </div>
@@ -1116,8 +1167,8 @@
                             <th class="text-center" style="min-width: 6rem;">Owner Department</th>
                             <th class="text-center" style="min-width: 6rem;">Division</th>
                             <th class="text-center" style="min-width: 6rem;">Sub Division</th>
-                            <th class="text-center" style="min-width: 8rem;">Project Start Date</th>
-                            <th class="text-center" style="min-width: 8rem;">Project End Date</th>
+                            <th class="text-center" style="min-width: 8rem;">Start Date</th>
+                            <th class="text-center" style="min-width: 8rem;">End Date</th>
                             <th class="text-center" style="min-width: 8rem;">Project Status</th>
                             <th class="text-center" style="min-width: 8rem;">Project Awarded To</th>
                             <th class="text-center" style="min-width: 8rem;">Estimated Project Cost</th>
@@ -1129,7 +1180,7 @@
                             <th class="text-center" style="min-width: 8rem;">Work Order Issued</th>
                             <th class="text-center" style="min-width: 8rem;">Scheme Name</th>
                             {{-- End: Nitish --}}
-							<th class="text-center" style="min-width: 8rem;">Technology Name</th>
+                            <th class="text-center" style="min-width: 8rem;">Technology Name</th>
                             <th class="text-center" style="min-width: 8rem;">Rejection Reason</th>
                             <th class="text-center" style="min-width: 8rem;">Asset Details</th>
                             <th class="text-center" style="min-width: 8rem;">Funding Agency</th>
@@ -1139,114 +1190,113 @@
                         </thead>
                         <tbody>
                             @foreach ($draftProjects as $index => $draft)
-                                <tr>
-                                    <td class="text-center">{{ $index + 1 }}</td>
-                                    <td class="text-center">{{ $draft->project_cd }}</td>
-                                    <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->project_start_date ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->project_end_date ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
-                                    {{-- New: Nitish --}}
-                                    <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
-									<td class="text-center">
-                                        {{ json_decode($draft->others, true)['tech_type_descr'] ?? 'N/A' }}</td>
-									
-                                    {{-- End: Nitish --}}
-                                    <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
-                                    <td class="text-center">
-										@if($draft->project_type_cd == 'NEW')
-                                        <button
-                                                class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
-                                                data-toggle="modal"
-                                                data-target="#showAssetForNewWorks{{ $draft->project_cd }}"
-                                                onclick="getNewWorksAssetDetails('{{ $draft->project_cd }}')">
-                                                <i class="fas fa-eye text-xs"></i>
-                                                View
-                                            </button>
-                                    @elseif($draft->project_type_cd == 'UPG')
-                                        @if ($draft->hasUpgradationAssets)
-                                            <button
-                                                    class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
-                                                    onclick="showModalNewAssetDetail('{{ $draft->project_cd }}','draft')">
+                                        <tr>
+                                            <td class="text-center">{{ $index + 1 }}</td>
+                                            <td class="text-center">{{ $draft->project_cd }}</td>
+                                            <td class="text-center">{{ $draft->project_name ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->project_type ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->owner_department ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->division_name ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->sub_div_name ?? 'N/A' }}</td>
+                                            <td class="text-center">
+                                                {{ $draft->project_start_date
+                                ? \Carbon\Carbon::parse($draft->project_start_date)->format('d-m-Y')
+                                : 'N/A' }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ $draft->project_end_date
+                                ? \Carbon\Carbon::parse($draft->project_end_date)->format('d-m-Y')
+                                : 'N/A' }}
+                                            </td>
+                                            <td class="text-center">{{ $draft->project_status ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->contractor_name ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->est_proj_cost ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->defect_liability_period ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->work_order_amount ?? 'N/A' }}</td>
+                                            {{-- New: Nitish --}}
+                                            <td class="text-center">{{ $draft->work_order_no ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->work_order_issue_date ?? 'N/A' }}</td>
+                                            <td class="text-center">{{ $draft->scheme_name ?? 'N/A' }}</td>
+                                            <td class="text-center">
+                                                {{ json_decode($draft->others, true)['tech_type_descr'] ?? 'N/A' }}
+                                            </td>
+                                            {{-- End: Nitish --}}
+                                            <td class="text-center">{{ $draft->reason_of_rejection ?? '-' }}</td>
+                                            <td class="text-center">
+                                                @if($draft->project_type_cd == 'NEW')
+                                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                                        data-toggle="modal" data-target="#showAssetForNewWorks{{ $draft->project_cd }}"
+                                                        onclick="getNewWorksAssetDetails('{{ $draft->project_cd }}')">
+                                                        <i class="fas fa-eye text-xs"></i>
+                                                        View
+                                                    </button>
+                                                @elseif($draft->project_type_cd == 'UPG')
+                                                    @if ($draft->hasUpgradationAssets)
+                                                        <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                                            onclick="showModalNewAssetDetail('{{ $draft->project_cd }}','draft')">
+                                                            <i class="fas fa-eye text-xs"></i>
+                                                            View
+                                                        </button>
+                                                    @else
+                                                        <span class="text-danger text-bold">NA</span>
+                                                    @endif
+                                                @elseif($draft->project_type_cd == 'MTN')
+                                                    @if ($hasMaintenanceAssets)
+                                                        <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                                            onclick="showModalMaintenanceDetail('{{ $draft->project_cd }}','draft')">
+                                                            <i class="fas fa-eye text-xs"></i>
+                                                            View
+                                                        </button>
+                                                    @else
+                                                        <span class="text-danger text-bold">NA</span>
+                                                    @endif
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                                    data-toggle="modal" data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
+                                                    onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}')">
                                                     <i class="fas fa-eye text-xs"></i>
                                                     View
                                                 </button>
-                                        @else
-                                            <span class="text-danger text-bold">NA</span>
-                                        @endif
-									@elseif($draft->project_type_cd == 'MTN')	
-                                        @if ($hasMaintenanceAssets)
-                                            <button
-                                                    class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
-                                                    onclick="showModalMaintenanceDetail('{{ $draft->project_cd }}','draft')">
-                                                    <i class="fas fa-eye text-xs"></i>
-                                                    View
+                                            </td>
+                                            <td class="text-center">
+                                                @if (in_array($draft->project_cd, $workItems_exist))
+                                                    <button class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
+                                                        data-toggle="modal" data-target="#ItemsModal{{ $draft->project_cd }}"
+                                                        onclick="showItemsDetail('{{ $draft->project_cd }}')">
+                                                        <i class="fas fa-eye text-xs"></i>
+                                                        View
+                                                    </button>
+                                                @endif
+                                                {{-- Link to work item module: nitish --}}
+                                                <a href="{{ route('pms.work-item.index', $draft->project_cd) }}"
+                                                    class="btn btn-xs btn-outline-primary p-1 fw-bold rounded-0">
+                                                    <i class="fas fa-plus-circle"></i>
+                                                    Add
+                                                </a>
+                                                {{-- End of linking --}}
+                                            </td>
+                                            <td class="text-center">
+
+                                                <button class="text-sm outline-0 btn btn-xs btn-outline-primary inline fw-bold rounded-0"
+                                                    onclick="editWithLocal('{{ $draft->project_cd }}', '{{ $department->id }}')">
+
+                                                    <i class="fas fa-edit"></i> Edit
                                                 </button>
-                                        @else
-                                            <span class="text-danger text-bold">NA</span>
-                                        @endif
-									@endif
-                                    </td>
-                                    <td class="text-center">
-                                        <button
-                                            class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
-                                            data-toggle="modal"
-                                            data-target="#showFundingAgencyDetails{{ $draft->scheme_cd }}"
-                                            onclick="getFundingAgencyDetails('{{ $draft->scheme_cd }}', '{{ $draft->work_order_amount }}')">
-                                            <i class="fas fa-eye text-xs"></i>
-                                            View
-                                        </button>
-                                    </td>
-                                    <td class="text-center">
-                                        @if (in_array($draft->project_cd, $workItems_exist))
-                                            <button
-                                                class="text-sm outline-0 btn btn-xs btn-outline-secondary inline fw-bold rounded-0"
-                                                data-toggle="modal" data-target="#ItemsModal{{ $draft->project_cd }}"
-                                                onclick="showItemsDetail('{{ $draft->project_cd }}')">
-                                                <i class="fas fa-eye text-xs"></i>
-                                                View
-                                            </button>
-                                        @endif
-                                        {{-- Link to work item module: nitish --}}
-                                        <a href="{{ route('pms.work-item.index', $draft->project_cd) }}"
-                                            class="btn btn-xs btn-outline-primary p-1 fw-bold rounded-0">
-                                            <i class="fas fa-plus-circle"></i>
-                                            Add
-                                        </a>
-                                        {{-- End of linking --}}
-                                    </td>
-                                    <td class="text-center">
-
-                                        <button
-                                            class="text-sm outline-0 btn btn-xs btn-outline-primary inline fw-bold rounded-0"
-                                            onclick="editWithLocal('{{ $draft->project_cd }}', '{{ $department->id }}')">
-
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
 
 
-                                        <button
-                                            class="text-sm outline-0 btn btn-xs btn-outline-danger inline fw-bold rounded-0 ms-1"
-                                            onclick="openDeleteModal('{{ $draft->project_cd }}')">
+                                                <button
+                                                    class="text-sm outline-0 btn btn-xs btn-outline-danger inline fw-bold rounded-0 ms-1"
+                                                    onclick="openDeleteModal('{{ $draft->project_cd }}')">
 
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="checkbox" class="selected-asset"
-                                            data-project-cd="{{ $draft->project_cd }}" />
-                                    </td>
-                                </tr>
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="checkbox" class="selected-asset" data-project-cd="{{ $draft->project_cd }}" />
+                                            </td>
+                                        </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -1354,7 +1404,8 @@
                     <input type="hidden" id="delete_project_cd">
                     <div class="mb-3">
                         <label>Remarks</label>
-                        <textarea id="delete_remarks" class="form-control" placeholder="Enter reason for deletion..."></textarea>
+                        <textarea id="delete_remarks" class="form-control"
+                            placeholder="Enter reason for deletion..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1587,12 +1638,12 @@
                         <img id="cropperImage" src="" style="max-width:100%; display:block;">
                     </div>
                     <div class="mt-2 d-flex justify-content-center flex-wrap gap-1">
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                            onclick="cropperInstance.rotate(-90)" title="Rotate Left">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.rotate(-90)"
+                            title="Rotate Left">
                             <i class="fa fa-undo"></i> Rotate Left
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                            onclick="cropperInstance.rotate(90)" title="Rotate Right">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.rotate(90)"
+                            title="Rotate Right">
                             <i class="fa fa-redo"></i> Rotate Right
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -1605,8 +1656,8 @@
                             title="Flip Vertical">
                             <i class="fa fa-arrows-alt-v"></i> Flip V
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                            onclick="cropperInstance.reset()" title="Reset">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cropperInstance.reset()"
+                            title="Reset">
                             <i class="fa fa-sync"></i> Reset
                         </button>
                     </div>
@@ -1645,7 +1696,7 @@
             color: var(--primary) !important;
         }
 
-		.badge-rose-primary {
+        .badge-rose-primary {
             background-color: var(--secondary);
             color: var(--primary);
             border: 1px solid color-mix(in srgb, var(--primary) 25%, white);
@@ -1653,7 +1704,7 @@
             padding: 0.45rem 0.8rem;
             border-radius: 999px;
         }
-					 
+
         .card-body {
             border: none;
             overflow: hidden;
@@ -1686,7 +1737,7 @@
                 {
 
                 -- .form-control form-control-sm,
-                .form-select form-select-sm {
+                .form-select-2 form-select-sm {
                     border-radius: 10px;
                     border: 2px solid #f3f4f6;
                     transition: all 0.3s;
@@ -1702,7 +1753,7 @@
                 {
 
                 -- .form-control form-control-sm:focus,
-                .form-select form-select-sm:focus {
+                .form-select-2 form-select-sm:focus {
                     border-color: #9fc9f6ff;
                     box-shadow: 0 0 0 0.2rem #9fc9f6ff;
                 }
@@ -1813,7 +1864,7 @@
             outline: none;
         }
 
-        {{-- CSS-Added By Pulak --}}
+            {{-- CSS-Added By Pulak --}}
         #contractorModal .modal-body {
             overflow-y: auto !important;
             max-height: 75vh;
@@ -1832,7 +1883,7 @@
 
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script> {{-- -added by Pulak --}}
-	<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>																					  
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
     <script src="{{ asset('js/pms/road/dynamicSectionByType/script.js') }}"></script>
     <script src="{{ asset('js/pms/showModalDetail/showWorkItems.js') }}"></script>
     <script src="{{ asset('js/pms/showModalDetail/fundingAgencyDetails.js') }}"></script>
@@ -1863,6 +1914,9 @@
 
         $(document).ready(function () {
             table1 = $("#project_details_table").DataTable();
+            $('.form-select-2').select2({
+                width: '100%'
+            });
         });
 
         // open contractor modal
@@ -1952,38 +2006,38 @@
                     // reset form
                     $('#contractorForm')[0].reset();
 
-				Swal.fire({ 			
-                        icon: res.status, 
-                        title: res.status.toUpperCase(), 
-                        text: res.message, 
-                        timer: 2000 
+                    Swal.fire({
+                        icon: res.status,
+                        title: res.status.toUpperCase(),
+                        text: res.message,
+                        timer: 2000
                     })
                 },
-                error: function(xhr) {
-                        if (xhr.status === 422) {
+                error: function (xhr) {
+                    if (xhr.status === 422) {
 
-                            let errors = xhr.responseJSON.errors;
-                            let errorMsg = '';
+                        let errors = xhr.responseJSON.errors;
+                        let errorMsg = '';
 
-                            $.each(errors, function(key, value) {
-                                errorMsg += value[0] + '<br>';
-                            });
+                        $.each(errors, function (key, value) {
+                            errorMsg += value[0] + '<br>';
+                        });
 
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Validation Error',
-                                html: errorMsg
-                            });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            html: errorMsg
+                        });
 
-                        } else {
+                    } else {
 
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'ERROR',
-                                text: 'Something went wrong!'
-                            });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ERROR',
+                            text: 'Something went wrong!'
+                        });
 
-                        }
+                    }
                 }
             });
         });
@@ -1992,7 +2046,7 @@
         // save btn validation
         document.getElementById('PmsSaveBtn').closest('form').addEventListener('submit', function (e) {
 
-             const showError = (input, message) => {
+            const showError = (input, message) => {
                 if (!input) return;
 
                 const error = document.createElement("div");
@@ -2004,18 +2058,18 @@
                 input.parentNode.appendChild(error);
             };
 
-			const projectType = document.getElementById('projectTypeSelect').value;
+            const projectType = document.getElementById('projectTypeSelect').value;
 
-            document.querySelectorAll('.dynamic-error').forEach(el => el.remove());																	   
+            document.querySelectorAll('.dynamic-error').forEach(el => el.remove());
             const table = document.getElementById('refAssetTable');
             const mtnTable = document.getElementById('mtnAssetTable');
             const rowCount = table.querySelectorAll('tbody tr').length;
             const mtnRowCount = mtnTable.querySelectorAll('tbody tr').length;
-			const kmlFile = document.getElementById('road_kml_file');
+            const kmlFile = document.getElementById('road_kml_file');
             const kmlCard = document.getElementById('kmlCard');
             const newAssetsForm = document.getElementById('newAssetsForm');
-			const newRoadDetailsForm = document.getElementById('newRoadDetailsForm');
-																		 
+            const newRoadDetailsForm = document.getElementById('newRoadDetailsForm');
+
             if (projectType === 'UPG' && rowCount === 0) {
                 e.preventDefault();
                 Swal.fire({
@@ -2029,7 +2083,7 @@
 
             if (projectType === 'MTN' && mtnRowCount === 0) {
                 e.preventDefault();
-				Swal.fire({		   
+                Swal.fire({
                     title: 'Warning',
                     text: 'Please add at least one asset.',
                     icon: 'warning',
@@ -2038,7 +2092,7 @@
                 return;
             }
 
-			if(projectType === 'UPG' && newRoadDetailsForm.style.display !== 'none'){
+            if (projectType === 'UPG' && newRoadDetailsForm.style.display !== 'none') {
 
                 const road_category = document.getElementById('road_category');
                 const road_type = document.getElementById('road_type');
@@ -2078,7 +2132,7 @@
                 const roadLengthFilled = roadLengthInput.value && roadLengthInput.value.trim() !== '';
 
                 if ((roadNameEmpty || roadLengthEmpty) || (roadLengthFilled && roadNameEmpty)) {
-				let hasError = false;
+                    let hasError = false;
 
                     if (roadNameEmpty) {
                         showError(roadNameInput, "Road Name is required");
@@ -2351,12 +2405,49 @@
                         $('#detailInspectionDate').text(asset.insp_date || '-');
                         $('#detailAssetType').text(asset.asset_type_name || asset.asset_type_cd || '-');
 
-                        $('#detailMasScore').text(formatScore(asset.mas_score));
+                        //$('#detailMasScore').text(formatScore(asset.mas_score));
                         $('#detailMpsScore').text(formatScore(asset.mps_score));
                         $('#detailConditionScore').text(formatScore(asset.condition_score));
                         $('#detailCriticalityScore').text(formatScore(asset.criticality_score));
 
                         $('#maintenanceAssetDetailsMessage').text('');
+
+                        const mas = Number(asset.mas_score);
+
+                        if (asset.mas_score === null ||
+                            asset.mas_score === undefined ||
+                            asset.mas_score === '' ||
+                            !Number.isFinite(mas)) {
+
+                            $('#detailPriority').html('<span class="text-muted">Not calculated</span>');
+                            $('#detailMasScore').text('Not calculated');
+
+                        } else {
+                            let priority;
+                            let badgeClass;
+
+                            if (mas >= 70) {
+                                priority = 'Urgent';
+                                badgeClass = 'mas-urgent';
+                            } else if (mas >= 40) {
+                                priority = 'High';
+                                badgeClass = 'mas-high';
+                            } else if (mas >= 20) {
+                                priority = 'Medium';
+                                badgeClass = 'mas-medium';
+                            } else {
+                                priority = 'Low';
+                                badgeClass = 'mas-low';
+                            }
+
+                            $('#detailPriority').html(
+                                `<span class="mas-priority-badge ${badgeClass}">${priority}</span>`
+                            );
+
+                            $('#detailMasScore').html(
+                                `<span class="mas-priority-badge ${badgeClass}">${mas.toFixed(2)}</span>`
+                            );
+                        }
                     },
 
                     error: function (xhr) {
@@ -2387,5 +2478,36 @@
             });
 
         });
-        </script>
+    </script>
+    <style>
+        /* MAS score and priority badges */
+        #maintenanceAssetDetailsCard .mas-priority-badge {
+            display: inline-block;
+            padding: 5px 11px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        #maintenanceAssetDetailsCard .mas-urgent {
+            background-color: #dc3545;
+            color: #ffffff;
+        }
+
+        #maintenanceAssetDetailsCard .mas-high {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        #maintenanceAssetDetailsCard .mas-medium {
+            background-color: #17a2b8;
+            color: #ffffff;
+        }
+
+        #maintenanceAssetDetailsCard .mas-low {
+            background-color: #28a745;
+            color: #ffffff;
+        }
+    </style>
 @endpush

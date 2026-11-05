@@ -512,16 +512,23 @@ async function loadDataIntoForm(draft, changesData, workItems, itemOfWorks, docu
             const mtn = others.maintenance || {};
             const assetList = mtn.asset_dtls?.asset_list || [];
             const subAssets = mtn.sub_asset_dtls || [];
+            const maintainableIds = mtn.maintainable_asset_ids || {};
+
+            const roads = maintainableIds.roads || [];
+            const culvertIds = maintainableIds.culverts || [];
+            const bridgeIds = maintainableIds.bridges || [];
+            const wallIds = maintainableIds.retaining_walls || [];
+
+
             const rowBase = assetList.length ? assetList : ["--"];
 
             const tbody = document.querySelector("#mtnAssetTable tbody");
             if (!tbody) return;
 
             tbody.innerHTML = "";
-
             mnt_rowIndex = 0;
 
-            rowBase.forEach((road) => {
+            rowBase.forEach((road, i) => {
 
                 mnt_rowIndex++;
 
@@ -534,28 +541,48 @@ async function loadDataIntoForm(draft, changesData, workItems, itemOfWorks, docu
                 tr.innerHTML = `
                     <td>
                         <input type="hidden" name="roads_mnt${mnt_rowIndex}[]" value="${road === '--' ? '' : road}">
-                        <span class="badge bg-info me-1">${road === '--' ? 'N/A' : road}</span>
+                        <input type="hidden" name="maintainable_roads_mnt${mnt_rowIndex}[]" value="${roads.join(',')}">
+                        ${road !== '--'
+                            ? `<span class="badge bg-info me-1">${road}</span>`
+                            : ''}
+                        ${i === 0 ? (maintainableIds.roads || []).map(id => `
+                            <input type="hidden"
+                                name="road_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
                         ${(culverts || []).map(c => `
                             <input type="hidden" name="culverts_mnt_${mnt_rowIndex}[]" value="${c}">
-                            <span class="badge bg-info me-1">${c}</span>
-                        `).join("")}
+                            <span class="badge bg-info me-1">${c}</span>`).join("")}
+                            ${i === 0 ? culvertIds.map(id => `
+                                <input type="hidden"
+                                    name="culvert_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                    value="${id}">
+                            `).join("") : ""}
                     </td>
 
                     <td>
                         ${(bridges || []).map(b => `
                             <input type="hidden" name="bridges_mnt_${mnt_rowIndex}[]" value="${b}">
-                            <span class="badge bg-warning text-dark me-1">${b}</span>
-                        `).join("")}
+                            <span class="badge bg-warning text-dark me-1">${b}</span>`).join("")}
+                            ${i === 0 ? bridgeIds.map(id => `
+                            <input type="hidden"
+                                name="bridge_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                value="${id}">
+                        `).join("") : ""}
                     </td>
 
                     <td>
                         ${(retaining_walls || []).map(w => `
                             <input type="hidden" name="walls_mnt_${mnt_rowIndex}[]" value="${w}">
-                            <span class="badge bg-secondary me-1">${w}</span>
-                        `).join("")}
+                            <span class="badge bg-secondary me-1">${w}</span>`).join("")}
+                             ${i === 0 ? wallIds.map(id => `
+                                <input type="hidden"
+                                    name="wall_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                                    value="${id}">
+                            `).join("") : ""}
                     </td>
 
                     <td>
@@ -2383,12 +2410,14 @@ async function populateMaintenanceBuildingSelectSubDiv(
         select.innerHTML = '<option value="">-- Select Building --</option>';
         if (Array.isArray(data) && data.length > 0) {
             data.forEach((building) => {
-                select.add(
-                    new Option(
-                        `${building.building_name} (${building.building_system_cd})`,
-                        building.building_system_cd,
-                    ),
+                const option = new Option(
+                    `${building.building_name} (${building.building_system_cd})`,
+                    building.building_system_cd,
                 );
+
+                option.dataset.id = building.id;
+
+                select.add(option);
             });
         } else {
             select.innerHTML = '<option value="">No buildings found</option>';
@@ -2468,7 +2497,24 @@ buildingCategoryUpgradation.addEventListener("change", function () {
 });
 
 buildings.addEventListener("change", () => {
+    const selectedOption = buildings.selectedOptions[0];
     const buildingCd = document.getElementById("maintBuildings").value;
+    const maintainableAssetId = selectedOption?.dataset.id || "";
+
+    let hiddenInput = document.getElementById(
+        "maintBuildingMaintainableId"
+    );
+
+    if (!hiddenInput) {
+        hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.id = "maintBuildingMaintainableId";
+        hiddenInput.name = "maintBuildingMaintainableId";
+        buildings.form.appendChild(hiddenInput);
+    }
+
+    hiddenInput.value = maintainableAssetId;
+    
     loadBuildingDetails(buildingCd, "maint");
 });
 

@@ -66,10 +66,10 @@
     <table id="inspectionTable" class="table table-bordered bg-white" style="width:100%">
         <thead class="table-dark">
             <tr>
-                <th style="width:15%">Asset Type</th>
-                <th style="width:15%">Asset ID</th>
+                <th style="width:10%">Asset Type</th>
+                <th style="width:10%">Asset ID</th>
                 <th style="width:25%">Road Name</th>
-                <th style="width:45%">Inspection</th>
+                <th style="width:55%">Inspection</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -130,16 +130,21 @@
             }
             html += '<table class="table table-sm table-bordered mb-0 sub-table">';
             html += '<thead class="table-light"><tr>';
-            html += '<th>Inspection ID</th><th>Inspection Date</th><th style="width:140px">Actions</th>';
+            html += '<th width="25%">Inspection ID</th><th width="20%">Date</th><th width="15%">MAS Score</th><th width="40%">Actions</th>';
             html += '</tr></thead><tbody>';
 
             $.each(res.items, function (i, item) {
                 html += '<tr>';
                 html += '<td>' + esc(item.insp_cd) + '</td>';
-                html += '<td>' + esc(item.insp_date) + '</td>';
+				html += '<td>' + esc(item.insp_date) + '</td>';											   
+                html += '<td>' + esc(item.mas_score) + '</td>';
                 html += '<td>';
-                html += '<a href="' + esc(item.show_url) + '" class="btn btn-sm btn-outline-success py-0">View all details</a> ';
-                html += '<a href="' + esc(item.pdf_url) + '" class="btn btn-sm btn-outline-secondary mt-1"><i class="fa fa-file-pdf"></i> Generate Report</a>';
+                html += '<div class="btn-group" role="group">';
+                html += '<a href="' + esc(item.show_url) + '" class="btn btn-sm btn-outline-success">View</a>';
+                html += '<a href="' + esc(item.pdf_url) + '" class="btn btn-sm btn-outline-secondary ms-1">';
+                html += '<i class="fa fa-file-pdf"></i> PDF';
+                html += '</a>';
+                html += '</div>';
                 html += '</td>';
                 html += '</tr>';
             });

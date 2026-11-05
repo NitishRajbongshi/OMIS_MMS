@@ -69,7 +69,7 @@
                         Projects</small><strong>{{ number_format($dashboard['delayed_projects']) }}</strong><span>Past
                         scheduled end date</span></div>
             </article> --}}
-            <a href="{{ route('pms.project-list', ['type' => 'delayed']) }}" class="pms-kpi-link">
+			<a href="{{ route('pms.project-list', ['type' => 'delayed']) }}" class="pms-kpi-link">
                 <article class="pms-kpi pms-kpi-red">
                     <span class="pms-kpi-icon">
                         <i class="fas fa-triangle-exclamation"></i>
@@ -189,22 +189,15 @@
                     <div>
                         <h2>Contractor-wise Physical Progress</h2>
                         <p>Average physical progress across projects awarded to each contractor</p>
-                    </div>
-                    <span class="pms-panel-total">
-                        {{ $contractorProgress->count() }} Contractors
-                    </span>
+                    </div><span class="pms-panel-total">{{ $contractorProgress->count() }} Contractors</span>
                 </div>
-
                 @if ($contractorProgress->isNotEmpty())
                     <div class="pms-chart-wrap pms-chart-contractors"
-                        style="--contractor-count: {{ $contractorProgress->count() }}">
-                        <canvas id="contractorProgressChart"></canvas>
-                    </div>
+                        style="--contractor-count: {{ $contractorProgress->count() }}"><canvas
+                            id="contractorProgressChart"></canvas></div>
                 @else
-                    <div class="pms-empty-chart">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>No contractor project progress is available.</span>
-                    </div>
+                    <div class="pms-empty-chart"><i class="fas fa-chart-bar"></i><span>No contractor project progress is
+                            available.</span></div>
                 @endif
             </article>
         </section>
@@ -232,7 +225,7 @@
                 }
             };
 
-            // Script to scroll to the section after applying filters
+			// Script to scroll to the section after applying filters
             const urlParams = new URLSearchParams(window.location.search);
             const departmentId = urlParams.get('department_id');
             const contractorId = urlParams.get('contractor_id');
@@ -245,10 +238,10 @@
                     });
                 }
             }
-
+			
             new Chart(document.getElementById('projectStatusChart'), {
                 type: 'doughnut',
-
+				
                 data: {
                     labels: statusLabels,
                     datasets: [{
@@ -257,7 +250,7 @@
                         borderWidth: 0
                     }]
                 },
-
+				
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -485,18 +478,14 @@
             }
             // ////////////////////////////////
 
-
             var contractorCanvas = document.getElementById('contractorProgressChart');
-
             if (contractorCanvas) {
                 new Chart(contractorCanvas, {
                     type: 'horizontalBar',
-
                     data: {
                         labels: contractorData.map(function(row) {
                             return row.name;
                         }),
-
                         datasets: [{
                             label: 'Physical Progress',
                             data: contractorData.map(function(row) {
@@ -506,15 +495,12 @@
                             borderWidth: 0
                         }]
                     },
-
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-
                         legend: {
                             display: false
                         },
-
                         scales: {
                             xAxes: [{
                                 ticks: {
@@ -528,7 +514,6 @@
                                     color: '#edf1f5'
                                 }
                             }],
-
                             yAxes: [{
                                 gridLines: {
                                     display: false
@@ -538,49 +523,14 @@
                                 }
                             }]
                         },
-
                         tooltips: {
                             callbacks: {
                                 label: function(item) {
                                     var row = contractorData[item.index];
-
-                                    return ' ' + item.xLabel + '% (' +
-                                        row.projects + ' project' +
-                                        (row.projects === 1 ? '' : 's') + ')';
+                                    return ' ' + item.xLabel + '% (' + row.projects + ' project' + (row
+                                        .projects === 1 ? '' : 's') + ')';
                                 }
                             }
-                        },
-
-                        // Click contractor bar to view their projects
-                        onClick: function(event, elements) {
-
-                            if (!elements || elements.length === 0) {
-                                return;
-                            }
-
-                            // Chart.js 2.x
-                            var index = elements[0]._index;
-
-                            var contractor = contractorData[index];
-
-                            if (!contractor || !contractor.contractor_id) {
-                                console.error('Contractor ID not found:', contractor);
-                                return;
-                            }
-
-                            var url = "{{ route('pms.project-list', ['type' => '__TYPE__']) }}"
-                                .replace('__TYPE__', 'contractor');
-
-                            url += '?contractor_id=' +
-                                encodeURIComponent(contractor.contractor_id);
-
-                            window.location.href = url;
-                        },
-
-                        // Pointer cursor when hovering over contractor bars
-                        onHover: function(event, elements) {
-                            event.target.style.cursor =
-                                elements.length ? 'pointer' : 'default';
                         }
                     }
                 });
