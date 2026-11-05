@@ -430,7 +430,9 @@ class PmsController extends Controller
             ->join('projects.prt_maintainable_assets as m', 'rd.rd_system_id', '=', 'm.asset_cd')
             ->where('rcm.sub_division_cd', $sub_division_cd)
             ->where('m.asset_type_cd', 10)
+			->where('flag','0')
             ->select(
+			'm.id',
                 'rd.rd_system_id',
                 'rd.rd_name',
                 'rd.rd_number',
@@ -457,8 +459,9 @@ class PmsController extends Controller
             ->join('projects.prt_maintainable_assets as m', 'p.rd_pavement_cd', '=', 'm.asset_cd');
 
         $pavements = $applyCommonFilter($pavements)
-            ->select('p.rd_pavement_cd', 'm.parent_asset_cd')
+            ->select('m.id','p.rd_pavement_cd', 'm.parent_asset_cd')
             ->where('m.asset_type_cd', 2)
+			->where('flag','0')
             ->get();
 
 
@@ -473,10 +476,12 @@ class PmsController extends Controller
 
         $walls = $applyCommonFilter($walls)
             ->select(
-                DB::raw('CAST(w.protection_wall_cd AS TEXT) as protection_wall_cd'),
+			'm.id',
+               DB::raw('CAST(w.protection_wall_cd AS TEXT) as protection_wall_cd'),
                 'm.parent_asset_cd'
             )
             ->where('m.asset_type_cd', 16)
+			->where('flag','0')
             ->get();
 
 
@@ -484,8 +489,9 @@ class PmsController extends Controller
             ->join('projects.prt_maintainable_assets as m', 'b.rd_bridge_cd', '=', 'm.asset_cd');
 
         $bridges = $applyCommonFilter($bridges)
-            ->select('b.bridge_name', 'b.rd_bridge_cd', 'm.parent_asset_cd')
+            ->select('m.id', 'b.bridge_name', 'b.rd_bridge_cd', 'm.parent_asset_cd')
             ->where('m.asset_type_cd', 1)
+			->where('flag','0')
             ->get();
 
 
@@ -493,8 +499,9 @@ class PmsController extends Controller
             ->join('projects.prt_maintainable_assets as m', 'c.rd_cdwork_cd', '=', 'm.asset_cd');
 
         $culverts = $applyCommonFilter($culverts)
-            ->select('c.rd_cdwork_cd', 'c.culvert_no', 'm.parent_asset_cd')
+            ->select('m.id', 'c.rd_cdwork_cd', 'c.culvert_no', 'm.parent_asset_cd')
             ->where('m.asset_type_cd', 0)
+            ->where('flag','0')
             ->get();
 
       
@@ -508,7 +515,6 @@ class PmsController extends Controller
     }
 
     
-
     public function getMaintenanceBuildingsbysubdivision($catCd, $sub_division_cd)
     {
         if ($catCd == 0) {
@@ -525,12 +531,14 @@ class PmsController extends Controller
                 'm.asset_cd'
             )
             ->select(
+			'm.id',
                 'b.building_system_cd',
                 DB::raw("$column as building_name")
             )
             ->where('b.sub_division_cd', $sub_division_cd)
             ->where('b.building_class_cd', $catCd)
             ->where('m.asset_type_cd', 5)
+			->where('flag','0')
             ->distinct()
             ->get();
 
@@ -576,6 +584,7 @@ class PmsController extends Controller
             )
             ->where('created_at_office_cd', $officeId)
             ->where('m.asset_type_cd', 6)
+			->where('flag','0')
             ->select(
                 'v.vehicle_asset_cd',
                 'v.vehicle_name'
@@ -702,6 +711,7 @@ class PmsController extends Controller
             )
             ->where('created_at_office_cd', $officeId)
             ->where('m.asset_type_cd', 7)
+			->where('flag','0')				   
             ->select(
                 'e.euipment_cd',
                 'e.equipment_name'
@@ -1114,14 +1124,14 @@ class PmsController extends Controller
                 }
             }
             $subItems = $request->sub_items ?? [];
-
+			
             if (is_string($subItems)) {
                 $subItems = json_decode($subItems, true);
             }
-
+			
             //dd($subItems);
             if (!empty($subItems) && is_array($subItems)) {
-
+				
                 foreach ($subItems as $item_cd => $subItemList) {  // item_cd = 2
 
                     foreach ($subItemList as $key => $subData) {   // sub_item1, sub_item2, sub_item3
@@ -1261,21 +1271,21 @@ class PmsController extends Controller
         if ($request->hasFile('designDoc')) {
             $file = $request->file('designDoc');
             $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                ->where('doc_catg_descr', 'Design Document')->get()->first();
+                ->where('doc_catg_descr', 'Design Document')->get()->first();		 
             $extension = $file->getClientOriginalExtension();
             $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_2.pdf';
             $folderPath = $configPath . now()->year;
-
+			
             // Use the 'external' disk to store the file
             if (!Storage::disk('external')->exists($folderPath)) {
                 Storage::disk('external')->makeDirectory($folderPath, 0775, true, true);
             }
-
+			
             // Store the file using the 'external' disk
             $filePath = $file->storeAs($folderPath, $uniqueFileName, 'external');
             // Combine the root path and folder path to get the complete file path
             $completeFilePath = $rootPath . '/' . $filePath;
-
+			
             PrtProjectDocumentDetail::create([
                 'project_cd' => $project_cd,
                 'file_path' => $completeFilePath,
@@ -1321,7 +1331,7 @@ class PmsController extends Controller
         if ($request->hasFile('projectPlan')) {
             $file = $request->file('projectPlan');
             $docCatg = AssetMasterDocumentCategory::select('doc_catg_cd')
-                ->where('doc_catg_descr', 'Project Plan')->get()->first();
+                ->where('doc_catg_descr', 'Project Plan')->get()->first();		  
             $extension = $file->getClientOriginalExtension();
             $uniqueFileName = $randomCode . '_' . $docCatg['doc_catg_cd'] . '_4.pdf';
             $folderPath = $configPath . now()->year;
@@ -1364,20 +1374,20 @@ class PmsController extends Controller
         try {
             // Get sub-asset codes
             $culvert_cd = DB::table('asset_master_road_sub_assets')
-                ->where('sub_assets_descr', $culvert)
-                ->value('sub_asset_cd');
+                        ->where('sub_assets_descr', $culvert)
+                        ->value('sub_asset_cd');
 
             $bridge_cd = DB::table('asset_master_road_sub_assets')
-                ->where('sub_assets_descr', $bridge)
-                ->value('sub_asset_cd');
+                        ->where('sub_assets_descr', $bridge)
+                        ->value('sub_asset_cd');
 
             $rtw_cd = DB::table('asset_master_road_sub_assets')
-                ->where('sub_assets_descr', $retain_wall)
-                ->value('sub_asset_cd');
+                    ->where('sub_assets_descr', $retain_wall)
+                    ->value('sub_asset_cd');
 
             $pvm_cd = DB::table('asset_master_road_sub_assets')
-                ->where('sub_assets_descr', $pavements)
-                ->value('sub_asset_cd');
+                    ->where('sub_assets_descr', $pavements)
+                    ->value('sub_asset_cd');
 
             // Insert culverts
             foreach ($culvert_starts as $index => $start_chainage) {
@@ -1533,20 +1543,20 @@ class PmsController extends Controller
 
             // Convert predecessor item codes → names
             $result = $items->map(function ($item) {
-
+				
                 // default empty
                 $predecessorNames = [];
-
+				
                 if (!empty($item->pre_code)) {
-
+					
                     // convert "1,2,4" → array
                     $codes = explode(',', $item->pre_code);
-
+					
                     // fetch names for these item_cd's
                     $predecessorNames = DB::table('projects.prm_item_of_work')
-                        ->whereIn('item_cd', $codes)
-                        ->pluck('item_name')
-                        ->toArray();
+                                        ->whereIn('item_cd', $codes)
+                                        ->pluck('item_name')
+                                        ->toArray();
                 }
 
                 return [
@@ -1555,7 +1565,7 @@ class PmsController extends Controller
                     'start_date' => $item->start_date,
                     'end_date' => $item->end_date,
                     'item_cd' => $item->item_cd,
-
+					
                     // return names instead of codes
                     'predecessor' => $predecessorNames
                 ];

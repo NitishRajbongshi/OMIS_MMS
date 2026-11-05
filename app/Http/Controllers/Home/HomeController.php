@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OfficeDetail;
 use App\Models\User;
 use App\Models\UserMenuDetail;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
@@ -75,33 +76,168 @@ class HomeController extends Controller
         }
     }
 
-    public function maintenanceLanding()
+    public function maintenanceLanding(Request $request)
     {
         try {
+            /*
+             * MMIS dashboard:
+             * - An inspection is considered assessed when it has an ACTIVE score row.
+             * - Assets are counted distinctly by asset type + asset ID.
+             * - MAS/MPS averages are calculated only from ACTIVE score rows.
+             */
+            $inspectionQuery = DB::table('maintenance.mtn_inspection_details as i')
+                ->leftJoin(
+                    'maintenance.master_mtn_inspection_types as it',
+                    'it.inspection_type_cd',
+                    '=',
+                    'i.insp_type_cd'
+                )
+                ->leftJoin(
+                    'public.asset_master_road_sub_assets as ast',
+                    'ast.sub_asset_cd',
+                    '=',
+                    'i.insp_asset_type'
+                )
+                ->leftJoin('maintenance.mtn_inspection_score as s', function ($join) {
+                    $join->on('s.inspection_id', '=', 'i.id')
+                        ->where('s.status', '=', 'ACTIVE');
+                });
+
+            $totalInspections = (clone $inspectionQuery)->count('i.id');
+
+            $assessedInspections = (clone $inspectionQuery)
+                ->whereNotNull('s.id')
+                ->distinct('i.id')
+                ->count('i.id');
+
+            $pendingInspections = max($totalInspections - $assessedInspections, 0);
+
+            $assetCount = (clone $inspectionQuery)
+                ->whereNotNull('i.insp_asset_id')
+                ->selectRaw("COUNT(DISTINCT (COALESCE(i.insp_asset_type, '') || ':' || i.insp_asset_id)) AS aggregate")
+                ->value('aggregate');
+
+            $scoreSummary = DB::table('maintenance.mtn_inspection_score')
+                ->where('status', 'ACTIVE')
+                ->selectRaw('COUNT(*) AS scored_count')
+                ->selectRaw('ROUND(AVG(mas_score)::numeric, 2) AS average_mas')
+                ->selectRaw('ROUND(AVG(mps_score)::numeric, 2) AS average_mps')
+                ->selectRaw('ROUND(AVG(condition_score)::numeric, 2) AS average_condition_score')
+                ->selectRaw('ROUND(AVG(criticality_score)::numeric, 2) AS average_criticality_score')
+                ->first();
+
+            $dashboard = [
+                'total_inspections' => (int) $totalInspections,
+                'assessed_inspections' => (int) $assessedInspections,
+                'pending_inspections' => (int) $pendingInspections,
+                'assessed_assets' => (int) ($assetCount ?: 0),
+                'average_mas' => (float) ($scoreSummary->average_mas ?? 0),
+                'average_mps' => (float) ($scoreSummary->average_mps ?? 0),
+                'average_condition_score' => (float) ($scoreSummary->average_condition_score ?? 0),
+                'average_criticality_score' => (float) ($scoreSummary->average_criticality_score ?? 0),
+            ];
+
+            // Assessment workflow distribution: assessed vs not yet scored.
+            $assessmentStatus = [
+                'Assessed' => (int) $assessedInspections,
+                'Pending Assessment' => (int) $pendingInspections,
+            ];
+
+            // Monthly inspection records for the last 12 calendar months.
+            $monthStart = now()->startOfMonth()->subMonths(11);
+            $monthEnd = now()->endOfMonth();
+
+            $monthlyCounts = DB::table('maintenance.mtn_inspection_details')
+                ->selectRaw("DATE_TRUNC('month', created_at)::date AS month_start")
+                ->selectRaw('COUNT(*) AS total')
+                ->whereNotNull('created_at')
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->groupByRaw("DATE_TRUNC('month', created_at)")
+                ->get()
+                ->keyBy(function ($row) {
+                    return Carbon::parse($row->month_start)->format('Y-m');
+                });
+
+            $monthlyInspections = collect(range(0, 11))->map(function ($offset) use ($monthStart, $monthlyCounts) {
+                $month = $monthStart->copy()->addMonths($offset);
+                $record = $monthlyCounts->get($month->format('Y-m'));
+
+                return [
+                    'label' => $month->format('M Y'),
+                    'count' => (int) ($record->total ?? 0),
+                ];
+            })->values();
+
+            // Asset-category distribution based on recorded inspections.
+            $assetTypeBreakdown = DB::table('maintenance.mtn_inspection_details as i')
+                ->leftJoin(
+                    'public.asset_master_road_sub_assets as ast',
+                    'ast.sub_asset_cd',
+                    '=',
+                    'i.insp_asset_type'
+                )
+                ->selectRaw("COALESCE(ast.sub_assets_descr, i.insp_asset_type, 'Unspecified') AS asset_type")
+                ->selectRaw('COUNT(*) AS total')
+                ->groupBy('ast.sub_assets_descr', 'i.insp_asset_type')
+                ->orderByDesc('total')
+                ->get();
+
+            // Latest inspection records, including their calculated scores where available.
+            $recentInspections = DB::table('maintenance.mtn_inspection_details as i')
+                ->leftJoin(
+                    'public.asset_master_road_sub_assets as ast',
+                    'ast.sub_asset_cd',
+                    '=',
+                    'i.insp_asset_type'
+                )
+                ->leftJoin('maintenance.mtn_inspection_score as s', function ($join) {
+                    $join->on('s.inspection_id', '=', 'i.id')
+                        ->where('s.status', '=', 'ACTIVE');
+                })
+                ->select(
+                    'i.id',
+                    'i.insp_cd',
+                    'i.insp_date',
+                    'i.insp_asset_id',
+                    'i.insp_asset_location',
+                    'i.insp_asset_type',
+                    'i.created_at',
+                    'ast.sub_assets_descr as asset_type_name',
+                    's.mas_score',
+                    's.mps_score'
+                )
+                ->orderByRaw('COALESCE(i.insp_date, i.created_at) DESC NULLS LAST')
+                ->limit(8)
+                ->get();
+
             $maintenanceLinks = [
                 [
-                    'title' => 'Create Maintenance Project',
-                    'subtitle' => 'Start maintenance project entry for roads, buildings, vehicles or equipment',
-                    'route' => url()->current(), #route('#'),
-                    'icon' => 'fas fa-file-circle-plus',
+                    'title' => 'Maintenance Assessment',
+                    'subtitle' => 'Create inspections and calculate MAS/MPS for maintainable assets',
+                    'route' => url('/maintenance-management/maintenance-assessment'),
+                    'icon' => 'fas fa-gauge-high',
                 ],
                 [
-                    'title' => 'Project List',
-                    'subtitle' => 'Open project monitoring records and progress details',
-                    'route' => url()->current(), #route('pms.project.list'),
-                    'icon' => 'fas fa-list-check',
-                ],
-                [
-                    'title' => 'Completion Report',
-                    'subtitle' => 'Review completion reports and movement status',
-                    'route' => url()->current(), #route('project.pms-completion-report'),
+                    'title' => 'Completed Assessments',
+                    'subtitle' => 'Review completed maintenance assessments and saved scores',
+                    'route' => url('/maintenance-management/completed-maintenance-assessments'),
                     'icon' => 'fas fa-clipboard-check',
                 ],
             ];
 
-            return view('maintenance.landing', compact('maintenanceLinks'));
+            return view('maintenance.landing', compact(
+                'dashboard',
+                'assessmentStatus',
+                'monthlyInspections',
+                'assetTypeBreakdown',
+                'recentInspections',
+                'maintenanceLinks'
+            ));
         } catch (Exception $e) {
-            Log::error("message: " . $e->getMessage());
+            Log::error('MMIS dashboard error: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
             return view('error');
         }
     }
@@ -412,7 +548,6 @@ class HomeController extends Controller
                     $firstProject = $contractorProjects->first();
 
                     return [
-                        'contractor_id' => $firstProject->project_awarded_to,
                         'name' => $firstProject->contractor_name
                             ?: $firstProject->project_awarded_to,
                         'progress' => round(
@@ -471,11 +606,11 @@ class HomeController extends Controller
             // Department dropdown
             $departments = DB::table('public.department_details')
                 ->select('id', 'department_name')
-                ->whereNotIn('id', ['16', '18', '19', '20'])
+				->whereNotIn('id', ['16', '18', '19', '20'])											
                 ->orderBy('precedence_order')
                 ->orderBy('department_name')
                 ->get();
-            Log::info("departments: " . $departments);
+            Log::info("departments: ". $departments);
             // Contractor dropdown: only contractors with projects
             // in the selected department, or all contractors if
             // no department has been selected.

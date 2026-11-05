@@ -149,7 +149,7 @@
                     <div class="fs-2 fw-bold text-danger">
                         {{ $urgentCount }}
                     </div>
-                    <small class="text-muted">MPS ≥ 70</small>
+                    <small class="text-muted">MAS ≥ 70</small>
                 </div>
             </div>
         </div>
@@ -161,7 +161,7 @@
                     <div class="fs-2 fw-bold text-warning">
                         {{ $highCount }}
                     </div>
-                    <small class="text-muted">MPS 40–69.99</small>
+                    <small class="text-muted">MAS 40–69.99</small>
                 </div>
             </div>
         </div>
@@ -508,6 +508,14 @@
 </div>
 
 @push('scripts')
+{{-- DataTables export dependencies: CSV and PDF --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
 <script>
 $(document).ready(function () {
 
@@ -525,6 +533,50 @@ $(document).ready(function () {
                 ],
                 responsive: true,
                 autoWidth: false,
+
+                // Export the current table's filtered rows, excluding the Action column.
+                dom: '<"assessment-table-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"Blf>rt<"d-flex flex-wrap justify-content-between align-items-center mt-3"ip>',
+                buttons: [
+                    {
+                        extend: 'csvHtml5',
+                        text: '<i class="fa fa-file-csv"></i> Export CSV',
+                        className: 'btn btn-sm btn-outline-success',
+                        title: 'Completed_Maintenance_Assessments',
+                        exportOptions: {
+                            columns: ':not(:last-child)',
+                            modifier: {
+                                search: 'applied',
+                                order: 'applied'
+                            }
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="fa fa-file-pdf"></i> Export PDF',
+                        className: 'btn btn-sm btn-outline-danger',
+                        title: 'Completed Maintenance Assessments',
+                        filename: 'Completed_Maintenance_Assessments',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        exportOptions: {
+                            columns: ':not(:last-child)',
+                            modifier: {
+                                search: 'applied',
+                                order: 'applied'
+                            }
+                        },
+                        customize: function (doc) {
+                            doc.defaultStyle.fontSize = 8;
+                            doc.styles.tableHeader.fontSize = 9;
+                            doc.styles.title.fontSize = 14;
+                            doc.pageMargins = [20, 25, 20, 25];
+                            doc.content[1].table.widths = [
+                                '10%', '11%', '10%', '13%', '17%', '12%', '8%', '19%'
+                            ];
+                        }
+                    }
+                ],
+
                 language: {
                     search: "Search:",
                     lengthMenu: "Show _MENU_ records",

@@ -163,7 +163,7 @@ class ProjectManagementmodifyController extends Controller
                     project_details.project_start_date
                     + (project_details.project_end_date - project_details.project_start_date) / 2
                 )
-            ")			
+            ")
             ->get();
 			//by dipshikha
         foreach ($projects as $project) {
@@ -449,11 +449,39 @@ class ProjectManagementmodifyController extends Controller
                 $bridgeData = [];
                 $wallData = [];
 
+                $roadMaintainableIds = [];
+                $culvertMaintainableIds = [];
+                $bridgeMaintainableIds = [];
+                $wallMaintainableIds = [];
+
+
+
                 for ($i = 1; $i <= $rows; $i++) {
                     $roads = array_filter($request->input("roads_mnt$i", []));
                     $culverts = array_filter($request->input("culverts_mnt_$i", []));
                     $bridges = array_filter($request->input("bridges_mnt_$i", []));
                     $walls = array_filter($request->input("walls_mnt_$i", []));
+
+                    $roadMaintainableIds = array_merge(
+                        $roadMaintainableIds,
+                        array_filter($request->input("road_maintainable_ids_mnt_$i", []))
+                    );
+
+                    $culvertMaintainableIds = array_merge(
+                        $culvertMaintainableIds,
+                        array_filter($request->input("culvert_maintainable_ids_mnt_$i", []))
+                    );
+
+                    $bridgeMaintainableIds = array_merge(
+                        $bridgeMaintainableIds,
+                        array_filter($request->input("bridge_maintainable_ids_mnt_$i", []))
+                    );
+
+                    $wallMaintainableIds = array_merge(
+                        $wallMaintainableIds,
+                        array_filter($request->input("wall_maintainable_ids_mnt_$i", []))
+                    );
+
 
                     if (!empty($roads)) {
                         $roadData = array_merge($roadData, $roads);
@@ -476,6 +504,55 @@ class ProjectManagementmodifyController extends Controller
                 $culvertData = array_values(array_unique($culvertData));
                 $bridgeData = array_values(array_unique($bridgeData));
                 $wallData = array_values(array_unique($wallData));
+
+                $roadMaintainableIds = array_values(array_unique($roadMaintainableIds));
+                $culvertMaintainableIds = array_values(array_unique($culvertMaintainableIds));
+                $bridgeMaintainableIds = array_values(array_unique($bridgeMaintainableIds));
+                $wallMaintainableIds = array_values(array_unique($wallMaintainableIds));
+
+                $maintainableIds = [
+                    'roads' => $roadMaintainableIds,
+                    'culverts' => $culvertMaintainableIds,
+                    'bridges' => $bridgeMaintainableIds,
+                    'retaining_walls' => $wallMaintainableIds,
+                ];
+
+                $existingDraft = DB::table('projects.prt_project_details_draft')
+                    ->where('project_cd', $request->project_cd)
+                    ->first();
+
+                $existingOthers = $existingDraft
+                    ? json_decode($existingDraft->others ?? '{}', true)
+                    : [];
+
+                $oldMaintainableIds =
+                    $existingOthers['maintenance']['maintainable_asset_ids'] ?? [];
+
+                // Identify only IDs newly added in this update.
+                $newIds = [];
+
+                foreach ($maintainableIds as $type => $ids) {
+                    $oldIds = array_map(
+                        'strval',
+                        $oldMaintainableIds[$type] ?? []
+                    );
+
+                    $newIds = array_merge(
+                        $newIds,
+                        array_values(array_filter(
+                            $ids,
+                            fn($id) => !in_array((string) $id, $oldIds, true)
+                        ))
+                    );
+                }
+
+                $newIds = array_values(array_unique($newIds));
+
+                if (!empty($newIds)) {
+                    DB::table('projects.prt_maintainable_assets')
+                        ->whereIn('id', $newIds)
+                        ->update(['flag' => '1']);
+                }
 
                 $subAssets = [];
 
@@ -511,6 +588,7 @@ class ProjectManagementmodifyController extends Controller
 
                 $maintenance = array_filter([
                     "asset_dtls" => $assetDtls,
+                    'maintainable_asset_ids' => $maintainableIds,
                     "sub_asset_dtls" => !empty($subAssets) ? $subAssets : null
                 ], fn($value) => !is_null($value));
 
@@ -842,10 +920,44 @@ class ProjectManagementmodifyController extends Controller
             }
             if ($request->projectTypeSelectHidden === 'MTN' && $request->owner_dept_cd_hidden == '6'){
                 $buildingId = $request->input('maintBuildings');
-                $mtn = [
-                    'building_id' => $buildingId
+                $maintainableAssetId = $request->input('maintBuildingMaintainableId');
+
+                $newMaintainableIds = !empty($maintainableAssetId)
+                    ? [(int) $maintainableAssetId]
+                    : [];
+
+                $existingDraft = DB::table('projects.prt_project_details_draft')
+                    ->where('project_cd', $request->project_cd)
+                    ->first();
+
+                $existingOthers = $existingDraft
+                    ? json_decode($existingDraft->others ?? '{}', true)
+                    : [];
+
+                $oldMaintainableIds =
+                    $existingOthers['maintenance']['maintainable_asset_ids']['buildings'] ?? [];
+
+                $oldIds = array_map('strval', $oldMaintainableIds);
+
+                // Identify only newly added IDs
+                $newIds = array_values(array_filter(
+                    $newMaintainableIds,
+                    fn($id) => !in_array((string) $id, $oldIds, true)
+                ));
+
+                // Set newly selected building flag to 1
+                if (!empty($newIds)) {
+                    DB::table('projects.prt_maintainable_assets')
+                        ->whereIn('id', $newIds)
+                        ->update(['flag' => '1']);
+                }
+
+                $maintenance = [
+                    'building_id' => $buildingId,
+                    'maintainable_asset_ids' => [
+                        'buildings' => $newMaintainableIds
+                    ]
                 ];
-                $maintenance = $mtn;
 
                 if (!empty($maintenance)) {
                     $changesApplied['others']['maintenance'] = $maintenance;
@@ -1006,6 +1118,52 @@ class ProjectManagementmodifyController extends Controller
                 'reject_reason' => 'required|string|max:255',
             ]);
 
+            $modification = DB::table('projects.prt_project_modification_request_details')
+                ->where('request_id', $request->request_id)
+                ->first();
+
+            if (!$modification) {
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Modification request not found.',
+                ], 404);
+            }
+
+            $changesApplied = json_decode($modification->changes_applied ?? '{}',true);
+
+            if (!is_array($changesApplied)) {
+                $changesApplied = [];
+            }
+
+            $maintainableIds = $changesApplied['others']['maintenance']
+                ['maintainable_asset_ids'] ?? [];
+
+            $newIds = [];
+
+            foreach ($maintainableIds as $assetType => $ids) {
+                if (is_array($ids)) {
+                    $newIds = array_merge($newIds, $ids);
+                }
+            }
+
+            $newIds = array_values(array_unique(array_filter(
+                $newIds,
+                function ($id) {
+                    return $id !== null && $id !== '';
+                }
+            )));
+
+            if (!empty($newIds)) {
+                DB::table('projects.prt_maintainable_assets')
+                    ->whereIn('id', $newIds)
+                    ->update([
+                        'flag' => '0',
+                    ]);
+            }
+
+
             $updated = DB::table('projects.prt_project_modification_request_details')
                 ->where('request_id', $request->request_id)
                 ->update([
@@ -1024,6 +1182,7 @@ class ProjectManagementmodifyController extends Controller
                     'message' => 'Request not found.'
                 ]);
             }
+
 
             DB::table('projects.prt_project_document_details')
             ->where('request_id', $request->request_id)
@@ -2410,6 +2569,37 @@ class ProjectManagementmodifyController extends Controller
                         $othersInfo['road_geojson_file']
                     );
 
+                    $oldOthersInfo = json_decode($project->others ?? '{}', true) ?: [];
+
+                    $oldMaintainableIds = $oldOthersInfo['maintenance']['maintainable_asset_ids'] ?? [];
+
+                    // Get maintainable IDs from the approved data
+                    $approvedMaintainableIds = $othersInfo['maintenance']['maintainable_asset_ids'] ?? [];
+
+                    $oldIds = [];
+
+                    foreach ($oldMaintainableIds as $ids) {
+                        $oldIds = array_merge($oldIds, $ids ?? []);
+                    }
+
+                    $approvedIds = [];
+
+                    foreach ($approvedMaintainableIds as $ids) {
+                        $approvedIds = array_merge($approvedIds, $ids ?? []);
+                    }
+
+                    $oldIds = array_values(array_unique(array_map('strval', $oldIds)));
+                    $approvedIds = array_values(array_unique(array_map('strval', $approvedIds)));
+
+                    // IDs removed in the approved version
+                    $removedIds = array_diff($oldIds, $approvedIds);
+
+                    if (!empty($removedIds)) {
+                        DB::table('projects.prt_maintainable_assets')
+                            ->whereIn('id', $removedIds)
+                            ->update(['flag' => '0']);
+                    }
+
                     // No merge required
                     $updateData['others'] = json_encode($othersInfo);
                 }
@@ -2424,6 +2614,43 @@ class ProjectManagementmodifyController extends Controller
                         $existingOthers = json_decode($project->others, true) ?? [];
                         $mergedOthers = array_merge($existingOthers, $othersInfo);
                         $updateData['others'] = json_encode($mergedOthers);
+					} elseif ($project->project_type_cd == 'MTN') {
+
+                        $oldOthersInfo = json_decode($project->others ?? '{}', true) ?: [];
+
+                        $oldMaintainableIds = $oldOthersInfo['maintenance']['maintainable_asset_ids'] ?? [];
+
+                        $approvedMaintainableIds = $othersInfo['maintenance']['maintainable_asset_ids'] ?? [];
+
+
+                        $oldIds = [];
+
+                        foreach ($oldMaintainableIds as $ids) {
+                            $oldIds = array_merge($oldIds, $ids ?? []);
+                        }
+
+                        $approvedIds = [];
+
+                        foreach ($approvedMaintainableIds as $ids) {
+                            $approvedIds = array_merge($approvedIds, $ids ?? []);
+                        }
+
+                        $oldIds = array_values(array_unique(array_map('strval', $oldIds)));
+                        $approvedIds = array_values(array_unique(array_map('strval', $approvedIds)));
+
+                        // IDs removed in approved version
+                        $removedIds = array_diff($oldIds, $approvedIds);
+
+                        if (!empty($removedIds)) {
+                            DB::table('projects.prt_maintainable_assets')
+                                ->whereIn('id', $removedIds)
+                                ->update(['flag' => '0']);
+                        }
+
+                        $updateData['others'] = json_encode($othersInfo);
+
+
+
                     } else {
                         $updateData['others'] = json_encode($othersInfo);
                     }
@@ -2632,7 +2859,6 @@ class ProjectManagementmodifyController extends Controller
             }
 
             $project->update($updateData);
-			\Log::info('Update Data:', $updateData);
 
             DB::commit();
 

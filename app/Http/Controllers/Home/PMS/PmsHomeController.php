@@ -15,7 +15,7 @@ class PmsHomeController extends Controller
     public function projectList(string $type)
     {
         try {
-            if (!in_array($type, ['total', 'delayed', 'completed', 'ongoing', 'contractor'], true)) {
+            if (!in_array($type, ['total', 'delayed', 'completed', 'ongoing'], true)) {
                 abort(404);
             }
 
@@ -103,11 +103,13 @@ class PmsHomeController extends Controller
 
             // Apply the selected listing type.
             if ($type === 'completed') {
+
                 // Physical progress is 100% or above.
                 $projectsQuery->whereRaw(
                     'COALESCE(progress.physical_progress, 0) >= 100'
                 );
             } elseif ($type === 'delayed') {
+
                 // Scheduled end date has passed and project is incomplete.
                 $projectsQuery
                     ->whereNotNull('p.project_end_date')
@@ -116,6 +118,7 @@ class PmsHomeController extends Controller
                         'COALESCE(progress.physical_progress, 0) < 100'
                     );
             } elseif ($type === 'ongoing') {
+
                 // Project has started, is incomplete, and is not delayed.
                 $projectsQuery
                     ->whereRaw('COALESCE(progress.physical_progress, 0) > 0')
@@ -130,18 +133,6 @@ class PmsHomeController extends Controller
                     });
             }
 
-            // Filter projects by contractor.
-            if ($type === 'contractor') {
-                $contractorId = request()->query('contractor_id');
-                if (empty($contractorId)) {
-                    abort(404);
-                }
-                $projectsQuery->where(
-                    'p.project_awarded_to',
-                    $contractorId
-                );
-            }
-
             $projects = $projectsQuery
                 ->orderBy('p.project_end_date', 'desc')
                 ->paginate(20);
@@ -151,7 +142,6 @@ class PmsHomeController extends Controller
                 'completed' => 'Completed Projects',
                 'ongoing' => 'Ongoing Projects',
                 'delayed' => 'Delayed Projects',
-                'contractor' => 'Contractor Projects',
             };
 
             return view('pms.dashboard.project-list', compact(

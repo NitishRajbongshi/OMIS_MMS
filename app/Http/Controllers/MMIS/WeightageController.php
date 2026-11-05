@@ -5,7 +5,7 @@ namespace App\Http\Controllers\MMIS;
 use App\Http\Controllers\Controller;
 use Exception;
 use GuzzleHttp\Client;
-use Carbon\Carbon;				  
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +42,7 @@ class WeightageController extends Controller
         try {
 
            $parameters = DB::table('maintenance.master_mtn_parameter_master')
-            ->select('id', 'parameter_code','parameter_name','description')
+            ->select('id', 'parameter_code','parameter_name','parameter_type','parameter_category','description')
             ->get();
 
             return view('mmis.parameter-weightage.master', compact('parameters'));
@@ -92,6 +92,8 @@ class WeightageController extends Controller
             return response()->json([]);
         }
 
+        $today = now()->toDateString();
+
         $parameters = DB::table('maintenance.master_set_of_mtn_parameters_dept_wise as parameter_set')
             ->join(
                 'maintenance.master_mtn_parameter_master as parameter',
@@ -108,6 +110,10 @@ class WeightageController extends Controller
             )
             ->where('parameter_set.dept_cd', $department)
             ->where('parameter_set.asset_type_cd', $asset)
+            ->whereNotNull('parameter_set.valid_from')
+            ->whereNotNull('parameter_set.valid_to')
+            ->whereDate('parameter_set.valid_from', '<=', $today)
+            ->whereDate('parameter_set.valid_to', '>=', $today)
             ->select(
                 'parameter_set.id as parameter_set_id',
                 'parameter.id as parameter_id',
@@ -123,53 +129,97 @@ class WeightageController extends Controller
     public function saveWeightage(Request $request)
     {
         try {
-
             $weightages = $request->weightages;
             $histRemark = $request->hist_remark;
 
-            foreach ($weightages as $weightage) {
+            DB::transaction(function () use ($weightages, $histRemark) {
 
-                $existing = DB::table('maintenance.master_each_mtn_parameters_weightage')
-                    ->where('mtn_parameter_set_id', $weightage['parameter_set_id'])
-                    ->where('parameter_id', $weightage['parameter_id'])
-                    ->first();
+                foreach ($weightages as $weightage) {
 
-                if ($existing) {
+                    // Get mapping details
+                    $mapping = DB::table(
+                        'maintenance.master_set_of_mtn_parameters_dept_wise'
+                    )
+                        ->where('id', $weightage['parameter_set_id'])
+                        ->first();
 
-                    DB::table('maintenance.master_each_mtn_parameters_weightage_hist')
-                        ->insert([
+                    if (!$mapping) {
+                        throw new Exception('Parameter mapping not found.');
+                    }
+
+                    // Reuse or generate reference_id for the same
+                    // department, asset and validity period
+                    $referenceId = DB::table(
+                        'maintenance.master_each_mtn_parameters_weightage as w'
+                    )
+                        ->join(
+                            'maintenance.master_set_of_mtn_parameters_dept_wise as m',
+                            'm.id',
+                            '=',
+                            'w.mtn_parameter_set_id'
+                        )
+                        ->where('m.dept_cd', $mapping->dept_cd)
+                        ->where('m.asset_type_cd', $mapping->asset_type_cd)
+                        ->whereDate('m.valid_from', $mapping->valid_from)
+                        ->whereDate('m.valid_to', $mapping->valid_to)
+                        ->whereNotNull('w.reference_id')
+                        ->value('w.reference_id');
+
+                    if (!$referenceId) {
+                        $referenceId = ((int) DB::table(
+                            'maintenance.master_each_mtn_parameters_weightage'
+                        )->max('reference_id')) + 1;
+                    }
+
+                    $existing = DB::table(
+                        'maintenance.master_each_mtn_parameters_weightage'
+                    )
+                        ->where(
+                            'mtn_parameter_set_id',
+                            $weightage['parameter_set_id']
+                        )
+                        ->where('parameter_id', $weightage['parameter_id'])
+                        ->first();
+
+                    if ($existing) {
+                        DB::table(
+                            'maintenance.master_each_mtn_parameters_weightage_hist'
+                        )->insert([
                             'id' => $existing->id,
                             'mtn_parameter_set_id' => $existing->mtn_parameter_set_id,
                             'parameter_id' => $existing->parameter_id,
                             'weightage' => $existing->weightage,
+                            'reference_id' => $existing->reference_id,
                             'hist_remark' => $histRemark,
                             'hist_created_by' => Auth::id(),
                             'hist_created_at' => now(),
                         ]);
-                }
+                    }
 
-                DB::table('maintenance.master_each_mtn_parameters_weightage')
-                    ->updateOrInsert(
+                    DB::table(
+                        'maintenance.master_each_mtn_parameters_weightage'
+                    )->updateOrInsert(
                         [
                             'mtn_parameter_set_id' => $weightage['parameter_set_id'],
                             'parameter_id' => $weightage['parameter_id'],
                         ],
                         [
                             'weightage' => $weightage['weightage'],
+                            'reference_id' => $referenceId,
                             'updated_at' => now(),
                             'updated_by' => Auth::id(),
                             'created_by' => Auth::id(),
                         ]
                     );
-            }
+                }
+            });
 
             return response()->json([
                 'status' => true,
-                'message' => 'Weightage saved successfully.'
+                'message' => 'Weightage saved successfully.',
             ]);
 
         } catch (Exception $e) {
-
             Log::error('WeightageController@saveWeightage: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -177,7 +227,7 @@ class WeightageController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to save weightage.'
+                'message' => 'Failed to save weightage.',
             ], 500);
         }
     }
@@ -188,6 +238,8 @@ class WeightageController extends Controller
             $request->validate([
                 'param_name' => 'required|string',
                 'param_code' => 'required|string',
+                'param_type' => 'required|string',
+                'param_category' => 'required|string',
                 'param_desc' => 'required|string',
             ]);
 
@@ -205,8 +257,9 @@ class WeightageController extends Controller
             DB::table('maintenance.master_mtn_parameter_master')->insert([
                 'parameter_name' => $request->param_name,
                 'parameter_code' => $request->param_code,
+                'parameter_type' => $request->param_type,
+                'parameter_category' => $request->param_category,
                 'description' => $request->param_desc,
-                'parameter_type' =>'RANGE',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ]);
@@ -229,6 +282,93 @@ class WeightageController extends Controller
         }
     }
 
+    public function updateParameter(Request $request)
+    {
+        try {
+            DB::table('maintenance.master_mtn_parameter_master')
+                ->where('id', $request->id)
+                ->update([
+                    'parameter_name' => $request->param_name,
+                    'parameter_type' => $request->param_type,
+                    'parameter_category' => $request->param_category,
+                    'description' => $request->param_desc,
+                    'updated_at' => Carbon::now()
+                ]);
+            return response()->json(['status' => 'success', 'message' => 'Parameter updated!']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Update failed.']);
+        }
+    }
+
+    public function deleteParameter($id)
+    {
+        try {
+            DB::beginTransaction();
+            $parameter = DB::table('maintenance.master_mtn_parameter_master')
+                ->where('id', $id)
+                ->first();
+
+            if (!$parameter) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Parameter not found.!'
+                ]);
+            }
+
+            $isMapped = DB::table('maintenance.master_set_of_mtn_parameters_dept_wise')
+                ->where('parameter_id', $id)
+                ->exists();
+
+            if ($isMapped) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cannot delete this parameter because it is mapped to a department and asset.!'
+                ]);
+            }
+
+
+            $parameterData = (array) $parameter;
+
+            DB::table('maintenance.master_mtn_parameter_master_hist')->insert([
+                'id'                 => $parameter->id,
+                'parameter_code'     => $parameter->parameter_code,
+                'parameter_name'     => $parameter->parameter_name,
+                'parameter_type'     => $parameter->parameter_type,
+                'description'        => $parameter->description,
+                'status'             => $parameter->status,
+                'parameter_category' => $parameter->parameter_category,
+                'created_at'         => $parameter->created_at,
+                'updated_at'         => $parameter->updated_at,
+                'deleted_at'         => now(),
+                'deleted_by'         => auth()->id(),
+            ]);
+
+            // Delete the parameter from the master table
+            DB::table('maintenance.master_mtn_parameter_master')
+                ->where('id', $id)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Parameter deleted successfully!'
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::error('Parameter deletion failed: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to delete parameter.'
+            ]);
+        }
+    }
+
     public function mapping(Request $request)
     {
         try {
@@ -239,10 +379,7 @@ class WeightageController extends Controller
                 ->orderBy('department_name')
                 ->get();
 
-            return view(
-                'mmis.parameter-weightage.mapping',
-                compact('departments')
-            );
+            return view('mmis.parameter-weightage.mapping',compact('departments'));
 
         } catch (Exception $e) {
 
@@ -255,99 +392,265 @@ class WeightageController extends Controller
         }
     }
 
-	public function updateParameter(Request $request)
-    {
-        try {
-            DB::table('maintenance.master_mtn_parameter_master')
-                ->where('id', $request->id)
-                ->update([
-                    'parameter_name' => $request->param_name,
-                    'description' => $request->param_desc,
-                    'updated_at' => Carbon::now()
-                ]);
-            return response()->json(['status' => 'success', 'message' => 'Parameter updated!']);
-        } catch (Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Update failed.']);
-        }
-    }
 
     public function getMappingParameters(Request $request)
     {
         $department = $request->department;
         $asset = $request->asset;
 
-        if ($department === null || $department === '' ||
-            $asset === null || $asset === '') {
-            return response()->json([]);
+        if (
+            $department === null || $department === '' ||
+            $asset === null || $asset === ''
+        ) {
+            return response()->json([
+                'parameters' => [],
+                'valid_from' => '',
+                'valid_to' => '',
+                'valid_from_editable' => false,
+                'valid_to_editable' => false
+            ]);
         }
 
-        $parameters = DB::table('maintenance.master_mtn_parameter_master as parameter')
-            ->leftJoin(
-                'maintenance.master_set_of_mtn_parameters_dept_wise as mapping',
-                function ($join) use ($department, $asset) {
+        $today = now()->startOfDay();
+        $todayString = $today->toDateString();
 
+        $mappingTable = 'maintenance.master_set_of_mtn_parameters_dept_wise';
+
+        // Get latest mapping record
+        $latestMapping = DB::table($mappingTable)
+            ->where('dept_cd', $department)
+            ->where('asset_type_cd', $asset)
+            ->whereNotNull('valid_from')
+            ->whereNotNull('valid_to')
+            ->orderByDesc('valid_to')
+            ->orderByDesc('id')
+            ->first();
+
+        $validFromEditable = false;
+        $validToEditable = false;
+
+        if (!$latestMapping) {
+
+            // No previous record: both dates editable
+            $validFrom = $today->toDateString();
+
+            $validTo = $today->copy()
+                ->addYears(5)
+                ->toDateString();
+
+            $validFromEditable = true;
+            $validToEditable = true;
+
+        } else {
+
+            $lastValidFrom = Carbon::parse($latestMapping->valid_from)
+                ->startOfDay();
+
+            $lastValidTo = Carbon::parse($latestMapping->valid_to)
+                ->startOfDay();
+
+            if ($today->between($lastValidFrom, $lastValidTo)) {
+
+                // Current validity period: both dates locked
+                $validFrom = $lastValidFrom->toDateString();
+                $validTo = $lastValidTo->toDateString();
+
+            } else {
+
+                // Previous record expired:
+                // Valid From is automatically the next day.
+                // Valid To can be edited.
+                $validFrom = $lastValidTo->copy()
+                    ->addDay()
+                    ->toDateString();
+
+                $validTo = Carbon::parse($validFrom)
+                    ->addYears(5)
+                    ->toDateString();
+
+                $validFromEditable = false;
+                $validToEditable = true;
+            }
+        }
+
+        // Load parameters and existing active mappings
+        $parameters = DB::table(
+            'maintenance.master_mtn_parameter_master as parameter'
+        )
+            ->leftJoin(
+                $mappingTable . ' as mapping',
+                function ($join) use ($department, $asset, $todayString) {
                     $join->on(
                         'mapping.parameter_id',
                         '=',
                         'parameter.id'
                     )
-                    ->where('mapping.dept_cd', '=', $department)
-                    ->where('mapping.asset_type_cd', '=', $asset);
+                        ->where('mapping.dept_cd', '=', $department)
+                        ->where('mapping.asset_type_cd', '=', $asset)
+                        ->whereNotNull('mapping.valid_from')
+                        ->whereNotNull('mapping.valid_to')
+                        ->whereDate('mapping.valid_from', '<=', $todayString)
+                        ->whereDate('mapping.valid_to', '>=', $todayString);
                 }
             )
             ->select(
                 'parameter.id as parameter_id',
                 'parameter.parameter_name',
-                'mapping.id as mapping_id'
+                'mapping.id as mapping_id',
+                'mapping.valid_from',
+                'mapping.valid_to'
             )
             ->orderBy('parameter.parameter_name')
             ->get();
 
-        return response()->json($parameters);
+        return response()->json([
+            'parameters' => $parameters,
+            'valid_from' => $validFrom,
+            'valid_to' => $validTo,
+            'valid_from_editable' => $validFromEditable,
+            'valid_to_editable' => $validToEditable
+        ]);
     }
+
 
     public function saveMapping(Request $request)
     {
         try {
+            $request->validate([
+                'department' => 'required',
+                'asset' => 'required',
+                'parameter_ids' => 'nullable|array',
+                'parameter_ids.*' => 'integer|min:1',
+                'valid_from' => 'required|date_format:Y-m-d',
+                'valid_to' => 'required|date_format:Y-m-d',
+            ]);
 
-            $department = $request->department;
-            $asset = $request->asset;
-            $parameterIds = $request->parameter_ids ?? [];
+            $department = $request->input('department');
+            $asset = $request->input('asset');
 
-            $existingMappings = DB::table(
-                'maintenance.master_set_of_mtn_parameters_dept_wise'
-            )
-            ->where('dept_cd', $department)
-            ->where('asset_type_cd', $asset)
-            ->get();
+            $parameterIds = array_values(array_unique(
+                array_map('intval', $request->input('parameter_ids', []))
+            ));
 
-            // Check removed mappings before making any changes
-            foreach ($existingMappings as $existing) {
+            $today = now()->startOfDay();
+            $todayString = $today->toDateString();
 
-                if (!in_array($existing->parameter_id, $parameterIds)) {
+            $mappingTable = 'maintenance.master_set_of_mtn_parameters_dept_wise';
+            $parameterTable = 'maintenance.master_mtn_parameter_master';
+            $weightageTable = 'maintenance.master_each_mtn_parameters_weightage';
 
-                    $weightage = DB::table(
-                        'maintenance.master_each_mtn_parameters_weightage'
-                    )
-                    ->where('mtn_parameter_set_id', $existing->id)
-                    ->first();
+            // Get currently active mappings only
+            $existingMappings = DB::table($mappingTable)
+                ->where('dept_cd', $department)
+                ->where('asset_type_cd', $asset)
+                ->whereNotNull('valid_from')
+                ->whereNotNull('valid_to')
+                ->whereDate('valid_from', '<=', $todayString)
+                ->whereDate('valid_to', '>=', $todayString)
+                ->get();
 
-                    if ($weightage && $weightage->weightage != 0) {
+            // Get the latest validity period, including expired mappings
+           // Get latest validity period, including expired records
+            $latestMapping = DB::table($mappingTable)
+                ->where('dept_cd', $department)
+                ->where('asset_type_cd', $asset)
+                ->whereNotNull('valid_from')
+                ->whereNotNull('valid_to')
+                ->orderByDesc('valid_to')
+                ->orderByDesc('id')
+                ->first();
 
-                        $parameter = DB::table(
-                            'maintenance.master_mtn_parameter_master'
-                        )
-                        ->where('id', $existing->parameter_id)
-                        ->value('parameter_name');
+            if (!$latestMapping) {
 
-                        return response()->json([
-                            'status' => false,
-                            'message' => 'Cannot remove "' . $parameter .
-                                '" because it has weightage value ' .
-                                $weightage->weightage .
-                                '. Please make the weightage 0 before removing this parameter.'
-                        ]);
-                    }
+                // No previous record: accept both dates from frontend
+                $validFrom = $request->input('valid_from');
+                $validTo = $request->input('valid_to');
+
+            } else {
+
+                $lastValidFrom = Carbon::parse($latestMapping->valid_from)
+                    ->startOfDay();
+
+                $lastValidTo = Carbon::parse($latestMapping->valid_to)
+                    ->startOfDay();
+
+                if ($today->between($lastValidFrom, $lastValidTo)) {
+
+                    // Current active period: do not allow date modification
+                    $validFrom = $lastValidFrom->toDateString();
+                    $validTo = $lastValidTo->toDateString();
+
+                } else {
+
+                    // Expired period: Valid From is fixed,
+                    // Valid To is accepted from frontend
+                    $validFrom = $lastValidTo->copy()
+                        ->addDay()
+                        ->toDateString();
+
+                    $validTo = $request->input('valid_to');
+                }
+            }
+
+            // Validate dates
+            try {
+                $validFromDate = Carbon::createFromFormat('!Y-m-d', $validFrom);
+                $validToDate = Carbon::createFromFormat('!Y-m-d', $validTo);
+
+                if (
+                    !$validFromDate ||
+                    !$validToDate ||
+                    $validFromDate->format('Y-m-d') !== $validFrom ||
+                    $validToDate->format('Y-m-d') !== $validTo ||
+                    $validToDate->lt($validFromDate)
+                ) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Please provide valid validity dates. Valid To must not be before Valid From.'
+                    ], 422);
+                }
+
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid validity dates.'
+                ], 422);
+            }
+
+             $referenceId = DB::table($mappingTable)
+                ->where('dept_cd', $department)
+                ->where('asset_type_cd', $asset)
+                ->whereDate('valid_from', $validFrom)
+                ->whereDate('valid_to', $validTo)
+                ->whereNotNull('reference_id')
+                ->value('reference_id');
+
+            if (!$referenceId) {
+                $referenceId = ((int) DB::table($mappingTable)
+                    ->max('reference_id')) + 1;
+            }
+
+            // Validate submitted parameter IDs
+            $requestedParameterIds = collect($parameterIds)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+            if (!empty($parameterIds)) {
+                $validParameterIds = DB::table($parameterTable)
+                    ->whereIn('id', $parameterIds)
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id)
+                    ->sort()
+                    ->values()
+                    ->all();
+
+                if ($validParameterIds !== $requestedParameterIds) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'One or more selected parameters are invalid.',
+                    ], 422);
                 }
             }
 
@@ -355,133 +658,74 @@ class WeightageController extends Controller
                 $department,
                 $asset,
                 $parameterIds,
-                $existingMappings
+                $existingMappings,
+                $validFrom,
+                $validTo,
+                $referenceId,
+                $mappingTable,
+                $weightageTable
             ) {
-
+                // Add new mappings; retain mappings that are already active
                 foreach ($parameterIds as $parameterId) {
-
                     $existing = $existingMappings->firstWhere(
                         'parameter_id',
                         $parameterId
                     );
 
                     if ($existing) {
+                        // Keep existing active mapping and its validity dates unchanged
+                        continue;
+                    }
 
-                        DB::table(
-                            'maintenance.master_set_of_mtn_parameters_dept_wise'
-                        )
-                        ->where('id', $existing->id)
-                        ->update([
-                            'dept_cd' => $department,
-                            'asset_type_cd' => $asset,
-                            'parameter_id' => $parameterId,
-                        ]);
+                    // Insert a new mapping row
+                    $mappingId = DB::table($mappingTable)->insertGetId([
+                        'dept_cd' => $department,
+                        'asset_type_cd' => $asset,
+                        'parameter_id' => $parameterId,
+                        'valid_from' => $validFrom,
+                        'valid_to' => $validTo,
+                        'reference_id' => $referenceId,
+                        'created_by' => Auth::id(),
+                        'created_at' => now(),
+                        'updated_by' => Auth::id(),
+                        'updated_at' => now(),
+                    ]);
 
-                    } else {
-
-                        // Insert new mapping
-                        $mappingId = DB::table(
-                            'maintenance.master_set_of_mtn_parameters_dept_wise'
-                        )->insertGetId([
-                            'dept_cd' => $department,
-                            'asset_type_cd' => $asset,
-                            'parameter_id' => $parameterId,
-                        ]);
-
-                        // Check if other mappings already have weightage
-                        $hasWeightage = DB::table(
-                            'maintenance.master_each_mtn_parameters_weightage as weightage'
-                        )
+                    // Create a zero-weightage record if other mappings
+                    // for this department and asset already have weightages
+                    $hasWeightage = DB::table($weightageTable . ' as weightage')
                         ->join(
-                            'maintenance.master_set_of_mtn_parameters_dept_wise as mapping',
+                            $mappingTable . ' as mapping',
                             'mapping.id',
                             '=',
                             'weightage.mtn_parameter_set_id'
                         )
                         ->where('mapping.dept_cd', $department)
                         ->where('mapping.asset_type_cd', $asset)
+                        ->where('mapping.id', '!=', $mappingId)
                         ->exists();
 
-                        // Only create weightage if other mappings already have weightage
-                        if ($hasWeightage) {
-
-                            DB::table(
-                                'maintenance.master_each_mtn_parameters_weightage'
-                            )->insert([
-                                'mtn_parameter_set_id' => $mappingId,
-                                'parameter_id' => $parameterId,
-                                'weightage' => 0,
-                                'created_by' => Auth::id(),
-                                'created_at' => now(),
-                            ]);
-                        }
-                    }
-                }
-
-                // Handle removed mappings
-                foreach ($existingMappings as $existing) {
-
-                    if (!in_array($existing->parameter_id, $parameterIds)) {
-
-                        $weightage = DB::table(
-                            'maintenance.master_each_mtn_parameters_weightage'
-                        )
-                        ->where('mtn_parameter_set_id', $existing->id)
-                        ->first();
-
-                        // Move weightage to history if weightage = 0
-                        if ($weightage) {
-
-                            DB::table(
-                                'maintenance.master_each_mtn_parameters_weightage_hist'
-                            )->insert([
-                                'id' => $weightage->id,
-                                'mtn_parameter_set_id' => $weightage->mtn_parameter_set_id,
-                                'parameter_id' => $weightage->parameter_id,
-                                'hist_remark' => 'Deleted due to parameter mapping removal',
-                                'weightage' => $weightage->weightage,
-                                'hist_created_by' => Auth::id(),
-                                'hist_created_at' => now(),
-                            ]);
-
-                            // Delete weightage
-                            DB::table(
-                                'maintenance.master_each_mtn_parameters_weightage'
-                            )
-                            ->where('id', $weightage->id)
-                            ->delete();
-                        }
-
-                        // Move mapping to history
-                        DB::table(
-                            'maintenance.master_set_of_mtn_parameters_dept_wise_hist'
-                        )->insert([
-                            'id' => $existing->id,
-                            'dept_cd' => $existing->dept_cd,
-                            'asset_type_cd' => $existing->asset_type_cd,
-                            'parameter_id' => $existing->parameter_id,
-                            'hist_created_by' => Auth::id(),
-                            'hist_created_at' => now(),
+                    if ($hasWeightage) {
+                        DB::table($weightageTable)->insert([
+                            'mtn_parameter_set_id' => $mappingId,
+                            'parameter_id' => $parameterId,
+                            'weightage' => 0,
+                            'created_by' => Auth::id(),
+                            'created_at' => now(),
                         ]);
-
-                        // Delete mapping
-                        DB::table(
-                            'maintenance.master_set_of_mtn_parameters_dept_wise'
-                        )
-                        ->where('id', $existing->id)
-                        ->delete();
                     }
                 }
-
             });
 
             return response()->json([
                 'status' => true,
-                'message' => 'Parameter mapping saved successfully.'
+                'message' => 'Parameter mapping saved successfully.',
             ]);
 
-        } catch (Exception $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
 
+        } catch (Exception $e) {
             Log::error('WeightageController@saveMapping: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -489,8 +733,9 @@ class WeightageController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to save parameter mapping.'
+                'message' => 'Failed to save parameter mapping.',
             ], 500);
         }
     }
 }
+

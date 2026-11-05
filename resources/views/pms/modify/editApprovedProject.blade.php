@@ -669,7 +669,7 @@
                             <label for="quarter_no">Quarter No <span class="star text-danger">*</span></label>
                             <input type="text" id="quarter_no" class="form-control form-control-sm" name="quarter_no"
                                 value="" placeholder="Enter Quarter No">
-                            <span class="spanHide text-danger text-xs mt-2" id="quarter_no_error"></span>	  
+                            <span class="spanHide text-danger text-xs mt-2" id="quarter_no_error"></span>
                         </div>
                     </div>
                 </div>
@@ -968,7 +968,7 @@
                                             <option value="">Choose one</option>
                                         </select>
 
-                                        <span class="text-danger text-xs d-block mt-1" id="building_location_cd_error"></span>	  
+                                        <span class="text-danger text-xs d-block mt-1" id="building_location_cd_error"></span>
                                 </div>
                             </div>
 						</div>
@@ -1125,55 +1125,67 @@
                             <input type="text" id="owning_dept_maint" class="form-control form-control-sm"
                                 name="owning_dept_maint" value="" placeholder="Owning Department" disabled>
                         </div>
-                    </div>	  
+                    </div>
                 </div>
             </div>
 
-            <div class="row mt-2" id="kmlCard" style="background-color: #efeeee; display: none;">
-                <div class="col-12 pt-2">
-                    <legend class="w-auto px-2" style="font-size:13px ">
-                        Upload Documents
-                    </legend>
-                    <div class="p-2">
-                        <div>
-                            <p class="text-sm text-info text-underline"><strong>
-                                    <i class="fa fa-info-circle mr-1 text-sm"></i>Important:
-                                </strong></p>
-                            <ul class="text-xs text-secondary">
-                                <li>
-                                    <strong>
-                                        File Type:
-                                    </strong>
-                                    Only KML files are supported for upload in this section.
-                                </li>
-                                <li>
-                                    <strong>
-                                        File Size Limit:
-                                    </strong>
-                                    The maximum allowed file size is 2 MB.
-                                </li>
-                            </ul>
+            <div class="row mt-3" id="kmlCard" style="display: none;">
+                <div class="col-12">
+                    <div class="card border rounded-3 shadow-sm">
+                        <div class="card-header text-light fw-bold text-uppercase">
+                            Upload Road KML Document
                         </div>
-                        <div class="row form-1-box my-1">
-                            <div class="col-md-4">
-                                <label for="road_kml_file">1. Upload KML File for this Road:<span
-                                        class="star">*</span></label>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+
+                            <!-- Information -->
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    <strong class="text-xs">Important Instructions</strong>
+                                </div>
+
+                                <ul class="text-xs mb-0 pl-4">
+                                    <li>Only <strong>.KML</strong> files are supported.</li>
+                                    <li>Maximum allowed file size is <strong>2 MB</strong>.</li>
+                                </ul>
                             </div>
-                            <div class="col-md-8">
-                                <input type="file" class="text-xs text-success" id="road_kml_file"
-                                    name="road_kml_file" onchange="showRemoveBtn('road_kml_file')">
-                                <button type="button" id="removeBtn_road_kml_file"
-                                    class="outline-0 border border-danger text-danger text-xs rounded-1"
-                                    style="background:rgb(252, 217, 217); display:none;"
-                                    onclick="removeFile('road_kml_file')">
-                                    <i class="fa fa-trash mr-1 text-xs"></i>
-                                    Remove
-                                </button>
+
+                            <!-- Upload Section -->
+                            <div class="p-3 rounded-2"
+                                style="background-color: #fafafa; border: 1px dashed #b8c7c0;">
+
+                                <label for="road_kml_file" class="text-sm font-weight-bold mb-2">
+                                    <i class="fa fa-file-upload text-success mr-1"></i>
+                                    Upload KML File for this Road
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="d-flex flex-wrap align-items-center">
+                                    <input type="file"
+                                        class="form-control-file text-xs"
+                                        id="road_kml_file"
+                                        name="road_kml_file"
+                                        accept=".kml"
+                                        onchange="showRemoveBtn('road_kml_file')">
+
+                                    <button type="button"
+                                        id="removeBtn_road_kml_file"
+                                        class="btn btn-sm btn-outline-danger mt-2"
+                                        style="display:none;"
+                                        onclick="removeFile('road_kml_file')">
+                                        <i class="fa fa-trash mr-1"></i>
+                                        Remove
+                                    </button>
+                                </div>
+
                                 @error('road_kml_file')
-                                    <div class="text-danger text-xs">
+                                    <div class="text-danger text-xs mt-2">
                                         {{ $message }}
                                     </div>
                                 @enderror
+
                             </div>
                         </div>
                     </div>
@@ -1315,107 +1327,140 @@
 
             <input type="hidden" name="work_items_json" id="work_items_json">
 
-            <div class="row form-1-box border mt-2" style="margin: 0 1.5px;" id="asset_document_container">
-                <div class="col-md-12 pt-2" style="background-color: #efeeee;">
-                    <fieldset class="">
-                        <legend class="w-auto px-2" style="font-size:13px ">
+            <div class="row mt-3" id="asset_document_container">
+                <div class="col-12">
+                    <div class="card border rounded-3 shadow-sm">
+
+                        <!-- Card Header -->
+                        <div class="card-header text-light fw-bold text-uppercase">
                             Upload Documents
-                        </legend>
-                        <div class="p-2">
-                            <div>
-                                <p class="text-sm text-info text-underline"><strong>
-                                        <i class="fa fa-info-circle mr-1 text-xs"></i>Important:
-                                    </strong></p>
-                                <ul class="text-xs text-secondary">
-                                    <li>
-                                        <strong>
-                                            File Size Limit:
-                                        </strong>
-                                        The maximum allowed file size is 2 MB.
-                                    </li>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+
+                            <!-- Information -->
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-info-circle mr-2"></i>
+                                    <strong class="text-xs">Important Instructions</strong>
+                                </div>
+
+                                <ul class="text-xs mb-0 pl-4">
+                                    <li>Only <strong>PDF</strong> files are supported.</li>
+                                    <li>Maximum allowed file size is <strong>2 MB</strong>.</li>
                                 </ul>
                             </div>
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="workorder">1. Upload Sanction Order (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="workOrder" name="workOrder"
-                                        accept=".pdf">
-                                    <button type="button" id="removeBtn_workOrder"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('workOrder')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+
+                            <!-- Upload Section -->
+                            <div class="p-3 rounded-2"
+                                style="background-color: #fafafa; border: 1px dashed #b8c7c0;">
+
+                                <!-- 1. Sanction Order -->
+                                <div class="mb-3">
+                                    <label for="workOrder" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        1. Upload Sanction Order (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="workOrder" name="workOrder" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_workOrder"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('workOrder')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('workOrder')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="projectPlan">2. Upload Work Order (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" name="projectPlan" id="projectPlan"
-                                        class="text-xs text-success" accept=".pdf">
-                                    <button type="button" id="removeBtn_projectPlan"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('projectPlan')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 2. Work Order -->
+                                <div class="mb-3">
+                                    <label for="projectPlan" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        2. Upload Work Order (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" name="projectPlan" id="projectPlan"
+                                            class="form-control-file text-xs" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_projectPlan"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('projectPlan')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('projectPlan')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="drpDocument">3. Upload Work Plans (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="drpDocument"
-                                        name="drpDocument" accept=".pdf">
-                                    <button type="button" id="removeBtn_drpDocument"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('drpDocument')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 3. Work Plans -->
+                                <div class="mb-3">
+                                    <label for="drpDocument" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        3. Upload Work Plans (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="drpDocument" name="drpDocument" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_drpDocument"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('drpDocument')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('drpDocument')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <div class="row form-1-box my-1">
-                                <div class="col-md-4">
-                                    <label for="design_doc">4. Upload Agreement (PDF):</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="file" class="text-xs text-success" id="designDoc" name="designDoc"
-                                        accept=".pdf">
-                                    <button type="button" id="removeBtn_designDoc"
-                                        class="outline-0 border border-danger text-danger text-xs rounded-0"
-                                        style="background:rgb(252, 217, 217); display:none;"
-                                        onclick="removeFile('designDoc')">
-                                        <i class="fa fa-trash mr-1 text-xs"></i>
-                                        Remove
-                                    </button>
+                                <hr>
+
+                                <!-- 4. Agreement -->
+                                <div class="mb-0">
+                                    <label for="designDoc" class="text-sm font-weight-bold mb-2">
+                                        <i class="fa fa-file-pdf text-danger mr-1"></i>
+                                        4. Upload Agreement (PDF):
+                                    </label>
+
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <input type="file" class="form-control-file text-xs"
+                                            id="designDoc" name="designDoc" accept=".pdf">
+
+                                        <button type="button" id="removeBtn_designDoc"
+                                            class="btn btn-sm btn-outline-danger mt-2"
+                                            style="display:none;"
+                                            onclick="removeFile('designDoc')">
+                                            <i class="fa fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+
                                     @error('designDoc')
-                                        <div class="text-danger text-xs">{{ $message }}</div>
+                                        <div class="text-danger text-xs mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                             </div>
                         </div>
-                    </fieldset>
+                    </div>
                 </div>
             </div>
 
@@ -1449,8 +1494,8 @@
                     onclick="{{ isset($project_cd) && !empty($project_cd) ? 'history.back()' : 'location.reload()' }}">
                     <i class="fa fa-backward"></i> Cancel
                 </button>
-				
-				
+
+
             <input type="hidden" id="subItems" name="sub_items">
         </form>
 		<x-building.coordinates.set-coordinate />
@@ -1770,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', function () {
     <script src="{{ asset('js/pms/script.js') }}"></script>
     <script src="{{ asset('js/pms/upgradation/script.js') }}"></script>
 	<script src="{{ asset('js/building/script.js') }}" defer></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnj1P_w0UVJGnX0vNSPMe5QS__d_E0goM"></script>																  
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnj1P_w0UVJGnX0vNSPMe5QS__d_E0goM"></script>
     <script src="{{ asset('js/road/assets/removeSelectedFile/script.js') }}" defer></script>
 
     <script>

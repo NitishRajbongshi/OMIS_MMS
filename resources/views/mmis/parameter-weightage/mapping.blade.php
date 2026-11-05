@@ -47,6 +47,17 @@
                     </select>
                 </div>
 
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label for="valid_from" class="form-label">Valid From</label>
+                        <input type="date" id="valid_from" class="form-control">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="valid_to" class="form-label">Valid To</label>
+                        <input type="date" id="valid_to" class="form-control">
+                    </div>
+                </div>
             </div>
 
             <div id="parameter_section" class="mt-4" style="display:none;">

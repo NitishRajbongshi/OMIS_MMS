@@ -250,6 +250,14 @@
         </tr>
     </table>
 
+    <div class="sub-section-title">Maintenance Score</div>
+    <table class="details">
+        <tr>
+            <td class="label">MAS</td>
+            <td class="value">{{ number_format($inspection->mas_score, 2) }}</td>
+        </tr>
+    </table>
+
     {{-- BRIDGE DETAILS (only for bridge inspections) --}}
     @if ($bridge)
         <div class="sub-section-title">Bridge Details</div>
@@ -404,7 +412,7 @@
                 <th width="40">Sl.</th>
                 <th width="22%">Activity</th>
                 <th>Observation</th>
-                <th width="15%">Grading</th>
+                {{-- <th width="15%">Grading</th> --}}
                 <th width="60">Weightage</th>
             </tr>
         </thead>
@@ -414,7 +422,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $obs->activity_name ?: '-' }}</td>
                     <td>{{ $obs->obsrv_desc ?: '-' }}</td>
-                    <td>{{ $obs->grading_name ?: '-' }}</td>
+                    {{-- <td>{{ $obs->grading_name ?: '-' }}</td> --}}
                     <td>{{ $obs->obsrv_weightage ?? '-' }}</td>
                 </tr>
             @empty

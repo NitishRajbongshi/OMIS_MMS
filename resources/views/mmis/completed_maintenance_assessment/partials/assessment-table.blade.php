@@ -43,7 +43,7 @@
                 <div class="fs-2 fw-bold text-danger">
                     {{ $assessments->filter(fn ($a) => (float) ($a->mps_score ?? 0) >= 70)->count() }}
                 </div>
-                <small class="text-muted">MPS ≥ 70</small>
+                <small class="text-muted">MAS ≥ 70</small>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
                 <div class="fs-2 fw-bold text-warning">
                     {{ $assessments->filter(fn ($a) => (float) ($a->mps_score ?? 0) >= 40 && (float) ($a->mps_score ?? 0) < 70)->count() }}
                 </div>
-                <small class="text-muted">MPS 40–69.99</small>
+                <small class="text-muted">MAS 40–69.99</small>
             </div>
         </div>
     </div>

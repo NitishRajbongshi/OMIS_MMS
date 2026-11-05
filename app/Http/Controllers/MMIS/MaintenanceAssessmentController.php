@@ -10,8 +10,8 @@ use Illuminate\Validation\Rule;
 
 class MaintenanceAssessmentController extends Controller
 {
-    private const DB_CONNECTION = 'pgsql_maintenance';
-    /**
+	private const DB_CONNECTION = 'pgsql_maintenance';
+	/**
      * Maintenance Assessment landing page.
      */
     // public function index()
@@ -116,7 +116,7 @@ class MaintenanceAssessmentController extends Controller
                 ->whereNotNull('inspection.insp_asset_type')
                 ->whereNotNull('inspection.insp_asset_id')
                 ->selectRaw(
-                    'inspection.insp_asset_type as code,
+				    'inspection.insp_asset_type as code,
                     COALESCE(
                         asset_type.sub_assets_descr,
                         inspection.insp_asset_type
@@ -135,7 +135,7 @@ class MaintenanceAssessmentController extends Controller
                 compact('assetTypes')
             );
         } catch (\Throwable $exception) {
-
+			
             Log::error(
                 'Maintenance assessment types could not be loaded.',
                 [
@@ -335,11 +335,11 @@ class MaintenanceAssessmentController extends Controller
              * 1. Get inspection details
              * ---------------------------------------------------------
              */
-            // $inspectionDetail = DB::table('maintenance.mtn_inspection_details as inspection')
+			// $inspectionDetail = DB::table('maintenance.mtn_inspection_details as inspection')
             //     ->leftJoin('public.asset_master_road_sub_assets as asset_type','asset_type.sub_asset_cd','=','inspection.insp_asset_type')
             //     ->select('inspection.*','asset_type.sub_assets_descr as asset_type_name','asset_type.dept_cd as asset_dept_cd')
             //     ->where('inspection.id',$inspection)
-            //     ->first();
+            //     ->first();		 
             $inspectionDetail = DB::table('maintenance.mtn_inspection_details as inspection')
                 ->leftJoin('public.asset_master_road_sub_assets as asset_type', 'asset_type.sub_asset_cd', '=', 'inspection.insp_asset_type')
                 ->leftJoin('public.asset_road_details as road', 'road.rd_system_id', '=', 'inspection.insp_asset_id')
@@ -533,6 +533,9 @@ class MaintenanceAssessmentController extends Controller
                     )
                     ->where('parameter_set.dept_cd', $departmentCd)
                     ->where('parameter_set.asset_type_cd', $inspectionDetail->insp_asset_type)
+                    // Parameter configuration must be valid today.
+                    ->whereDate('parameter_set.valid_from', '<=', now()->toDateString())
+                    ->whereDate('parameter_set.valid_to', '>=', now()->toDateString())
                     ->where('parameter.status', 'ACTIVE')
                     ->where(function ($query) {
                         $query->where('parameter_range.status', 'ACTIVE')
@@ -1271,14 +1274,14 @@ class MaintenanceAssessmentController extends Controller
         }
     }
 
-    // Saiful: 17-10-2026
+	// Saiful: 17-10-2026
     public function calculateAndSaveForAsset(string $inspectionCode): array
     {
         // Initialize variables for error logging.
         $assetCd = null;
         $assetTypeCd = null;
         try {
-            return DB::connection(self::DB_CONNECTION)->transaction(function () use ($inspectionCode, &$assetCd, &$assetTypeCd) {
+            return DB::connection(self::DB_CONNECTION)->transaction(function ()use ($inspectionCode, &$assetCd, &$assetTypeCd) {
                 /*
                 |--------------------------------------------------------------------------
                 | 1. Get the exact inspection using inspection code
@@ -1340,7 +1343,7 @@ class MaintenanceAssessmentController extends Controller
                 $unsatisfactoryWeight = $observations
                     ->filter(
                         fn($item) =>
-                        strtoupper((string) $item->grading_cd) === 'U'
+                            strtoupper((string) $item->grading_cd) === 'U'
                     )
                     ->sum(fn($item) => (float) $item->obsrv_weightage);
 
@@ -1393,21 +1396,21 @@ class MaintenanceAssessmentController extends Controller
                         break;
 
                     case '9': // PCI
-                        $roadSystemId = DB::connection(self::DB_CONNECTION)
+						$roadSystemId = DB::connection(self::DB_CONNECTION)
                             ->table('public.asset_road_pavement_condition_indexes')
                             ->where('pci_section_cd', $assetCd)
                             ->value('rd_system_id');
                         break;
 
                     case '11': // Distress
-                        $roadSystemId = DB::connection(self::DB_CONNECTION)
+						$roadSystemId = DB::connection(self::DB_CONNECTION)
                             ->table('public.asset_road_distress_details')
                             ->where('rd_distress_cd', $assetCd)
                             ->value('rd_system_id');
                         break;
 
                     case '12': // Protection Wall
-                        $roadSystemId = DB::connection(self::DB_CONNECTION)
+						$roadSystemId = DB::connection(self::DB_CONNECTION)
                             ->table('public.asset_protection_wall_details')
                             ->where('protection_wall_cd', $assetCd)
                             ->value('rd_system_id');
@@ -1423,7 +1426,7 @@ class MaintenanceAssessmentController extends Controller
 
                 if (!empty($roadSystemId)) {
                     $habitationScore = (float) (
-                        DB::connection(self::DB_CONNECTION)
+						DB::connection(self::DB_CONNECTION)
                         ->table('public.asset_road_habitation_details')
                         ->where('rd_system_id', $roadSystemId)
                         ->avg('habitation_score') ?? 0
@@ -1439,7 +1442,7 @@ class MaintenanceAssessmentController extends Controller
 
                 if (!empty($inspection->pci_section_cd)) {
                     $pciValue = (float) (
-                        DB::connection(self::DB_CONNECTION)
+						DB::connection(self::DB_CONNECTION)
                         ->table('public.asset_road_pavement_condition_indexes')
                         ->where('pci_section_cd', $inspection->pci_section_cd)
                         ->value('pci_value') ?? 0
@@ -1452,13 +1455,13 @@ class MaintenanceAssessmentController extends Controller
                 |--------------------------------------------------------------------------
                 */
                 $criticalityIndex = (float) (
-                    DB::connection(self::DB_CONNECTION)
+					DB::connection(self::DB_CONNECTION)
                     ->table('maintenance.master_asset_criticality_indexes')
-                    ->where('asset_type', $assetTypeCd)
-                    ->where('asset_id', $assetCd)
-                    ->orderByDesc('updated_at')
-                    ->orderByDesc('id')
-                    ->value('criticality_index') ?? 0
+                        ->where('asset_type', $assetTypeCd)
+                        ->where('asset_id', $assetCd)
+                        ->orderByDesc('updated_at')
+                        ->orderByDesc('id')
+                        ->value('criticality_index') ?? 0
                 );
 
                 /*
@@ -1470,11 +1473,11 @@ class MaintenanceAssessmentController extends Controller
 
                 if (!empty($roadSystemId)) {
                     $roadCategoryScore = (float) (
-                        DB::connection(self::DB_CONNECTION)
+						DB::connection(self::DB_CONNECTION)
                         ->table('public.asset_road_details as road')
-                        ->leftJoin('public.asset_master_road_category as category', 'category.rd_catg_cd', '=', 'road.rd_category_cd')
-                        ->where('road.rd_system_id', $roadSystemId)
-                        ->value('category.maintenance_score') ?? 0
+                            ->leftJoin('public.asset_master_road_category as category','category.rd_catg_cd','=','road.rd_category_cd')
+                            ->where('road.rd_system_id', $roadSystemId)
+                            ->value('category.maintenance_score') ?? 0
                     );
                 }
 
@@ -1496,6 +1499,9 @@ class MaintenanceAssessmentController extends Controller
                     )
                     ->where('parameter_set.dept_cd', $inspection->asset_dept_cd)
                     ->where('parameter_set.asset_type_cd', $assetTypeCd)
+                    // Parameter configuration must be valid today.
+                    ->whereDate('parameter_set.valid_from', '<=', now()->toDateString())
+                    ->whereDate('parameter_set.valid_to', '>=', now()->toDateString())
                     ->where('parameter.status', 'ACTIVE')
                     ->where(function ($query) {
                         $query->where('parameter_range.status', 'ACTIVE')
@@ -1566,7 +1572,7 @@ class MaintenanceAssessmentController extends Controller
                 |--------------------------------------------------------------------------
                 */
                 $now = now();
-                $userId = auth()->id();
+                $userId = auth()->id() ?? ($inspection->created_by ?? null);
 
                 $scoreId = DB::connection(self::DB_CONNECTION)
                     ->table('maintenance.mtn_inspection_score')
@@ -1592,8 +1598,8 @@ class MaintenanceAssessmentController extends Controller
                 |--------------------------------------------------------------------------
                 */
                 foreach ($mpsResult['details'] as $detail) {
-                    $submittedParameter = collect($parameters)->firstWhere('parameter_code', $detail['parameter_code']);
-                    DB::connection(self::DB_CONNECTION)
+                    $submittedParameter = collect($parameters)->firstWhere('parameter_code',$detail['parameter_code']);
+					DB::connection(self::DB_CONNECTION)
                         ->table('maintenance.mtn_inspection_score_details')
                         ->insert([
                             'inspection_score_id' => $scoreId,
@@ -1617,36 +1623,41 @@ class MaintenanceAssessmentController extends Controller
                 | 14. Save maintainable asset history
                 |--------------------------------------------------------------------------
                 */
-                $assetInfo = $this->resolveMaintainableAsset($assetTypeCd, $assetCd);
-                $maintainableAssetId = DB::connection(self::DB_CONNECTION)
+                $assetInfo = $this->resolveMaintainableAsset($assetTypeCd,$assetCd);
+				$maintainableAssetId = DB::connection(self::DB_CONNECTION)
                     ->table('projects.prt_maintainable_assets')->insertGetId([
-                        'asset_name' => $assetInfo['asset_name'],
-                        'asset_type_cd' => $assetTypeCd,
-                        'asset_cd' => $assetCd,
-                        'parent_asset_cd' => $assetInfo['parent_asset_cd'],
-                        'flag' => 0,
-                        'inspection_id' => $inspectionId,
-                        'inspection_score_id' => $scoreId,
-                        'created_at' => $now,
-                        'created_by' => $userId,
-                    ]);
-
-                return [
-                    'success' => true,
-                    'message' => 'Maintenance assessment calculated and saved successfully.',
-                    'asset_cd' => $assetCd,
+                    'asset_name' => $assetInfo['asset_name'],
                     'asset_type_cd' => $assetTypeCd,
+                    'asset_cd' => $assetCd,
+                    'parent_asset_cd' => $assetInfo['parent_asset_cd'],
+                    'flag' => 0,
                     'inspection_id' => $inspectionId,
                     'inspection_score_id' => $scoreId,
-                    'maintainable_asset_id' => $maintainableAssetId,
-                    'mas' => $mas,
-                    'condition_score' => $conditionScore,
-                    'criticality_score' => $criticalityScore,
-                    'mps' => $mps,
-                    'average_habitation_score' => round($habitationScore, 2),
-                    'total_observation_weight' => $totalWeight,
-                    'average_observation_weight' => round($averageWeight, 2),
-                ];
+                    'created_at' => $now,
+                    'created_by' => $userId,
+                ]);
+
+                $response = [
+                                'success' => true,
+                                'message' => 'Maintenance assessment calculated and saved successfully.',
+                                'asset_cd' => $assetCd,
+                                'asset_type_cd' => $assetTypeCd,
+                                'inspection_id' => $inspectionId,
+                                'inspection_score_id' => $scoreId,
+                                'maintainable_asset_id' => $maintainableAssetId,
+                                'mas' => $mas,
+                                'condition_score' => $conditionScore,
+                                'criticality_score' => $criticalityScore,
+                                'mps' => $mps,
+                                'average_habitation_score' => round($habitationScore, 2),
+                                'total_observation_weight' => $totalWeight,
+                                'average_observation_weight' => round($averageWeight, 2),
+                            ];
+
+                // Write the response data to the Laravel log
+                Log::info('Maintenance Assessment Result', $response);
+
+                return $response;
             });
         } catch (\Throwable $exception) {
             Log::error('Generic maintenance assessment failed.', [

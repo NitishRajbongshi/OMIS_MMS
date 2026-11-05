@@ -45,16 +45,52 @@ const txt_end_chainage = document.getElementById("txt_end_chainage");
 const refAssetTableBody = document.querySelector("#refAssetTable tbody");
 
 function addMaintenanceAssets() {
-    const road = Array.from(maintRoads.selectedOptions).map((opt) => opt.value);
-    const culverts = Array.from(maintCulverts.selectedOptions).map(
-        (opt) => opt.value,
-    );
-    const bridges = Array.from(maintBridges.selectedOptions).map(
-        (opt) => opt.value,
-    );
-    const walls = Array.from(maintWalls.selectedOptions).map(
-        (opt) => opt.value,
-    );
+    const roadSelect = document.getElementById("maintRoads");
+    const culvertSelect = document.getElementById("maintCulverts");
+    const bridgeSelect = document.getElementById("maintBridges");
+    const wallSelect = document.getElementById("maintWalls");
+    
+
+    const selectedRoads = Array.from(roadSelect.selectedOptions)
+        .filter(opt => opt.value !== "");
+
+    const selectedCulverts = Array.from(culvertSelect.selectedOptions)
+        .filter(opt => opt.value !== "");
+
+    const selectedBridges = Array.from(bridgeSelect.selectedOptions)
+        .filter(opt => opt.value !== "");
+
+    const selectedWalls = Array.from(wallSelect.selectedOptions)
+        .filter(opt => opt.value !== "");
+
+    const road = selectedRoads.map(opt => opt.value);
+    const culverts = selectedCulverts.map(opt => opt.value);
+    const bridges = selectedBridges.map(opt => opt.value);
+    const walls = selectedWalls.map(opt => opt.value);
+    
+    // new code added by PulAK 29-10-26
+    const selectedOptionsBySelect = [
+        [roadSelect, selectedRoads],
+        [culvertSelect, selectedCulverts],
+        [bridgeSelect, selectedBridges],
+        [wallSelect, selectedWalls],
+    ];
+
+     const roadMaintainableIds = selectedRoads
+        .map(opt => opt.dataset.maintainableId)
+        .filter(id => id);
+
+    const culvertMaintainableIds = selectedCulverts
+        .map(opt => opt.dataset.maintainableId)
+        .filter(id => id);
+
+    const bridgeMaintainableIds = selectedBridges
+        .map(opt => opt.dataset.maintainableId)
+        .filter(id => id);
+
+    const wallMaintainableIds = selectedWalls
+        .map(opt => opt.dataset.maintainableId)
+        .filter(id => id);
 
     if (
         road.length === 0 &&
@@ -77,6 +113,32 @@ function addMaintenanceAssets() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
+        ${roadMaintainableIds.map(id => `
+            <input type="hidden"
+                   name="road_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                   value="${id}">
+        `).join("")}
+
+        <!-- Culvert maintainable asset IDs -->
+        ${culvertMaintainableIds.map(id => `
+            <input type="hidden"
+                   name="culvert_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                   value="${id}">
+        `).join("")}
+
+        <!-- Bridge maintainable asset IDs -->
+        ${bridgeMaintainableIds.map(id => `
+            <input type="hidden"
+                   name="bridge_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                   value="${id}">
+        `).join("")}
+
+        <!-- Wall maintainable asset IDs -->
+        ${wallMaintainableIds.map(id => `
+            <input type="hidden"
+                   name="wall_maintainable_ids_mnt_${mnt_rowIndex}[]"
+                   value="${id}">
+        `).join("")}
         <td>
             ${road
                 .map(
@@ -127,6 +189,13 @@ function addMaintenanceAssets() {
     `;
 
     document.querySelector("#mtnAssetTable tbody").appendChild(tr);
+    // new code added by PulAK 29-10-26
+    selectedOptionsBySelect.forEach(([, options]) => {
+        options.forEach((option) => {
+            option.disabled = true;
+        });
+    });
+
     [
         "maintRoads",
         "maintCulverts",
@@ -140,9 +209,56 @@ function addMaintenanceAssets() {
     });
 
     tr.querySelector(".deleteRowBtn").addEventListener("click", () => {
+        // new code added by PulAK 29-10-26
+        selectedOptionsBySelect.forEach(([, options]) => {
+            options.forEach((option) => {
+                option.disabled = false;
+            });
+        });
         tr.remove();
     });
 }
+
+// new code added by PulAK 29-10-26
+const maintenanceRoadSelect = document.querySelector(
+    '#maintenanceSection [data-confirm-add-on-select="true"]',
+);
+let maintenanceAddPromptOpen = false;
+
+$(maintenanceRoadSelect).on("change", async () => {
+    const selectedRoads = Array.from(maintenanceRoadSelect.selectedOptions)
+        .filter((option) => option.value !== "");
+
+    if (selectedRoads.length === 0 || maintenanceAddPromptOpen) {
+        return;
+    }
+
+    maintenanceAddPromptOpen = true;
+
+    try {
+        const roadNames = selectedRoads
+            .map((option) => option.text.trim())
+            .join(", ");
+        const result = await Swal.fire({
+            icon: "question",
+            title: "Add selected assets to this project?",
+            text: `Add ${roadNames} to the project and maintenance table?`,
+            showCancelButton: true,
+            confirmButtonText: "Yes, add to project",
+            confirmButtonColor: "#198754",
+            cancelButtonText: "Nope",
+            cancelButtonColor: "#dc3545",
+        });
+
+        if (result.isConfirmed) {
+            addMaintenanceAssets();
+        } else {
+            maintenanceRoadSelect.selectedIndex = -1;
+        }
+    } finally {
+        maintenanceAddPromptOpen = false;
+    }
+});
 
 document.getElementById("refRoadSelect")?.addEventListener("change", () => {
     loadChainage("upg");

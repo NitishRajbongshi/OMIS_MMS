@@ -46,7 +46,7 @@ class MtnAssessmentController extends Controller
                     '=',
                     'insp.insp_asset_type'
                 )
-                ->join(
+				->join(
                     'public.asset_road_details as road',
                     'road.rd_system_id',
                     '=',
@@ -76,7 +76,7 @@ class MtnAssessmentController extends Controller
                     'insp.end_section',
                     'insp.cndtn_overall',
                     'sub_asset.sub_assets_descr as asset_type_name',
-                    'road.rd_name as road_name',
+					'road.rd_name as road_name',
                 ])
                 ->orderByDesc('assessment.mas_score')
                 ->get();
@@ -144,12 +144,12 @@ class MtnAssessmentController extends Controller
                     '=',
                     'insp.insp_asset_type'
                 )
-                ->join(
+				->join(
                     'public.asset_road_details as road',
                     'road.rd_system_id',
                     '=',
                     'insp.insp_asset_id'
-                )
+                )	   
                 ->where('assessment.id', (int) $assessmentId)
                 ->select([
                     'assessment.id as assessment_id',
@@ -174,7 +174,7 @@ class MtnAssessmentController extends Controller
                     'insp.end_section',
                     'insp.cndtn_overall',
                     'sub_asset.sub_assets_descr as asset_type_name',
-                    'road.rd_name as road_name',
+					'road.rd_name as road_name',							
                 ])
                 ->first();
 
