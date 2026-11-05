@@ -548,6 +548,7 @@ class HomeController extends Controller
                     $firstProject = $contractorProjects->first();
 
                     return [
+                        'contractor_id' => $firstProject->project_awarded_to,
                         'name' => $firstProject->contractor_name
                             ?: $firstProject->project_awarded_to,
                         'progress' => round(
@@ -606,11 +607,11 @@ class HomeController extends Controller
             // Department dropdown
             $departments = DB::table('public.department_details')
                 ->select('id', 'department_name')
-				->whereNotIn('id', ['16', '18', '19', '20'])											
+                ->whereNotIn('id', ['16', '18', '19', '20'])
                 ->orderBy('precedence_order')
                 ->orderBy('department_name')
                 ->get();
-            Log::info("departments: ". $departments);
+            Log::info("departments: " . $departments);
             // Contractor dropdown: only contractors with projects
             // in the selected department, or all contractors if
             // no department has been selected.
