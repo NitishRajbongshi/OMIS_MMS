@@ -8,6 +8,7 @@ use App\Models\Building\Master\AssetMasterBuildingAccessType;
 use App\Models\Building\Master\AssetMasterBuildingCategory;
 use App\Models\Building\Master\AssetMasterBuildingClass;
 use App\Models\Building\Master\AssetMasterBuildingLocation;
+use App\Models\Building\Master\AssetMasterBuildingSchemes;
 use App\Models\Building\Master\AssetMasterBuildingSecurityFenchingType;
 use App\Models\Building\Master\AssetMasterBuildingType;
 use App\Models\OfficeDetail;
@@ -133,6 +134,14 @@ class AssetBuildingDetail extends Model
     public function securityFencingType()
     {
         return $this->belongsTo(AssetMasterBuildingSecurityFenchingType::class, 'security_fenching_type_cd', 'fenching_type_cd');
+    }
+
+    /**
+     * Building Scheme type master  (buildings schema)
+     */
+    public function schemeType()
+    {
+        return $this->belongsTo(AssetMasterBuildingSchemes::class, 'scheme_cd', 'scheme_cd');
     }
 
     /**
