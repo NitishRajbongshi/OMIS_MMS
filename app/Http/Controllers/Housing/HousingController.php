@@ -407,9 +407,28 @@ class HousingController extends Controller
         ])
             ->where('building_system_cd', $id)
             ->firstOrFail();
-        // dd($building);
 
-        return view('building.show', compact('building'));
+        $occupancies = DB::table('buildings.asset_building_unit_occupancy_details as occupancy')
+            ->join('buildings.asset_building_unit_details as unit', 'unit.unit_id', '=', 'occupancy.unit_id')
+            ->join('public.asset_master_dept_of_state as state', 'state.id', '=', 'occupancy.occupant_dept_cd')
+            ->whereIn('occupancy.unit_id', function ($query) use ($building) {
+                $query->select('unit_id')
+                    ->from('buildings.asset_building_unit_details')
+                    ->where('building_system_cd', $building->building_system_cd);
+            })
+            ->where('occupancy.is_current', 'Y')
+            ->select(
+                'occupancy.occupancy_id',
+                'occupancy.occupant_name',
+                'state.dept_name',
+                'occupancy.occupied_from',
+                'occupancy.occupied_to',
+                'unit.unit_name'
+            )
+            ->orderBy('occupancy.occupied_from', 'desc')
+            ->get();
+
+        return view('building.show', compact('building', 'occupancies'));
     }
 
     /**
