@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class AssetMasterBuildingSchemes extends Model
 {
     use HasFactory;
+    protected $connection = 'pgsql_buildings';
     protected $table = 'buildings.asset_master_building_schemes';
     protected $fillable = [
         'scheme_cd',

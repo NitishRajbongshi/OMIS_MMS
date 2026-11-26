@@ -396,6 +396,7 @@ class HousingController extends Controller
             'buildingCategory',
             'accessType',
             'securityFencingType',
+            'schemeType',
             'division',
             'subDivision',
             'occupantDept',
@@ -406,6 +407,7 @@ class HousingController extends Controller
         ])
             ->where('building_system_cd', $id)
             ->firstOrFail();
+        // dd($building);
 
         return view('building.show', compact('building'));
     }
