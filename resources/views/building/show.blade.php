@@ -317,7 +317,9 @@
                 {{-- Column 2: Right (Occupancy, Amenities, Repair) --}}
                 <div class="col-md-4">
                     {{-- 4. Occupancy --}}
-                    <article class="command-panel mb-4">
+
+                    {{-- Modified by Nitish: Sliding property for multiple occupant unit wise --}}
+                    {{-- <article class="command-panel mb-4">
                         <header>
                             <div>
                                 <span>Resident Context</span>
@@ -337,13 +339,6 @@
                                     <div class="detail-item">
                                         <div class="text-muted small mb-1">Occupant Department</div>
                                         <div class="fw-bold">{{ $building->occupantDept?->dept_name ?? '—' }}</div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12">
-                                    <div class="detail-item">
-                                        <div class="text-muted small mb-1">Occupant Grade</div>
-                                        <div class="fw-bold">{{ $building->occupant_grade_cd ?? '—' }}</div>
                                     </div>
                                 </div>
 
@@ -373,7 +368,115 @@
                                 </div>
                             </div>
                         </div>
+                    </article> --}}
+
+                    <article class="command-panel mb-4 occupancy-panel">
+
+                        <header class="occupancy-toggle">
+                            <div>
+                                <span>Resident Context</span>
+                                <h2>Occupancy (Unit wise)</h2>
+                                <small class="text-muted">
+                                    {{ $occupancies->count() }} Current Occupancy Records
+                                </small>
+                            </div>
+
+                            <div class="occupancy-toggle-icon">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </header>
+
+
+                        <div class="occupancy-content p-3" style="display: none;">
+
+                            @forelse($occupancies as $occupancy)
+                                <div class="occupancy-record mb-2">
+
+                                    {{-- Individual Unit Toggle --}}
+                                    <div class="unit-occupancy-toggle d-flex justify-content-between align-items-center">
+
+                                        <div>
+                                            <strong>
+                                                {{ $occupancy->unit_name ?? 'Unit —' }}
+                                            </strong>
+                                            <span class="text-muted small ms-2">
+                                                {{ $occupancy->occupant_name ?? 'No occupant' }}
+                                            </span>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-success">Current</span>
+                                            <i class="fas fa-chevron-down unit-toggle-icon"></i>
+                                        </div>
+
+                                    </div>
+
+                                    {{-- Individual Unit Details --}}
+                                    <div class="unit-occupancy-content" style="display: none;">
+
+                                        <div class="row g-3 text-sm pt-3">
+
+                                            <div class="col-12">
+                                                <div class="detail-item">
+                                                    <div class="text-muted small mb-1">
+                                                        Occupant Name
+                                                    </div>
+                                                    <div class="fw-bold">
+                                                        {{ $occupancy->occupant_name ?? '—' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <div class="detail-item">
+                                                    <div class="text-muted small mb-1">
+                                                        Occupant Department
+                                                    </div>
+                                                    <div class="fw-bold">
+                                                        {{ $occupancy->dept_name ?? '—' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6">
+                                                <div class="detail-item">
+                                                    <div class="text-muted small mb-1">
+                                                        Occupied From
+                                                    </div>
+                                                    <div class="fw-bold">
+                                                        {{ $occupancy->occupied_from ? \Carbon\Carbon::parse($occupancy->occupied_from)->format('d M Y') : '—' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-6">
+                                                <div class="detail-item">
+                                                    <div class="text-muted small mb-1">
+                                                        Occupied To
+                                                    </div>
+                                                    <div class="fw-bold">
+                                                        {{ $occupancy->occupied_to ? \Carbon\Carbon::parse($occupancy->occupied_to)->format('d M Y') : '—' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            @empty
+
+                                <div class="text-center text-muted py-3">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    No current occupancy records found.
+                                </div>
+                            @endforelse
+
+                        </div>
+
                     </article>
+
 
                     {{-- 3. Amenities --}}
                     <article class="command-panel mb-4">
@@ -481,8 +584,81 @@
         .gap-2 {
             gap: 0.5rem !important;
         }
+
+        /* Main occupancy header */
+        .occupancy-toggle,
+        .unit-occupancy-toggle {
+            cursor: pointer;
+        }
+
+        /* Individual unit card */
+        .occupancy-record {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .unit-occupancy-toggle {
+            padding: 12px 14px;
+            min-height: 45px;
+        }
+
+        .unit-toggle-icon {
+            font-size: 12px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+        }
+
+        .unit-occupancy-toggle.active .unit-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .unit-occupancy-content {
+            padding: 0 14px 14px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        /* Main header arrow */
+        .occupancy-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .occupancy-toggle.active .occupancy-toggle-icon {
+            transform: rotate(180deg);
+        }
     </style>
 @endpush
 
 @push('scripts')
+    <script>
+        $(document).ready(function() {
+
+            // Main occupancy list toggle
+            $('.occupancy-toggle').on('click', function() {
+
+                const header = $(this);
+                const content = header.next('.occupancy-content');
+
+                content.stop(true, true).slideToggle(300);
+                header.toggleClass('active');
+
+            });
+
+
+            // Individual unit details toggle
+            $('.occupancy-content').on('click', '.unit-occupancy-toggle', function(e) {
+
+                e.stopPropagation();
+
+                const header = $(this);
+                const content = header.next('.unit-occupancy-content');
+
+                content.stop(true, true).slideToggle(250);
+                header.toggleClass('active');
+
+            });
+
+        });
+    </script>
 @endpush
