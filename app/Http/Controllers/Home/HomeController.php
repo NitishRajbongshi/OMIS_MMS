@@ -242,6 +242,67 @@ class HomeController extends Controller
         }
     }
 
+    public function inspectionStatus(Request $request, $status)
+    {
+        try {
+            if (!in_array($status, ['assessed', 'pending', 'all'], true)) {
+                abort(404);
+            }
+
+            $inspectionQuery = DB::table('maintenance.mtn_inspection_details as i')
+                ->leftJoin(
+                    'public.asset_master_road_sub_assets as ast',
+                    'ast.sub_asset_cd',
+                    '=',
+                    'i.insp_asset_type'
+                )
+                ->leftJoin('maintenance.mtn_inspection_score as s', function ($join) {
+                    $join->on('s.inspection_id', '=', 'i.id')
+                        ->where('s.status', '=', 'ACTIVE');
+                })
+                ->select(
+                    'i.id',
+                    'i.insp_cd',
+                    'i.insp_date',
+                    'i.insp_asset_id',
+                    'i.insp_asset_location',
+                    'i.insp_asset_type',
+                    'ast.sub_assets_descr as asset_type_name',
+                    's.mas_score',
+                    's.mps_score'
+                );
+
+            // Filter according to the selected assessment status.
+            if ($status === 'assessed') {
+                $inspectionQuery->whereNotNull('s.id');
+            } elseif ($status === 'pending') {
+                $inspectionQuery->whereNull('s.id');
+            }
+
+            $inspections = $inspectionQuery
+                ->orderByRaw('COALESCE(i.insp_date, i.created_at) DESC NULLS LAST')
+                ->get();
+
+            $pageTitle = match ($status) {
+                'assessed' => 'Assessed Inspections',
+                'pending'  => 'Pending Inspections',
+                'all'      => 'All Inspections',
+            };
+
+            return view('maintenance.inspection-status', compact(
+                'inspections',
+                'status',
+                'pageTitle'
+            ));
+        } catch (Exception $e) {
+            Log::error('Inspection status page error: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return view('error');
+        }
+    }
+
     public function pmsLandingOld()
     {
         try {
